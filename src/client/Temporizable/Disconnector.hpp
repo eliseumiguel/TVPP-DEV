@@ -11,10 +11,9 @@ class Disconnector : public Temporizable
 		Strategy *strategy;
 		PeerManager* peerManager;
 		set<string>* peerActive;
-		boost::mutex* peerActiveMutex;
 
     public:
-		Disconnector(Strategy *disconnectorStrategy, PeerManager* peerManager, uint64_t timerPeriod, set<string>* peerActive, boost::mutex* peerActiveMutex);
+		Disconnector(Strategy *disconnectorStrategy, PeerManager* peerManager, uint64_t timerPeriod, set<string>* peerActive);
 		void Disconnect();
 		void TimerAlarm(uint64_t timerPeriod, string timerName);
 };

@@ -10,12 +10,11 @@
 
 #include "Connector.hpp"
 
-Connector::Connector(Strategy *connectorStrategy, PeerManager* peerManager, uint64_t timerPeriod, set<string>* peerActive, boost::mutex* peerActiveMutex) : Temporizable(timerPeriod)
+Connector::Connector(Strategy *connectorStrategy, PeerManager* peerManager, uint64_t timerPeriod, set<string>* peerActive) : Temporizable(timerPeriod)
 {
 	this->strategy = connectorStrategy;
 	this->peerManager = peerManager;
 	this->peerActive = peerActive;
-	this->peerActiveMutex = peerActiveMutex;
 }
 
 void Connector::Connect()
@@ -24,19 +23,19 @@ void Connector::Connect()
 	boost::mutex::scoped_lock peerListLock(*peerManager->GetPeerListMutex());
 	for (map<string, PeerData>::iterator i = peerManager->GetPeerList()->begin(); i != peerManager->GetPeerList()->end(); i++)
 	{
-		if (!peerManager->IsPeerActive(i->first,peerActive, peerActiveMutex))
+		if (!peerManager->IsPeerActive(i->first,peerActive))
 			peers.push_back(&i->second);
 	}
 	strategy->Execute(&peers, NULL, peerManager->GetMaxActivePeers(peerActive));
 
-	unsigned int vacancies = peerManager->GetMaxActivePeers(peerActive) - peerManager->GetPeerActiveSize(peerActive,peerActiveMutex);
+	unsigned int vacancies = peerManager->GetMaxActivePeers(peerActive) - peerManager->GetPeerActiveSize(peerActive);
 	if (vacancies > peers.size()) vacancies = peers.size();
 
 	if (!peers.empty())
 	{
 		for (unsigned int i = 0; i < vacancies; i++)
 		{
-			peerManager->ConnectPeer(peers[i]->GetPeer()->GetID(),peerActive,peerActiveMutex);
+			peerManager->ConnectPeer(peers[i]->GetPeer()->GetID(),peerActive);
 		}
 	}
 	peerListLock.unlock();

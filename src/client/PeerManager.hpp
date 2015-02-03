@@ -31,7 +31,7 @@ class PeerManager
     //faz a checagem das duas listas de peerActiveCooldown em checkPeerList
     void CheckpeerActiveCooldown(map<string, unsigned int>* peerActiveCooldown);
     // auxilia na funcao showPeerList
-    int showPeerActive(set<string>* peerActive, boost::mutex* peerActiveMutex);
+    int showPeerActive(set<string>* peerActive);
 
     public:
 		PeerManager(); //atua na lista de vizinhos
@@ -45,25 +45,24 @@ class PeerManager
     set<string>* GetPeerActiveOut();
     map<string, unsigned int>* GetPeerActiveCooldown(set<string>* peerActive);
 
-	bool ConnectPeer(string peer, set<string>* peerActive, boost::mutex* peerActiveMutex);
-	void DisconnectPeer(string peer, set<string>* peerActive, boost::mutex* peerActiveMutex);
+	bool ConnectPeer(string peer, set<string>* peerActive);
+	void DisconnectPeer(string peer, set<string>* peerActive);
 		void RemovePeer(string peer);//remove na lista de vizinhos
 
 	/*ECM - nao deve implementar as funções:
 	 * unsigned int GetPeerActiveSizeIn()
 	 * unsigned int GetPeerActiveSizeOut()
 	 * porque, assim o método Connector::connector() deverá ser dois, ao contrário de único. */
-	unsigned int GetPeerActiveSize(set<string>* peerActive, boost::mutex* peerActiveMutex);
+	unsigned int GetPeerActiveSize(set<string>* peerActive);
 	unsigned int GetPeerActiveSizeTotal(); //usada para fornecer o total de pares ativos em In + Out sem repetição. Será removida!!!
 
-	bool IsPeerActive(string peer,set<string>* peerActive, boost::mutex* peerActiveMutex);
+	bool IsPeerActive(string peer,set<string>* peerActive);
 		PeerData* GetPeerData(string peer); // a lista de vizinhos é a única que tem os dados do peer
 
 		map<string, PeerData>* GetPeerList();
 		boost::mutex* GetPeerListMutex();
 
-	boost::mutex* GetPeerActiveMutexIn();
-	boost::mutex* GetPeerActiveMutexOut();
+	boost::mutex* GetPeerActiveMutex(set<string>* peerActive);
 
 		void CheckPeerList();
         void ShowPeerList();

@@ -84,8 +84,8 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
     //TODO OportunisticDisconnect
     else
     {
-        this->disconnectorIn = new Disconnector(new RandomStrategy(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveIn(),peerManager.GetPeerActiveMutexIn());
-        this->disconnectorOut = new Disconnector(new RandomStrategy(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveOut(),peerManager.GetPeerActiveMutexOut());
+        this->disconnectorIn = new Disconnector(new RandomStrategy(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveIn());
+        this->disconnectorOut = new Disconnector(new RandomStrategy(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveOut());
     }
     if (disconnectorIn) temporizableList.push_back(disconnectorIn);
     if (disconnectorOut) temporizableList.push_back(disconnectorOut);
@@ -102,8 +102,8 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
     }
     else
     {
-        this->connectorIn = new Connector(new RandomStrategy(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveIn(),peerManager.GetPeerActiveMutexIn());
-        //this->connectorOut = new Connector(new RandomStrategy(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveOut(),peerManager.GetPeerActiveMutexOut());
+        this->connectorIn = new Connector(new RandomStrategy(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveIn());
+        //this->connectorOut = new Connector(new RandomStrategy(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveOut());
     }
     //TODO More connector options
     if (connectorIn) temporizableList.push_back(connectorIn);
@@ -404,11 +404,11 @@ void Client::HandlePingMessageIn(vector<int>* pingHeader, MessagePing* message, 
     if (!peerManager.AddPeer(newPeer))
         delete newPeer;
 
-    if (!peerManager.IsPeerActive(sourceAddress, peerManager.GetPeerActiveIn(), peerManager.GetPeerActiveMutexIn())) //I received a ping from someone that is not on my active peer list
+    if (!peerManager.IsPeerActive(sourceAddress, peerManager.GetPeerActiveIn())) //I received a ping from someone that is not on my active peer list
     {
-        if (!peerManager.ConnectPeer(sourceAddress, peerManager.GetPeerActiveIn(), peerManager.GetPeerActiveMutexIn()))
+        if (!peerManager.ConnectPeer(sourceAddress, peerManager.GetPeerActiveIn()))
         {
-            cout<<"Ping by "<<sourceAddress<<" tried to connect to me to be a In but failed. Neighborhood ["<<peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn(), peerManager.GetPeerActiveMutexIn())<<"/"<<peerManager.GetMaxActivePeers(peerManager.GetPeerActiveIn())<<"]"<<endl;
+            cout<<"Ping by "<<sourceAddress<<" tried to connect to me to be a In but failed. Neighborhood ["<<peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn())<<"/"<<peerManager.GetMaxActivePeers(peerManager.GetPeerActiveIn())<<"]"<<endl;
             return;
         }
     }
@@ -423,7 +423,7 @@ void Client::HandlePingMessageIn(vector<int>* pingHeader, MessagePing* message, 
     {
         case PING_PART_CHUNKMAP:
             peerListLock.lock();
-            if (peerManager.IsPeerActive(sourceAddress, peerManager.GetPeerActiveIn(), peerManager.GetPeerActiveMutexIn()))
+            if (peerManager.IsPeerActive(sourceAddress, peerManager.GetPeerActiveIn()))
             {
                 peerManager.GetPeerData(sourceAddress)->SetChunkMap(otherPeerTipChunk,
                     BytesToBitset(message->GetFirstByte()+message->GetHeaderSize(),(BUFFER_SIZE/8)));
@@ -450,11 +450,11 @@ void Client::HandlePingMessageOut(vector<int>* pingHeader, MessagePing* message,
     if (!peerManager.AddPeer(newPeer))
         delete newPeer;
 
-    if (!peerManager.IsPeerActive(sourceAddress, peerManager.GetPeerActiveOut(), peerManager.GetPeerActiveMutexOut())) //I received a ping from someone that is not on my active peer list
+    if (!peerManager.IsPeerActive(sourceAddress, peerManager.GetPeerActiveOut())) //I received a ping from someone that is not on my active peer list
     {
-        if (!peerManager.ConnectPeer(sourceAddress, peerManager.GetPeerActiveOut(), peerManager.GetPeerActiveMutexOut()))
+        if (!peerManager.ConnectPeer(sourceAddress, peerManager.GetPeerActiveOut()))
         {
-            cout<<"Ping by "<<sourceAddress<<" tried to connect to me to be Out but failed. Neighborhood ["<<peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut(), peerManager.GetPeerActiveMutexOut())<<"/"<<peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut())<<"]"<<endl;
+            cout<<"Ping by "<<sourceAddress<<" tried to connect to me to be Out but failed. Neighborhood ["<<peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut())<<"/"<<peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut())<<"]"<<endl;
             return;
         }
     }
@@ -523,7 +523,7 @@ void Client::HandleRequestMessage(MessageRequest* message, string sourceAddress,
     vector<int> requestHeader = message->GetHeaderValues();
     ChunkUniqueID requestedChunk(requestHeader[0], (uint16_t)requestHeader[1]);
 
-    if (peerManager.IsPeerActive(sourceAddress, peerManager.GetPeerActiveOut(), peerManager.GetPeerActiveMutexOut()))
+    if (peerManager.IsPeerActive(sourceAddress, peerManager.GetPeerActiveOut()))
     {
         if ((mediaBuffer->Available(requestedChunk.GetPosition())) //If i have the chunk 
             && (latestReceivedPosition >= requestedChunk) //The request is for past chunks
@@ -563,7 +563,7 @@ void Client::HandleDataMessage(MessageData* message, string sourceAddress, uint3
     vector<int> dataHeader = message->GetHeaderValues();
     ChunkUniqueID receivedChunk(dataHeader[2], dataHeader[3]);
     
-    if (peerManager.IsPeerActive(sourceAddress, peerManager.GetPeerActiveIn(), peerManager.GetPeerActiveMutexIn()))
+    if (peerManager.IsPeerActive(sourceAddress, peerManager.GetPeerActiveIn()))
     {
         peerManager.GetPeerData(sourceAddress)->DecPendingRequests();
         peerListLock.unlock();
@@ -870,7 +870,7 @@ void Client::Ping()
 
             /* ping to Active Peer List Out
              * ECM. Aqui, será enviada mensagem com buffermap para os peerActiveOut */
-            if (peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut(), peerManager.GetPeerActiveMutexOut()) > 0)
+            if (peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut()) > 0)
             {
                 pingMessage = new MessagePing(PING_PART_CHUNKMAP, BUFFER_SIZE/8, peerMode, latestReceivedPosition);
                 pingMessage->SetIntegrity();
@@ -896,7 +896,7 @@ void Client::Ping()
                 }
 
                 boost::mutex::scoped_lock peerListLock(*peerManager.GetPeerListMutex());
-                boost::mutex::scoped_lock peerActiveOutLock(*peerManager.GetPeerActiveMutexOut());
+                boost::mutex::scoped_lock peerActiveOutLock(*peerManager.GetPeerActiveMutex(peerManager.GetPeerActiveOut()));
                 for (set<string>::iterator i = peerManager.GetPeerActiveOut()->begin(); i != peerManager.GetPeerActiveOut()->end(); i++)
                 {
                     Peer* peer = peerManager.GetPeerData(*i)->GetPeer();
@@ -914,13 +914,13 @@ void Client::Ping()
             /* ECM - código 100% incluído
              * ping to Active Peer List In
              * aqui, será enviada mensagem simples para informar aos peerActiveIn que this está vivo */
-            if(peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn(), peerManager.GetPeerActiveMutexIn()) > 0)
+            if(peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()) > 0)
             {
                 pingMessage = new MessagePing(PING_LIVE_OUT, BUFFER_SIZE/8, peerMode, latestReceivedPosition);
                 pingMessage->SetIntegrity();
 
                 boost::mutex::scoped_lock peerListLock(*peerManager.GetPeerListMutex());
-                boost::mutex::scoped_lock peerActiveIntLock(*peerManager.GetPeerActiveMutexIn());
+                boost::mutex::scoped_lock peerActiveIntLock(*peerManager.GetPeerActiveMutex(peerManager.GetPeerActiveIn()));
                 for (set<string>::iterator i = peerManager.GetPeerActiveIn()->begin(); i != peerManager.GetPeerActiveIn()->end(); i++)
                 {
                     Peer* peer = peerManager.GetPeerData(*i)->GetPeer();
@@ -1111,7 +1111,7 @@ Request* Client::CriaRequest()
     Request* newRequest = new Request(requestPosition);
    
     boost::mutex::scoped_lock peerListLock(*peerManager.GetPeerListMutex());
-    boost::mutex::scoped_lock peerActiveInLock(*peerManager.GetPeerActiveMutexIn());
+    boost::mutex::scoped_lock peerActiveInLock(*peerManager.GetPeerActiveMutex(peerManager.GetPeerActiveIn()));
     map<string, PeerData*> peerActiveWithData;
     for (set<string>::iterator i = peerManager.GetPeerActiveIn()->begin(); i != peerManager.GetPeerActiveIn()->end(); i++)
     {
@@ -1173,7 +1173,7 @@ void Client::FazPedidos(int stepInMs)
             message->SetIntegrity();
 
             boost::mutex::scoped_lock peerListLock(*peerManager.GetPeerListMutex());
-            boost::mutex::scoped_lock peerActiveInLock(*peerManager.GetPeerActiveMutexIn());
+            boost::mutex::scoped_lock peerActiveInLock(*peerManager.GetPeerActiveMutex(peerManager.GetPeerActiveIn()));
             map<string, PeerData*> peerActiveWithData;
             for (set<string>::iterator i = peerManager.GetPeerActiveIn()->begin(); i != peerManager.GetPeerActiveIn()->end(); i++)
             {

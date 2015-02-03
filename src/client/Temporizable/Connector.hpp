@@ -11,10 +11,9 @@ class Connector : public Temporizable
 		Strategy *strategy;
 		PeerManager* peerManager;
 		set<string>* peerActive;
-		boost::mutex* peerActiveMutex;
 
     public:
-		Connector(Strategy *disconnectorStrategy, PeerManager* peerManager, uint64_t timerPeriod, set<string>* peerActive, boost::mutex* peerActiveMutex);
+		Connector(Strategy *disconnectorStrategy, PeerManager* peerManager, uint64_t timerPeriod, set<string>* peerActive);
 		void Connect();
 		void TimerAlarm(uint64_t timerPeriod, string timerName);
 };

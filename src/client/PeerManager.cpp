@@ -57,9 +57,9 @@ map<string, unsigned int>* PeerManager::GetPeerActiveCooldown(set<string>* peerA
 }
 
 //ECM - efetivamente, insere o par em uma das lista In ou Out
-bool PeerManager::ConnectPeer(string peer, set<string>* peerActive, boost::mutex* peerActiveMutex)
-
+bool PeerManager::ConnectPeer(string peer, set<string>* peerActive)
 {
+	boost::mutex* peerActiveMutex = this->GetPeerActiveMutex(peerActive);
 	map<string, unsigned int>* peerActiveCooldown = this->GetPeerActiveCooldown(peerActive);
 	if (peerActiveCooldown->find(peer) == (*peerActiveCooldown).end())
 	{
@@ -83,8 +83,9 @@ bool PeerManager::ConnectPeer(string peer, set<string>* peerActive, boost::mutex
 	return false;
 }
 
-void PeerManager::DisconnectPeer(string peer, set<string>* peerActive, boost::mutex* peerActiveMutex)
+void PeerManager::DisconnectPeer(string peer, set<string>* peerActive)
 {
+	boost::mutex* peerActiveMutex = this->GetPeerActiveMutex(peerActive);
 	map<string, unsigned int>* peerActiveCooldown = this->GetPeerActiveCooldown(peerActive);
 	boost::mutex::scoped_lock peerActiveLock(*peerActiveMutex);
 	peerActive->erase(peer);
@@ -101,8 +102,9 @@ void PeerManager::RemovePeer(string peer)
 	cout<<"Peer "<<peer<<" removed from PeerList"<<endl;
 }
 
-unsigned int PeerManager::GetPeerActiveSize(set<string>* peerActive, boost::mutex* peerActiveMutex)
+unsigned int PeerManager::GetPeerActiveSize(set<string>* peerActive)
 {
+	boost::mutex* peerActiveMutex = this->GetPeerActiveMutex(peerActive);
 	boost::mutex::scoped_lock peerActiveLock(*peerActiveMutex);
 	unsigned int size = peerActive->size();
 	peerActiveLock.unlock();
@@ -112,7 +114,7 @@ unsigned int PeerManager::GetPeerActiveSize(set<string>* peerActive, boost::mute
 // Gera o total de parceiros somando In e Out sem repeticoes
 unsigned int PeerManager::GetPeerActiveSizeTotal()
 {
-	unsigned int size = this->GetPeerActiveSize(&peerActiveIn, &peerActiveMutexIn);
+	unsigned int size = this->GetPeerActiveSize(&peerActiveIn);
 	boost::mutex::scoped_lock peerActiveInLock(peerActiveMutexIn);
 	boost::mutex::scoped_lock peerActiveOutLock(peerActiveMutexOut);
 	for (set<string>::iterator i = peerActiveOut.begin(); i != peerActiveOut.end(); i++)
@@ -125,8 +127,9 @@ unsigned int PeerManager::GetPeerActiveSizeTotal()
     return size;
 }
 
-bool PeerManager::IsPeerActive(string peer,set<string>* peerActive, boost::mutex* peerActiveMutex)
+bool PeerManager::IsPeerActive(string peer,set<string>* peerActive)
 {
+	boost::mutex* peerActiveMutex = this->GetPeerActiveMutex(peerActive);
 	boost::mutex::scoped_lock peerActiveLock(*peerActiveMutex);
 	if (peerActive->find(peer) != peerActive->end())
 	{
@@ -151,13 +154,11 @@ boost::mutex* PeerManager::GetPeerListMutex()
 	return &peerListMutex;
 }
 
-boost::mutex* PeerManager::GetPeerActiveMutexIn()
+boost::mutex* PeerManager::GetPeerActiveMutex(set<string>* peerActive)
 {
-	return &peerActiveMutexIn;
-}
-boost::mutex* PeerManager::GetPeerActiveMutexOut()
-{
-	return &peerActiveMutexOut;
+	if (peerActive == &peerActiveIn) return &peerActiveMutexIn;
+	if (peerActive == &peerActiveOut) return &peerActiveMutexOut;
+	return NULL;
 }
 
 //ECM metodo privado criado para ser chamado duas vezes (In e Out) em CheckPeerList()
@@ -236,11 +237,11 @@ void PeerManager::CheckPeerList()
 
     for (set<string>::iterator i = desconectaPeerIn.begin(); i != desconectaPeerIn.end(); i++)
     {
-    	DisconnectPeer(*i, &peerActiveIn, &peerActiveMutexIn);
+    	DisconnectPeer(*i, &peerActiveIn);
     }
     for (set<string>::iterator i = desconectaPeerOut.begin(); i != desconectaPeerOut.end(); i++)
         {
-        	DisconnectPeer(*i, &peerActiveOut, &peerActiveMutexOut);
+        	DisconnectPeer(*i, &peerActiveOut);
         }
     for (set<string>::iterator i = deletaPeer.begin(); i != deletaPeer.end(); i++)
     {
@@ -252,8 +253,9 @@ void PeerManager::CheckPeerList()
 }
 
 //funcao auxiliar usada interna em ShowPeerList para impressao
-int PeerManager::showPeerActive(set<string>* peerActive, boost::mutex* peerActiveMutex)
+int PeerManager::showPeerActive(set<string>* peerActive)
 {
+	boost::mutex* peerActiveMutex = this->GetPeerActiveMutex(peerActive);
 	int j = 0; int ttl = 0; string ttlRotulo("");
 	boost::mutex::scoped_lock peerActiveLock(*peerActiveMutex);
 
@@ -282,9 +284,9 @@ void PeerManager::ShowPeerList()
  	int k = 0;
     int j = 0;
     cout<<endl<<"- Peer List Active -"<<endl;
-    k = showPeerActive(&peerActiveIn, &peerActiveMutexIn);
+    k = showPeerActive(&peerActiveIn);
 	//cout<<"Total: "<<k<<" Peers In"<<endl<<endl;
-    j = showPeerActive(&peerActiveOut, &peerActiveMutexOut);
+    j = showPeerActive(&peerActiveOut);
     cout<<"Total In ["<<k<<"]  Total Out ["<<j<<"]"<<endl;
     cout<<"Total different Peers Active: ["<<this->GetPeerActiveSizeTotal()<<"] "<<endl<<endl;
 
@@ -299,23 +301,5 @@ void PeerManager::ShowPeerList()
 	peerListLock.unlock();
 	cout<<"Total PeerList: "<<j<<endl<<endl;
 
-    /* ECM código auxiliar de depuração
-     * pode ser removido...
-
-	cout<<"Total lista In: "<<this->GetPeerActiveSize(&peerActiveIn, &peerActiveMutexIn);
-	cout<<endl<<"In :";
-    for (set<string>::iterator i = peerActiveIn.begin(); i != peerActiveIn.end(); i++)
-    {
-    	if (i != peerActiveIn.end())
-    			cout<<*i<<" ";
-    }
-    cout<<endl;
-    cout<<"Total lista Out: "<<this->GetPeerActiveSize(&peerActiveOut, &peerActiveMutexOut);
-    cout<<endl<<"Out :";
-    for (set<string>::iterator j = peerActiveOut.begin(); j != peerActiveOut.end(); j++)
-    {
-    	if (j != peerActiveOut.end())
-    			 cout<<*j<<" ";
-    } */
 }
 

@@ -1,11 +1,10 @@
 #include "Disconnector.hpp"
 
-Disconnector::Disconnector(Strategy *disconnectorStrategy, PeerManager* peerManager, uint64_t timerPeriod, set<string>* peerActive, boost::mutex* peerActiveMutex) : Temporizable(timerPeriod)
+Disconnector::Disconnector(Strategy *disconnectorStrategy, PeerManager* peerManager, uint64_t timerPeriod, set<string>* peerActive) : Temporizable(timerPeriod)
 {
 	this->strategy = disconnectorStrategy;
 	this->peerManager = peerManager;
 	this->peerActive = peerActive;
-	this->peerActiveMutex = peerActiveMutex;
 }
 
 void Disconnector::Disconnect()
@@ -20,7 +19,7 @@ void Disconnector::Disconnect()
 
 	if (!peers.empty() && peers[0])
 	{
-		peerManager->DisconnectPeer(peers[0]->GetPeer()->GetID(),peerActive,peerActiveMutex);
+		peerManager->DisconnectPeer(peers[0]->GetPeer()->GetID(),peerActive);
 	}
 	peerListLock.unlock();
 }
