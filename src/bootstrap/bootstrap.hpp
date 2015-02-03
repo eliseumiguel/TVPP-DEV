@@ -49,7 +49,7 @@ class Bootstrap
     public:
         /**
         * @param string 
-        * @param int Max TTL value
+        * @param int Max TTLChannel value
         */
         Bootstrap(string udpPort, string peerlistSelectorStrategy);
         void TCPStart(const char *);

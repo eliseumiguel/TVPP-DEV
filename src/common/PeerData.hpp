@@ -21,7 +21,7 @@ class PeerData
         * @param string
         * @param int Max TTL value
         */
-        PeerData(Peer* p = NULL, int ttl = TTL, int size = STD_BUFFERSIZE);
+        PeerData(Peer* p = NULL, int ttlIn = TTLIn, int ttlOut = TTLOut, int ttlChannel = TTLChannel, int size = STD_BUFFERSIZE);
         
         Peer* GetPeer();
         
@@ -29,9 +29,19 @@ class PeerData
         * This method returns the current TTL value
         * @return A string with the
         */
-        int GetTTL();
-        void SetTTL(int v);
-        void DecTTL();
+        //ECM
+        int GetTTLIn();
+        void SetTTLIn(int v);
+        void DecTTLIn();
+        int GetTTLOut();
+        void SetTTLOut(int v);
+        void DecTTLOut();
+
+        int GetTTLChannel();
+        void SetTTLChannel(int v);
+        void DecTTLChannel();
+        //ECM
+
         void SetMode(PeerModes mode);
         PeerModes GetMode();
         void SetChunkMap(ChunkUniqueID chunkMapHead, boost::dynamic_bitset<>x);
@@ -61,7 +71,11 @@ class PeerData
         HeadedBitset chunkMap;
         
         //TimeToLive of the partnership or request
-        int ttl;
+        //ECM
+        int ttlIn;
+        int ttlOut;
+        int ttlChannel;
+        //ECM
         
         //Peer classification technologies =D
         int uploadScore;

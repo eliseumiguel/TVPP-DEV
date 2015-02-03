@@ -92,7 +92,6 @@ time_t Channel::GetCreationTime()
 {
     return creationTime;
 }
-
 vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, unsigned int peerQuantity)
 {
     vector<PeerData*> allPeers, selectedPeers;
@@ -121,8 +120,8 @@ void Channel::CheckActivePeers()
     vector<string> deletedPeer;
     for (map<string,PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++) 
     {
-        i->second.DecTTL();
-        if (i->second.GetTTL() <= 0) 
+        i->second.DecTTLChannel();
+        if (i->second.GetTTLChannel() <= 0)
             deletedPeer.push_back(i->first);
     }
     for (vector<string>::iterator peerId = deletedPeer.begin(); peerId < deletedPeer.end(); peerId++)
@@ -133,7 +132,7 @@ void Channel::PrintPeerList()
 {
     cout<<"Channel ["<<channelId<<"] Tip["<<serverNewestChunkID<<"] Rate["<<serverEstimatedStreamRate<<"] Peer List:"<<endl;
     for (map<string,PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
-        cout<<"PeerID: "<<i->first<<" Mode: "<<(int)i->second.GetMode()<<" TTL: "<<i->second.GetTTL()<<endl;
+        cout<<"PeerID: "<<i->first<<" Mode: "<<(int)i->second.GetMode()<<" TTL: "<<i->second.GetTTLChannel()<<endl;
 }
 
 FILE* Channel::GetPerformanceFile()

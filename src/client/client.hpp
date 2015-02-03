@@ -2,7 +2,7 @@
 #define CLIENT_H_INCLUDED
 
 #include <iostream>
-#include <cstdlib>
+//#include <cstdlib>
 
 #include <map>
 #include <vector>
@@ -71,7 +71,7 @@ class Client
         ~Client();
         void ClientInit(char *host_ip, string TCP_server_port, string udp_port, uint32_t idChannel, 
              string peers_udp_port,  string streamingPort, PeerModes mode, uint32_t buffer, 
-            int maxpeers, int janela, int num, int ttl, int maxRequestAttempt, int tipOffsetTime, int limitDownload, int limitUpload, 
+            int maxpeersIn, int maxpeersOut, int janela, int num, int ttlIn, int ttlOut, int maxRequestAttempt, int tipOffsetTime, int limitDownload, int limitUpload,
             string disconnectorStrategy, string connectorStrategy, string chunkSchedulerStrategy, 
             string messageSendScheduler, string messageReceptionScheduler);
         virtual void Ping();
@@ -105,6 +105,9 @@ class Client
         
         void HandlePeerlistMessage(MessagePeerlist* message, string sourceAddress = "", uint32_t socket = 0);
         void HandlePingMessage(MessagePing* message, string sourceAddress = "", uint32_t socket = 0);
+        void HandlePingMessageIn(vector<int>* pingHeader, MessagePing* message, string sourceAddress = "", uint32_t socket = 0);
+        void HandlePingMessageOut(vector<int>* pingHeader, MessagePing* message, string sourceAddress = "", uint32_t socket = 0);
+        //ECM
         void HandleErrorMessage(MessageError* message, string sourceAddress = "", uint32_t socket = 0);
         void HandleRequestMessage(MessageRequest* message, string sourceAddress = "", uint32_t socket = 0);
         void HandleDataMessage(MessageData* message, string sourceAddress = "", uint32_t socket = 0);
@@ -121,13 +124,19 @@ class Client
         uint32_t BUFFER_SIZE;   //Tamanho do buffer de dados, e chunk_map
         unsigned int JANELA;    //Janela de interesse
         int NUM_PEDIDOS;        //Número de chunks a ser colocado na lista de pedidos a cada chamada
-        int TTL_MAX;            //tempo até o cliente ser removido da lista de peer ativos
+        int TTL_MAX_In;          //tempo até o cliente ser removido da lista de peer ativos na lista In
+        int TTL_MAX_Out;         //tempo até o cliente ser removido da lista de peer ativos na lista Out
         int maxRequestAttempt;  //Maximum number of attempts to perform a request
         int tipOffsetTime;      //Time from where to start requesting once reseting to tip
         uint32_t idChannel;
 		list<Temporizable*> temporizableList;
-		Disconnector* disconnector;
-		Connector* connector;
+
+		//ECM
+		Disconnector* disconnectorIn;
+		Disconnector* disconnectorOut;
+		Connector* connectorIn;
+		//Connector* connectorOut;
+
 		PeerRequester* requester;
         Strategy* chunkSchedulerStrategy;
         //-----------------------         

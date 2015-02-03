@@ -13,7 +13,7 @@ MESSAGE_SOURCES=$(MESSAGE_DIR)/Message.cpp $(MESSAGE_DIR)/MessagePing.cpp $(MESS
 SCHEDULER_SOURCES=$(SCHEDULER_DIR)/FIFOMessageScheduler.cpp $(SCHEDULER_DIR)/RRMessageScheduler.cpp $(SCHEDULER_DIR)/CDFMessageScheduler.cpp $(SCHEDULER_DIR)/RandomMessageScheduler.cpp
 COMMON_SOURCES=$(MESSAGE_SOURCES) $(SCHEDULER_SOURCES) $(COMMON_DIR)/XPConfig.cpp $(COMMON_DIR)/AddressedMessage.cpp $(COMMON_DIR)/Channel.cpp $(COMMON_DIR)/PeerData.cpp $(COMMON_DIR)/Peer.cpp $(COMMON_DIR)/UdpBuffer.cpp $(COMMON_DIR)/ChunkUniqueID.cpp $(COMMON_DIR)/HeadedBitset.cpp $(COMMON_DIR)/tcp-server.cpp $(COMMON_DIR)/tcp-session.cpp $(COMMON_DIR)/udp.cpp 
 TEMPORIZABLE_SOURCES=$(TEMPORIZABLE_DIR)/LeakyBucket.cpp $(TEMPORIZABLE_DIR)/Disconnector.cpp $(TEMPORIZABLE_DIR)/PeerRequester.cpp $(TEMPORIZABLE_DIR)/Connector.cpp
-C_SOURCES=$(C_DIR)/main.cpp $(COMMON_SOURCES) $(TEMPORIZABLE_SOURCES) $(C_DIR)/client.cpp $(C_DIR)/Statistics.cpp $(C_DIR)/MediaBuffer.cpp $(C_DIR)/PeerManager.cpp $(C_DIR)/Request.cpp $(C_DIR)/RequestAttempt.cpp $(C_DIR)/client-player-session.cpp $(C_DIR)/client-tcp-server.cpp $(C_DIR)/client-bootstrap-session.cpp
+C_SOURCES=$(C_DIR)/main.cpp $(COMMON_SOURCES) $(TEMPORIZABLE_SOURCES) $(C_DIR)/client.cpp $(C_DIR)/Statistics.cpp $(C_DIR)/MediaBuffer.cpp $(C_DIR)/Request.cpp $(C_DIR)/PeerManager.cpp $(C_DIR)/RequestAttempt.cpp $(C_DIR)/client-player-session.cpp $(C_DIR)/client-tcp-server.cpp $(C_DIR)/client-bootstrap-session.cpp
 B_SOURCES=$(B_DIR)/main.cpp $(COMMON_SOURCES) $(B_DIR)/bootstrap.cpp $(B_DIR)/bootstrap-session.cpp $(B_DIR)/bootstrap-tcp-server.cpp 
 C_OBJECTS=$(C_SOURCES:.cpp=.o)
 B_OBJECTS=$(B_SOURCES:.cpp=.o)
@@ -34,7 +34,7 @@ sclient: $(C_OBJECTS)
 
 clean:
 	find . -name "*.o" | xargs rm
-	rm $(BIN_DIR)/client $(BIN_DIR)/bootstrap $(BIN_DIR)/sclient $(BIN_DIR)/sbootstrap
+	rm -f $(BIN_DIR)/client $(BIN_DIR)/bootstrap $(BIN_DIR)/sclient $(BIN_DIR)/sbootstrap
 
 .cpp.o:
 	$(CC) $(CFLAGS) $< -o $@

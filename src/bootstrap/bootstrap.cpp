@@ -215,7 +215,8 @@ void Bootstrap::HandlePingMessage(MessagePingBoot* message, string sourceAddress
         if (channelList[channelId].HasPeer(srcPeer))
         {
             channelList[channelId].GetPeerData(srcPeer).SetMode(peerMode);
-            channelList[channelId].GetPeerData(srcPeer).SetTTL(TTL);
+            //ECM alteracao no TTL para TTLChannel que agora e usado no channel
+            channelList[channelId].GetPeerData(srcPeer).SetTTLChannel(TTLChannel);
 
             //If ping from server
             if (*(srcPeer) == *(channelList[channelId].GetServer())) 
@@ -289,7 +290,7 @@ void Bootstrap::HandlePingMessage(MessagePingBoot* message, string sourceAddress
     }
 }
 
-/** Verifica se algum peer da lista está inativo (TTL <= 0) caso esteja, removo esse peer */
+/** Verifica se algum peer da lista está inativo (TTLChannel <= 0) caso esteja, removo esse peer */
 void Bootstrap::CheckPeerList() 
 {
     boost::xtime xt;

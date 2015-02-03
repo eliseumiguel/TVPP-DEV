@@ -22,6 +22,10 @@
 //| OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM |  PINGCODE | PEERMODE | CHUNKGUID |    BITMAP    | 
 //|   1    |     1      |     2    |     2    |     1     |     1    |  4  |  2  | BUFFERSIZE/8 | TOTAL: 14 + (BUFFERSIZE/8) Bytes
 
+// PING LIVE OUT MESSAGE
+//| OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM |  PINGCODE | PEERMODE | CHUNKGUID |
+//|   1    |     1      |     2    |     2    |     1     |     1    |  4  |  2  | TOTAL: 14
+
 // ERRO MESSAGE 
 //| OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM |  ERRORCODE | X | 
 //|   1    |     1      |     2    |     2    |      1     | 1 | TOTAL: 8 Bytes
