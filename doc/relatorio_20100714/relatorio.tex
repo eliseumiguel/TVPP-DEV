@@ -1,0 +1,124 @@
+\title{Relatório do Teste em 14/7/2010}
+\author{
+        Pedro de Carvalho Gomes
+}
+\date{\today}
+
+\documentclass[12pt]{article}
+\usepackage[brazil]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{type1ec}
+\selectlanguage{brazil}
+
+\begin{document}
+\maketitle
+
+\section{Introdução}
+
+Este documento relata o teste coletivo realizado no dia 14 de julho de 2010 sobre
+a primeira versão dos clientes TvTide. O objetivo deste teste foi levantar possíveis
+cenários de falha do sistema e determinar ações imediatas para sua correção.
+O teste contou com a participação ativa do Pedro, Marcus e Mantini.
+A duração do teste foi de aproximadamente 40 minutos, com número variável
+de clientes na transmissão. O software se mostrou relativamente estável,
+apresentando algumas falhas específicas que são detalhadas ao longo deste
+relatório. O servidor de testes executou do servidor pinotnoir do laboratório
+Luar.
+
+\section{Avaliação Marcus}
+
+Cenário:
+\begin{itemize}
+\item Roteador DLink DI-524 (Airplus G), desktop Vista 64 bits, netbook Windows 7, GVT 10Mbps;
+\item Instalação em Vista 64 Bits e em Windows 7:
+\end{itemize}
+
+Instalação:
+\begin{itemize}
+\item É preciso instalar o framework .NET versão 4. A instalação é solicitada em uma janelinha em inglês. É preciso fazer o download, salvar e executar. Depois é preciso reiniciar a instalação do plugin;
+\item É preciso instalar o VLC E forçar a instalação do plugin para o Firefox.
+\end{itemize}
+
+Utilização:
+\begin{itemize}
+\item Ao se ativar a primeira estação, o funcionamento é normal;
+\item Ao se ativar a segunda estação, o cliente da que já estava ativa termina com indicação de "Connection reset by peer". O cliente da nova estação não consegue se conectar;
+\item Não avaliei a frequência das descontinuidades de mídia.
+\end{itemize}
+
+
+\section{Avaliação Mantini}
+
+Cenário:
+
+\begin{itemize}
+\item Plataforma de teste: Windows 7 64bits
+\item Roteador: Cisco-Linksys WRT54G Wireless-G Router
+\end{itemize}
+
+Utilização:
+\begin{itemize}
+\item Punch não funcionou para parceiros que estavam atrás de NAT.
+\item O cliente fechou uma vez durante os testes com a seguinte mensagem :"UDP MSG:getaddrinfo: hostname nor servname provided, or not known". Provavelmente causada por um punch mal feito resultando em um endereço invalido, ou uma condição de corrida no momento de enviar uma mensagem UDP.
+\end{itemize}
+
+\section{Avaliação Pedro/Luar}
+Cenário:
+\begin{itemize}
+\item Dois desktops Linux OpenSuse 11.1
+\item Ambos estavam na rede do Laboratório Luar: sem firewall para o servidor, mas atrás do firewall do DCC.
+\end{itemize}
+
+Utilização:
+\begin{itemize}
+\item Não foi possível avaliar a qualidade do vídeo em ambos por estar remoto.
+\item Os clientes foram muito estáveis. Não travaram hora nenhuma
+\item Todos os demais clientes conseguiram estabelecer conexão com eles.
+\end{itemize}
+
+\section{Avaliação Pedro/Casa}
+Cenário
+\begin{itemize}
+\item Um computador Windows XP SP3 32 Bits
+\item Um computador Linux OpenSuse 64 bits
+\item Roteador D-Link DI-524 (mesmo do Marcus)
+\item Link ADSL da Telemar de 2 MBs
+\end{itemize}
+
+Instalação:
+\begin{itemize}
+\item Foi preciso instalar o mesmo framework .Net no Windows XP. O problema é que essa instalação demanda um download de 30 MB. Tive que abortar porque estava próximo do momento combinado pro teste e não podia gastar banda fazendo esse download.
+\item Após os experimentos, fiz a instalação no Windows XP. O instalador do Tvtide funcionou normalmente. Só que ele instalou o binário em "C:\Arquivos de programas\Microsoft\Tvtide\". Mas ao tentar abrir o plugin vlc+tvtide, ele procura em "C:\Tvtide\Tvtide.exe" e dá erro.
+\item Criei um atalho Windows pro lugar correto.
+\item O cliente 64 bits foi compilado por mim usando o código atual do SVN.
+\end{itemize}
+
+Utilização:
+\begin{itemize}
+\item Não pude colocar o cliente Windows pra rodar porque precisou do .Net no dia do deste.
+\item Após instalar o .Net, tentei chamar o cliente pelo Bash do Cygwin. Ele deu um erro de conflito de versões do cygwin1.dll: entre a minha instalação do Cygwin e a biblioteca que vem no cliente.
+\item Coloquei o cliente pra rodar usando prompt "cmd" do Windows e funcionou corretamente. Fui capaz de ver o vídeo no Google Chrome, usando a página do Mantini.
+\item O cliente Linux executou sem falhas.
+\item Pude avaliar através dos logs dos desktops do Luar que todos conseguiram passar o Nat do meu roteador. Ou seja, meu computador atrás do NAT foi um parceiro bom durante toda a transmissão.
+\item O video começou a tocar sem muita demora e não travou em hora nenhuma.
+\item Eu "forcei" um erro durante a transmissão. Coloquei uma regra no firewall do meu Linux pra descartar pacotes UDP da pinotnoir. Quase instantaneamente meu cliente removeu a pinotnoir. Ai o video deu umas 2 travadas e voltou em seguida, mesmo sem ter o servidor como parceiro.
+\item Assim que removi a regra de firewall, a pinotnoir voltou quase instantaneamente à lista de peers.
+\item Quando um cliente sai da lista de peers, ele volta logo em seguida. Ou seja, não há registro de parceiros ruins.
+\item O processamento ficou por volta de 10\% no Linux.
+\end{itemize}
+
+\section{Ações}
+
+O primeiro ponto a atacar é o erro do Punch. Quero verificar se existe erro nas seguintes situações:
+\begin{itemize}
+\item Clientes Windows não estão fazendo punch corretamente
+\item Quando 2 ou mais clientes estão atrás do mesmo NAT ambos não funcionam.
+\end{itemize}
+
+Outro problema urgente é a questão do processamento. Eu penso que 10\% de carga pro nosso
+cliente é alto. É aceitável pra não interferir no funcionamento do computador, mas é alto
+pra o que ele faz. É importante atacar o problema porque o código do servidor é o mesmo.
+E o servidor sim está com uma carga muito alta, perto de 20\% segundo constatou o Mantini.
+
+\end{document}
