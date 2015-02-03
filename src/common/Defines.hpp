@@ -33,6 +33,13 @@ enum PeerModes
     MODE_FREERIDER_GOOD    = 0x02,          // Modo Freerider Good
     MODE_FULLCHUNKMAP      = 0x03,          // Modo Anunciando FULL ChunkMap
     MODE_SUPERNODE         = 0x04,          // Modo Supernode
+    MODE_AUXILIAR_SERVER   = 0x05,          // Modo de servidor auxiliar em sub canal
+};
+
+enum ChannelModes
+{
+	MODE_NORMAL             =0x00,          // Modo Normal
+	MODE_FLASH_CROWD        =0x01,          // Modo que ativa os sub-canais
 };
 
 //Operation Codes

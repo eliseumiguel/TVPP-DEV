@@ -79,6 +79,9 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message, string sourceA
                 if (!channelList[channelId].HasPeer(source))
                 {
                     channelList[channelId].AddPeer(source);
+                    /* esse método pode ser mais elaborado e ser chamado para os pares que já estão no canal
+                     * isso seria feito abaixo de  SelectPeerList(...) */
+                    channelList[channelId].analizePeerToBeServerAux(source);
                 }
             }
             break;
