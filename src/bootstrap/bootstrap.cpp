@@ -46,11 +46,10 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message, string sourceA
     uint16_t externalPort = channelHeader[3];
     uint32_t channelId = channelHeader[4];
     uint32_t clientTime = channelHeader[5];
-    uint8_t channelState;
-	if (channelFlag == CHANGE_STATE)
-		channelState = channelHeader[6];
+    uint8_t  channelState = channelHeader[6]; //ECM used if channelFlag == CHANGE_STATE
 
     cout<<"Channel MSG: "<<(uint32_t)channelFlag<<", "<<performingPunch<<", "<<version<<", "<<externalPort<<", "<<channelId<<endl;
+
     if (!performingPunch)
         source->SetPort(boost::lexical_cast<string>(externalPort));
 
@@ -79,6 +78,7 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message, string sourceA
             }
             else 
             {
+            	//deve ser revisto. Caso já exista e esteja em um sub canal, ele tentará entrar novamente no sub canal...
                 if (!channelList[channelId].HasPeer(source))
                 {
                     channelList[channelId].AddPeer(source);
@@ -92,11 +92,7 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message, string sourceA
         case CHANGE_STATE:
         	if (channelState != NULL_MODE)
         	{
-            	if (channelState == MODE_FLASH_CROWD)
-            		cout<<"CHANNEL STATE NEW * FLASH CROWD"<<endl;
-
-            	if (channelState == MODE_NORMAL)
-            		cout<<"CHANNEL STATE NEW * MODE_NORMAL"<<endl;
+        		this->setChannelState(channelId, channelState);
 
             	messageReply = new MessageStateChannel((ChannelModes)channelState);
         	}
@@ -115,6 +111,7 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message, string sourceA
 
         if (!messageReply && (channelFlag !=CHANGE_STATE))
         {
+
             vector<PeerData*> selectedPeers = channelList[channelId].SelectPeerList(peerlistSelectorStrategy, source, 20);
 
             time_t nowtime;
@@ -132,6 +129,7 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message, string sourceA
                 ((MessagePeerlist*)messageReply)->AddPeer(selectedPeers[i]->GetPeer());
             }
         }
+
         channelListLock.unlock();
     } 
     else
@@ -141,6 +139,18 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message, string sourceA
 
     messageReply->SetIntegrity();
     return messageReply;
+}
+
+void Bootstrap::setChannelState(uint32_t channelId, uint8_t channelState)
+{
+    for (map<unsigned int, Channel>::iterator channel = channelList.begin(); channel != channelList.end(); channel++)
+    	if (channel->first ==  channelId)
+    		channel->second.SetChannelMode((ChannelModes)channelState);
+
+    if (channelState == MODE_FLASH_CROWD)
+		cout<<" ***** CHANNEL STATE NEW * FLASH CROWD ****"<<endl;
+	if (channelState == MODE_NORMAL)
+		cout<<" **** CHANNEL STATE NEW * MODE_NORMAL ****"<<endl;
 }
 
 void Bootstrap::HandleUDPMessage(Message* message, string sourceAddress)
@@ -240,7 +250,6 @@ void Bootstrap::HandlePingMessage(MessagePingBoot* message, string sourceAddress
         if (channelList[channelId].HasPeer(srcPeer))
         {
             channelList[channelId].GetPeerData(srcPeer).SetMode(peerMode);
-            //ECM alteracao no TTL para TTLChannel que agora e usado no channel
             channelList[channelId].GetPeerData(srcPeer).SetTTLChannel(TTLChannel);
 
             //If ping from server
@@ -315,7 +324,7 @@ void Bootstrap::HandlePingMessage(MessagePingBoot* message, string sourceAddress
     }
 }
 
-/** Verifica se algum peer da lista está inativo (TTLChannel <= 0) caso esteja, removo esse peer */
+/** Verifica se algum peer da lista está inativo (TTLChannel <= 0) caso esteja, remove esse peer */
 void Bootstrap::CheckPeerList() 
 {
     boost::xtime xt;

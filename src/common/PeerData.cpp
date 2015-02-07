@@ -21,21 +21,6 @@ PeerData::PeerData(Peer* peer, int ttlIn, int ttlOut, int ttlChannel, int size) 
     pendingRequests = 0;
     delay = 0;
 }
-PeerData::PeerData (Peer* p, unsigned int channelId_Sub, int size): chunkMap(size)
-{
-	this->ttlIn = TTLIn;
-	this->ttlOut = TTLOut;
-	this->ttlChannel = TTLChannel;
-	this->channelId_Sub = channelId_Sub;
-
-    this->peer = peer;
-    uploadScore = 0;
-    mode = MODE_CLIENT;
-    pendingRequests = 0;
-    delay = 0;
-
-}
-
 
 /** Retorna o TTL*****************/
 int PeerData::GetTTLIn()

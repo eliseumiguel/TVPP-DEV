@@ -3,9 +3,9 @@
 //|   1    |      1      |     2     |     2    |   ?    |   ?  |
 
 // CHANNEL MESSAGE
-// ECM: A NEW CHANNEL MESSAGE CAN BE 17 Bytes IF CHANNELFLAG = CHANGE_STATE
+// ECM: A NEW CHANNEL MESSAGE
 //| OPCODE | HEADER_SIZE | BODY_SIZE | CHECKSUM |  CHANNELCODE | PUNCH | VERSION | EXTPORT | CHANNELID | CHANNELSTATE |
-//|   1    |      1      |     2     |     2    |       1      |   1   |    2    |    2    |     4     |    0 OR 1    |TOTAL: 16 Bytes
+//|   1    |      1      |     2     |     2    |       1      |   1   |    2    |    2    |     4     |         1    |TOTAL: 17 Bytes
 
 // PEERLIST MESSAGE
 //| OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM |  EXTPORT | CHUNKGUID | QTDPEERS | PEERLIST |  

@@ -14,8 +14,9 @@
 #include "Sub-Channel-Data.hpp"
 #include "Strategy/Strategy.hpp"
 
-#define MAXPEER_CHANNELSUB 30
-#define MAXPEER_CHANNEL_SUB_CANDIDATE 2 //10
+#define MAXPEER_CHANNELSUB 2 //30               //máximo de pares em um sub canal
+#define MAX_CHANNELSUB 2                        //máximo de subcanais permitido
+#define MAXPEER_CHANNEL_SUB_CANDIDATE 5 //10    //máximo de candidatos a servidor auxiliar
 
 using namespace std;
 
@@ -58,12 +59,9 @@ class Channel
         vector<PeerData*> SelectPeerList(Strategy* strategy, Peer* srcPeer, unsigned int peerQuantity);
         unsigned int GetPeerListSize(); //usada apenas pelo bootstrap em HHTLog
 
-        /* ECM ***
-         * retorna o tamanho da lista em que o peer pertence (subcanal ou canal principal)
-         * caso não esteja em flash crowd, retorna peerList.size (todos peers em canal principal)
-         * o tamanho do canal principal
-         */
-        unsigned int GetPeerListSizeChannel_Sub(unsigned int channelId_Sub);
+        unsigned int GetPeerListSizeChannel_Sub(unsigned int channelId_Sub); //retorna quantos pares estão em um subcanal
+        unsigned int GetTotalChannel_Sub(); //retorna quantos subcanis existem
+
         void CheckActivePeers();
         void PrintPeerList();
         void analizePeerToBeServerAux(Peer* source);
@@ -87,13 +85,14 @@ class Channel
 
         ChannelModes channelMode;
         unsigned int maxPeer_ChannelSub;
+        unsigned int max_channelSub;
 
         bool AddPeerChannel(Peer* peer);
         bool Creat_New_ChannelSub();
+        void Remove_AllChannelSub();
         void Remove_ChannelSub(const string* source);
-        //apagar esse método
-        void printPossibleServerAux();
 
+        void printChannelProfile(); //ECM método auxiliar para testes
         //*** ECM
 
         ChunkUniqueID serverNewestChunkID;

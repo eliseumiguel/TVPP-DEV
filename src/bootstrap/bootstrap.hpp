@@ -69,6 +69,7 @@ class Bootstrap
         Message *HandleChannelMessage(MessageChannel* message, string sourceAddress = "");
         void HandlePeerlistMessage(MessagePeerlist* message, string sourceAddress = "");
         void HandlePingMessage(MessagePingBoot* message, string sourceAddress = "", uint32_t socket = 0);
+        void setChannelState(uint32_t channelId, uint8_t channelState);
 
         map<unsigned int, Channel> channelList;
         BootstrapTCPServer *tcpServer;

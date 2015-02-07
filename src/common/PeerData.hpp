@@ -26,7 +26,7 @@ class PeerData
         /**
         * @param channelId_Sub usado para criar novo sub canal na classe Channel
         */
-        PeerData(Peer* p, unsigned int channelId_Sub, int size = STD_BUFFERSIZE);
+        //PeerData(unsigned int channelId_Sub, Peer* p, int ttlIn = TTLIn, int ttlOut = TTLOut, int ttlChannel = TTLChannel, int size = STD_BUFFERSIZE);
         Peer* GetPeer();
         
         /**

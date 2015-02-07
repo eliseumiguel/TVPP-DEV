@@ -31,6 +31,7 @@ bool PeerManager::AddPeer(Peer* newPeer)
 	boost::mutex::scoped_lock peerListLock(peerListMutex);
 	if (peerList.find(newPeer->GetID()) == peerList.end())
 	{
+		//chamar construtor PeerData (idSubChannel, peer)...
 		peerList[newPeer->GetID()] = PeerData(newPeer);
 		peerListLock.unlock();
 		cout<<"Peer "<<newPeer->GetID()<<" added to PeerList"<<endl;
