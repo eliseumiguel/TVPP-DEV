@@ -17,6 +17,7 @@ class Client;
 class ClientBootstrapSession: public TCPSession
 {
 public:
+  ClientBootstrapSession(boost::asio::io_service& io_service);
   ClientBootstrapSession(boost::asio::io_service&, string server_address, string server_port, string punch_port, Client *client);
 
   bool Connect();

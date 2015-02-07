@@ -156,8 +156,39 @@ PeerData& Channel::GetPeerData(Peer* peer)
 
 void Channel::SetChannelMode(ChannelModes channelMode)
 {
-	this->channelMode = channelMode;
+	if (this->channelMode == MODE_FLASH_CROWD  && channelMode == MODE_NORMAL)
+	{
+		boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
+		boost::mutex::scoped_lock channelSubCandidatesLock(*channel_Sub_Candidates_Mutex);
+
+		for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
+			this->Remove_ChannelSub(&(i->first));
+
+		/*faz todos os pares pertencentes ao canal principal
+		 * Neste ponto deverá ser tratada a mesclagem das redes
+		 * o mutex da lista peerList é fechado no bootstrap,
+		 * onde a mensagem para mudar o estado é tratada.
+		 */
+	    for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
+	        i->second.SetChannelId_Sub(channelId);
+
+		channelSubListLock.unlock();
+		channelSubCandidatesLock.unlock();
+	}
+	else;
+		this->channelMode = channelMode;
 }
+/* TODO ECM conferir o mutex que está em bootstrap
+ * sempre na chamada em caso de remoção de apenas um canal,
+ * lembrar de tratar a mesclagem da rede.
+ */
+void Channel::Remove_ChannelSub(const string* source)
+{
+    channel_Sub_List.erase(*source);
+	server_Sub_Candidates.insert(*source);
+}
+
+
 ChannelModes Channel::GetChannelMode()
 {
 	return channelMode;
@@ -195,16 +226,6 @@ bool Channel::Creat_New_ChannelSub()
 	return false;
 }
 
-void Channel::Remove_ChannelSub(string* source)
-{
-	boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
-    channel_Sub_List.erase(*source);
-	channelSubListLock.unlock();
-
-	boost::mutex::scoped_lock channelSubCandidatesLock(*channel_Sub_Candidates_Mutex);
-	server_Sub_Candidates.insert(*source);
-	channelSubCandidatesLock.unlock();
-}
 
 /* ECM ****
  * Agora, fazemos a busca considerando qual subcanal o peer está.
@@ -250,6 +271,8 @@ unsigned int Channel::GetPeerListSize()
 {
     return peerList.size();
 }
+//não é necessário saber em qual subcanal o peer está
+//considerar testar se um servidorAuxiliar entrou para remoção
 void Channel::CheckActivePeers()
 {
     vector<string> deletedPeer;
@@ -260,7 +283,9 @@ void Channel::CheckActivePeers()
             deletedPeer.push_back(i->first);
     }
     for (vector<string>::iterator peerId = deletedPeer.begin(); peerId < deletedPeer.end(); peerId++)
-        RemovePeer(*peerId);
+    	//garante que não vai apagar um servidor auxiliar (mas isso não é esperado...)
+    	if (channel_Sub_List.find(*peerId)!= channel_Sub_List.end())
+    		RemovePeer(*peerId);
 }
 
 void Channel::PrintPeerList()
@@ -270,12 +295,21 @@ void Channel::PrintPeerList()
         cout<<"PeerID: "<<i->first<<" Mode: "<<(int)i->second.GetMode()<<" TTL: "<<i->second.GetTTLChannel()<<endl;
 }
 
-FILE* Channel::GetPerformanceFile()
+FILE* Channel::GetPerformanceFile(Peer* srcPeer)
 {
-    return performanceFile;
+	if (peerList[srcPeer->GetID()].GetChannelId_Sub() != this->channelId)
+		for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
+			if (peerList[srcPeer->GetID()].GetChannelId_Sub() == i->second.GetchannelId_Sub())
+					return i->second.GetPerformanceFile();
+	return performanceFile;
 }
 
-FILE* Channel::GetOverlayFile()
+FILE* Channel::GetOverlayFile(Peer* srcPeer)
 {
+	if (peerList[srcPeer->GetID()].GetChannelId_Sub() != this->channelId)
+		for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
+			if (peerList[srcPeer->GetID()].GetChannelId_Sub() == i->second.GetchannelId_Sub())
+					return i->second.GetOverlayFile();
+
     return overlayFile;
 }

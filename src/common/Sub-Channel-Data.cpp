@@ -1,11 +1,12 @@
 #include "Sub-Channel-Data.hpp"
 
-SubChannelData::SubChannelData(unsigned int channelId, unsigned int channelIDSub, Peer* serverPeer_Sub)
+SubChannelData::SubChannelData(unsigned int channelId, unsigned int channelIdSub, Peer* serverPeer_Sub)
 {
-    if (channelId != 0 || serverPeer_Sub != NULL) //Avoid creation by map[]
+    //TODO ECM ... esta condição deve ser avaliada. Inicialmente, um canal cria o sub, assim, não teria que testar o channelID..
+	if (channelIdSub != 0 || serverPeer_Sub != NULL) //Avoid creation by map[]
     {
         this->channelId_Master = channelId;
-        this->channelId_Sub    = channelIDSub;
+        this->channelId_Sub    = channelIdSub;
         this->serverPeer_Sub = serverPeer_Sub;
 
         //Logging

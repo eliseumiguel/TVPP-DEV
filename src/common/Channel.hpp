@@ -24,6 +24,8 @@ using namespace std;
 * ECM-mudanças para que o canal perimta subcanais.
 * Com isso, um par do canal poderá ser servidor auxiliar de um sub canal
 */
+class SubChannelData;
+
 class Channel
 {
     public:
@@ -66,8 +68,8 @@ class Channel
         void PrintPeerList();
         void analizePeerToBeServerAux(Peer* source);
 
-        FILE* GetPerformanceFile();
-        FILE* GetOverlayFile();
+        FILE* GetPerformanceFile(Peer* srcPeer);
+        FILE* GetOverlayFile(Peer* srcPeer);
 		
 		friend bool operator<(const Channel &a, const Channel &b) {return a.channelId<b.channelId;};
 		
@@ -88,7 +90,7 @@ class Channel
 
         bool AddPeerChannel(Peer* peer);
         bool Creat_New_ChannelSub();
-        void Remove_ChannelSub(string* source);
+        void Remove_ChannelSub(const string* source);
         //apagar esse método
         void printPossibleServerAux();
 

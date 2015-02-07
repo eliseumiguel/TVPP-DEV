@@ -7,6 +7,10 @@
 
 #include "client-bootstrap-session.hpp"
 
+ClientBootstrapSession::ClientBootstrapSession(boost::asio::io_service& io_service):TCPSession(io_service)
+{
+
+}
 ClientBootstrapSession::ClientBootstrapSession(boost::asio::io_service& io_service, string server_address, string server_port, string punch_target_port, Client *client):TCPSession(io_service)
 {
   server_address_ = server_address;

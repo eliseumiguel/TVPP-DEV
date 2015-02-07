@@ -168,7 +168,7 @@ bool Client::ConnectToBootstrap()
         message = new MessageChannel(CHANNEL_CONNECT, perform_udp_punch, externalPort, idChannel, nowtime);
     message->SetIntegrity();
     int32_t peers_port;
-    if(perform_udp_punch)
+    if(perform_udp_punch)  //perform_udp_punch é usado para informar (uma vez) a porta udp atrás do NAT
     {
         peers_port = cbSession->Punch_connect();
         if(peers_port < 0)///Failed

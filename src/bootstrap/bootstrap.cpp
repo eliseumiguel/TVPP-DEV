@@ -46,6 +46,9 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message, string sourceA
     uint16_t externalPort = channelHeader[3];
     uint32_t channelId = channelHeader[4];
     uint32_t clientTime = channelHeader[5];
+    uint8_t channelState;
+	if (channelFlag == CHANGE_STATE)
+		channelState = channelHeader[6];
 
     cout<<"Channel MSG: "<<(uint32_t)channelFlag<<", "<<performingPunch<<", "<<version<<", "<<externalPort<<", "<<channelId<<endl;
     if (!performingPunch)
@@ -57,7 +60,8 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message, string sourceA
         boost::mutex::scoped_lock channelListLock(channelListMutex);
         switch (channelFlag)
         {
-        case CHANNEL_CREATE:
+
+        case  CHANNEL_CREATE:
             if (channelList.find(channelId) == channelList.end())
             {
                 channelList[channelId] = Channel(channelId, source);
@@ -65,14 +69,13 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message, string sourceA
             else
             {
                 messageReply = new MessageError(ERROR_CHANNEL_CANT_BE_CREATED);
-                //message = "Channel "+idChannelStr+" cant be created, ID already in use";
             }
             break;
+
         case CHANNEL_CONNECT:
             if (channelList.count(channelId) == 0)
             {
                 messageReply = new MessageError(ERROR_CHANNEL_UNAVAILABLE);
-                //message = "Channel "+idChannelStr+" unavailable";
             }
             else 
             {
@@ -85,13 +88,32 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message, string sourceA
                 }
             }
             break;
+
+        case CHANGE_STATE:
+        	if (channelState != NULL_MODE)
+        	{
+            	if (channelState == MODE_FLASH_CROWD)
+            		cout<<"CHANNEL STATE NEW * FLASH CROWD"<<endl;
+
+            	if (channelState == MODE_NORMAL)
+            		cout<<"CHANNEL STATE NEW * MODE_NORMAL"<<endl;
+
+            	messageReply = new MessageStateChannel((ChannelModes)channelState);
+        	}
+        	else
+        	{
+        		cout<<"No Channel State altered..."<<endl;
+        		messageReply = new MessageError(ERROR_CHANNEL_STATE_NULL);
+        	}
+        	break;
+
         default:
             cout<<"Unknown error, flags de channel erradas?"<<endl;
             messageReply = new MessageError(ERROR_NONE);
             break;
         }
 
-        if (!messageReply)
+        if (!messageReply && (channelFlag !=CHANGE_STATE))
         {
             vector<PeerData*> selectedPeers = channelList[channelId].SelectPeerList(peerlistSelectorStrategy, source, 20);
 
@@ -163,7 +185,7 @@ void Bootstrap::HandlePeerlistMessage(MessagePeerlist* message, string sourceAdd
         {
             if (channelList[channelId].HasPeer(srcPeer))
             {
-                FILE* overlayFile = channelList[channelId].GetOverlayFile();
+                FILE* overlayFile = channelList[channelId].GetOverlayFile(srcPeer);
                 channelListLock.unlock();
 
                 string overlayLog  = sourceAddress + " ";                           //PeerID
@@ -228,7 +250,7 @@ void Bootstrap::HandlePingMessage(MessagePingBoot* message, string sourceAddress
                 channelList[channelId].SetServerEstimatedStreamRate(serverStreamRate);
             }
 
-            FILE* performanceFile = channelList[channelId].GetPerformanceFile();
+            FILE* performanceFile = channelList[channelId].GetPerformanceFile(srcPeer);
             channelListLock.unlock();
 
             //If it has performance measures

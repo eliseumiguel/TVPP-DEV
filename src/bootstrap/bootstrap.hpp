@@ -30,6 +30,7 @@
 #include "../common/Messages/MessageError.hpp"
 #include "../common/Messages/MessagePingBoot.hpp"
 #include "../common/Messages/MessagePingBootPerf.hpp"
+#include "../common/Messages/MessageStateChannel.hpp"
 
 #include "../common/Strategy/Strategy.hpp"
 #include "../common/Strategy/TournamentStrategy.hpp"

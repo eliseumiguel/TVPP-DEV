@@ -14,9 +14,10 @@
 
 //Message Header Sizes
 #define MESSAGE_HEADER_SIZE                      6
-#define MESSAGE_CHANNEL_HEADER_SIZE             20
+#define MESSAGE_CHANNEL_HEADER_SIZE             21
 #define MESSAGE_REQUEST_HEADER_SIZE             18
 #define MESSAGE_ERROR_HEADER_SIZE                8
+#define MESSAGE_STATE_CHANNEL_SIZE               8
 #define MESSAGE_PEERLIST_HEADER_SIZE            10
 #define MESSAGE_PEERLIST_SHARE_HEADER_SIZE      38
 #define MESSAGE_PEERLIST_LOG_HEADER_SIZE        18
@@ -38,8 +39,9 @@ enum PeerModes
 
 enum ChannelModes
 {
-	MODE_NORMAL             =0x00,          // Modo Normal
-	MODE_FLASH_CROWD        =0x01,          // Modo que ativa os sub-canais
+	NULL_MODE               =0x00,          // Usado para desconsiderar esse campo em mensagesn ao Channel
+	MODE_NORMAL             =0x01,          // Modo Normal
+	MODE_FLASH_CROWD        =0x02,          // Modo que ativa os sub-canais
 };
 
 //Operation Codes
@@ -58,6 +60,8 @@ enum ChannelFlags
 {
     CHANNEL_CREATE      = 0x00,
     CHANNEL_CONNECT     = 0x01,
+    CHANGE_STATE        = 0X02,
+    CONFIRM_STATE       = 0X03,
 };
 
 //PING MESSAGES FLAGS
@@ -89,6 +93,7 @@ enum ErrorTypes
     ERROR_CHUNK_UNAVAILABLE         = 0x04,
     ERROR_UPLOAD_LIMIT_EXCEEDED     = 0x05,
     ERROR_NO_PARTNERSHIP            = 0x06,
+    ERROR_CHANNEL_STATE_NULL        = 0X07,
 };
 
 #endif // DEFINES_H

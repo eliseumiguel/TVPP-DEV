@@ -20,7 +20,7 @@ using namespace std;
 class SubChannelData
 {
     public:
- 	    SubChannelData(unsigned int channelId = 0, unsigned int subChannelID = 0, Peer* serverPeer_Sub = NULL);
+ 	    SubChannelData(unsigned int channelId = 0, unsigned int channelIdSub = 0, Peer* serverPeer_Sub = NULL);
 
         Peer* GetServer_Sub();
         void CheckActivePeers();
