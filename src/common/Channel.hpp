@@ -16,7 +16,9 @@
 
 #define MAXPEER_CHANNELSUB 2 //30               //máximo de pares em um sub canal
 #define MAX_CHANNELSUB 2                        //máximo de subcanais permitido
-#define MAXPEER_CHANNEL_SUB_CANDIDATE 5 //10    //máximo de candidatos a servidor auxiliar
+#define MAXPEER_CHANNEL_SUB_CANDIDATE 3 //10    //máximo de candidatos a servidor auxiliar
+
+#define MESCLAR_REDES 1 //true
 
 using namespace std;
 
@@ -34,7 +36,11 @@ class Channel
         * Constructor
         * @param idServer server ip and port (ip:port)
         */
-        Channel(unsigned int channelId = 0, Peer* serverPeer = NULL);
+        Channel(unsigned int channelId = 0, Peer* serverPeer = NULL,
+        		unsigned int maxPeerInSubChannel = MAXPEER_CHANNELSUB,
+        		unsigned int maxSubChannel = MAX_CHANNELSUB,
+        		unsigned int maxSubServerAux = MAXPEER_CHANNEL_SUB_CANDIDATE,
+        		bool mesclar = MESCLAR_REDES);
 
         ChunkUniqueID GetServerNewestChunkID();
 		void SetServerNewestChunkID(ChunkUniqueID serverNewestChunkID);
@@ -53,6 +59,11 @@ class Channel
 
         void SetChannelMode(ChannelModes channelMode);
         ChannelModes GetChannelMode();
+
+        bool GetServerSubWaitInform(Peer* peer);
+        void SetServerSubWaitInform(Peer* peer, bool waiting);
+
+        ServerAuxTypes GetServerSubNewMode (Peer* peer);
 
         void SetmaxPeer_ChannelSub(int unsigned maxpeerChannelSub);
 
@@ -81,16 +92,21 @@ class Channel
         boost::mutex* channel_Sub_Candidates_Mutex;
 
         map<string, SubChannelData> channel_Sub_List;
-        set<string> server_Sub_Candidates;
+        map<string, SubChannelCandidateDate> server_Sub_Candidates;
 
         ChannelModes channelMode;
         unsigned int maxPeer_ChannelSub;
         unsigned int max_channelSub;
+        unsigned int max_ServerSubCandidate;
+        bool mesclarRedes;
 
         bool AddPeerChannel(Peer* peer);
-        bool Creat_New_ChannelSub();
-        void Remove_AllChannelSub();
-        void Remove_ChannelSub(const string* source);
+        bool Create_New_ChannelSub();
+        void Remove_AllChannelSub(bool mesclar = false);
+        void Remove_ChannelSub(const string* source, bool mesclar = false);
+        void CheckAllSubChannel();
+
+        void CheckServerSubState();
 
         void printChannelProfile(); //ECM método auxiliar para testes
         //*** ECM

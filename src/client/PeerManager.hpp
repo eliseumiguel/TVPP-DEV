@@ -34,6 +34,9 @@ class PeerManager
     int showPeerActive(set<string>* peerActive);
 
     public:
+        //somente para testes... remover esse método
+        //void apagaPeerListout();
+
 		PeerManager(); //atua na lista de vizinhos
 	unsigned int GetMaxActivePeers(set<string>* peerActive);
 		void SetMaxActivePeersIn(unsigned int maxActivePeers);

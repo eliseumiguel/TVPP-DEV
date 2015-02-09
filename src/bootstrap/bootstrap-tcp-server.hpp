@@ -12,6 +12,7 @@ class BootstrapTCPServer:public TCPServer
 public:
   BootstrapTCPServer(short port,Bootstrap *bootstrap);
   Message *Handle_message(Message*,std::string);
+
 private:  
   ///Start Accepting Connexions
   void Start_accept();

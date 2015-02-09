@@ -18,6 +18,7 @@
 #define MESSAGE_REQUEST_HEADER_SIZE             18
 #define MESSAGE_ERROR_HEADER_SIZE                8
 #define MESSAGE_STATE_CHANNEL_SIZE               8
+#define MESSAGE_SERVERAUX_HEADER_SIZE            8
 #define MESSAGE_PEERLIST_HEADER_SIZE            10
 #define MESSAGE_PEERLIST_SHARE_HEADER_SIZE      38
 #define MESSAGE_PEERLIST_LOG_HEADER_SIZE        18
@@ -53,6 +54,7 @@ enum Opcodes
     OPCODE_REQUEST      = 0x03,
     OPCODE_DATA         = 0x04,
     OPCODE_ERROR        = 0x05,
+    OPCODE_SERVERAUX    = 0x06,
 };
 
 //CHANNEL MESSAGES FLAGS
@@ -81,6 +83,13 @@ enum PeerlistTypes
     PEERLIST_BASE          = 0x00,     // PEERLIST BASE
     PEERLIST_SHARE         = 0x01,     // PEERLIST TO SHARE PARTNERS
     PEERLIST_LOG           = 0x02      // PEERLIST TO LOG
+};
+
+enum ServerAuxTypes
+{
+	NO_SERVER_AUX           = 0X00,    // PEERMANAGER NORMAL
+	SERVER_AUX_ACTIVE       = 0x01,    // PEERMANAGER SERVER AUX
+	SERVER_AUX_MESCLAR      = 0x02     // PEERMANAGER MESCLANDO REDE
 };
 
 //ERROR MESSAGES FLAGS

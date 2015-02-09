@@ -5,6 +5,14 @@
 
 #include "PeerManager.hpp"
 
+/*somente teste... apagar esse método
+void PeerManager::apagaPeerListout()
+{
+	peerActiveOut.clear();
+}
+*///***** teste teste ****************
+
+
 PeerManager::PeerManager()
 {
 }

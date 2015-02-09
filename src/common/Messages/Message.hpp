@@ -3,9 +3,8 @@
 //|   1    |      1      |     2     |     2    |   ?    |   ?  |
 
 // CHANNEL MESSAGE
-// ECM: A NEW CHANNEL MESSAGE
 //| OPCODE | HEADER_SIZE | BODY_SIZE | CHECKSUM |  CHANNELCODE | PUNCH | VERSION | EXTPORT | CHANNELID | CHANNELSTATE |
-//|   1    |      1      |     2     |     2    |       1      |   1   |    2    |    2    |     4     |         1    |TOTAL: 17 Bytes
+//|   1    |      1      |     2     |     2    |       1      |   1   |    2    |    2    |     4     |       1      |TOTAL: 17 Bytes
 
 // PEERLIST MESSAGE
 //| OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM |  EXTPORT | CHUNKGUID | QTDPEERS | PEERLIST |  
@@ -29,6 +28,14 @@
 
 // ERRO MESSAGE 
 //| OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM |  ERRORCODE | X | 
+//|   1    |     1      |     2    |     2    |      1     | 1 | TOTAL: 8 Bytes
+
+// SERVER SUB MESSAGE
+//| OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM |  STATECODE | X |
+//|   1    |     1      |     2    |     2    |      1     | 1 | TOTAL: 8 Bytes
+
+// CHANNEL STATE MESSAGE
+//| OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM |  STATECODE | X |
 //|   1    |     1      |     2    |     2    |      1     | 1 | TOTAL: 8 Bytes
 
 // REQUEST MESSAGE 

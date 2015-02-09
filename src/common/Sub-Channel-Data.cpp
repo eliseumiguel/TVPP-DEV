@@ -1,13 +1,17 @@
 #include "Sub-Channel-Data.hpp"
 
-SubChannelData::SubChannelData(unsigned int channelId, unsigned int channelIdSub, Peer* serverPeer_Sub)
+SubChannelData::SubChannelData(unsigned int channelId, unsigned int channelIdSub, Peer* serverPeer_Sub,
+		                       int clife, int rnew)
 {
     //TODO ECM ... esta condição deve ser avaliada. Inicialmente, um canal cria o sub, assim, não teria que testar o channelID..
 	if (channelIdSub != 0 || serverPeer_Sub != NULL) //Avoid creation by map[]
     {
-        this->channelId_Master = channelId;
-        this->channelId_Sub    = channelIdSub;
-        this->serverPeer_Sub = serverPeer_Sub;
+        this->channelId_Master     = channelId;
+        this->channelId_Sub        = channelIdSub;
+        this->serverPeer_Sub       = serverPeer_Sub;
+        this->channelLife          = clife;
+        this->reNewServerSub       = rnew;
+        this->mesclando            = false;
 
         //Logging
          struct tm * timeinfo;
@@ -28,10 +32,20 @@ SubChannelData::SubChannelData(unsigned int channelId, unsigned int channelIdSub
     } 
 }
 
-Peer* SubChannelData::GetServer_Sub()
-{
-    return serverPeer_Sub;
-}
+Peer* SubChannelData::GetServer_Sub()           {return serverPeer_Sub;}
+
+int SubChannelData::GetChannelLife()            {return channelLife;}
+void SubChannelData::SetChannelLife(int cf)     {this->channelLife = cf;}
+void SubChannelData::DecChannelLif()            {this->channelLife--;}
+
+
+int SubChannelData::GetReNewServerSub()         {return reNewServerSub;}
+void SubChannelData::SetReNewServerSub(int rn)  {this->reNewServerSub = rn;}
+void SubChannelData::DecReNewServerSub()        {reNewServerSub--;}
+
+bool SubChannelData::GetMesclando()               {return this->mesclando;}
+void SubChannelData::SetMesclando(bool mesclar)   {this->mesclando = mesclar;}
+
 
 void SubChannelData::PrintPeerList(map<string, PeerData>* peerList_Master)
 {
@@ -56,4 +70,18 @@ FILE* SubChannelData::GetOverlayFile()
 {
     return overlayFile;
 }
+
+
+//***********************************
+SubChannelCandidateDate::SubChannelCandidateDate(ServerAuxTypes serverState, bool peerWaitInform)
+{
+	this->serverState = serverState;
+	this->peerWaitInform = peerWaitInform;
+
+}
+ServerAuxTypes SubChannelCandidateDate::GetState(){return this->serverState;}
+void SubChannelCandidateDate::SetState(ServerAuxTypes serverState){this->serverState = serverState;}
+
+bool SubChannelCandidateDate::GetPeerWaitInform(){return this->peerWaitInform;}
+void SubChannelCandidateDate::SetPeerWaitInfor(bool peerWaitInform){this->peerWaitInform = peerWaitInform;}
 

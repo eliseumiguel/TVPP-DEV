@@ -82,10 +82,11 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message, string sourceA
                 if (!channelList[channelId].HasPeer(source))
                 {
                     channelList[channelId].AddPeer(source);
-                    /* esse método pode ser mais elaborado e ser chamado para os pares que já estão no canal
-                     * isso seria feito abaixo de  SelectPeerList(...) */
-                    channelList[channelId].analizePeerToBeServerAux(source);
+
                 }
+                /* esse método pode ser mais elaborado e ser chamado para os pares que já estão no canal
+                * isso seria feito abaixo de  SelectPeerList(...) */
+                channelList[channelId].analizePeerToBeServerAux(source);
             }
             break;
 
@@ -93,7 +94,6 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message, string sourceA
         	if (channelState != NULL_MODE)
         	{
         		this->setChannelState(channelId, channelState);
-
             	messageReply = new MessageStateChannel((ChannelModes)channelState);
         	}
         	else
@@ -111,23 +111,30 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message, string sourceA
 
         if (!messageReply && (channelFlag !=CHANGE_STATE))
         {
+        	if(channelList[channelId].GetServerSubWaitInform(source))
+        	{
+        	    messageReply = new MessageServerSub(channelList[channelId].GetServerSubNewMode(source));
+        	    channelList[channelId].SetServerSubWaitInform(source, false);
+        	}
+        	else
+        	{
+        		vector<PeerData*> selectedPeers = channelList[channelId].SelectPeerList(peerlistSelectorStrategy, source, 20);
 
-            vector<PeerData*> selectedPeers = channelList[channelId].SelectPeerList(peerlistSelectorStrategy, source, 20);
-
-            time_t nowtime;
-            time(&nowtime);
-            messageReply = new MessagePeerlistShare(selectedPeers.size(), source->GetIP(), externalPort, 
-                channelList[channelId].GetServerNewestChunkID(), channelList[channelId].GetServerEstimatedStreamRate(), 
+        		time_t nowtime;
+        		time(&nowtime);
+        		messageReply = new MessagePeerlistShare(selectedPeers.size(), source->GetIP(), externalPort,
+        		channelList[channelId].GetServerNewestChunkID(), channelList[channelId].GetServerEstimatedStreamRate(),
                 channelList[channelId].GetCreationTime(), nowtime, clientTime);
-            /**
-            * Varre a lista de peers canditados, separando cada campo por um caracter de seperação    
-            * caso esse campo for ultimo campo a ser enviado insere um caracter que sinaliza o fim da mensagem
-            * envia para o cliente
-            */    
-            for (uint16_t i = 0; i < selectedPeers.size(); i++) 
-            {
-                ((MessagePeerlist*)messageReply)->AddPeer(selectedPeers[i]->GetPeer());
-            }
+        		/**
+        		 * Varre a lista de peers canditados, separando cada campo por um caracter de seperação
+        		 * caso esse campo for ultimo campo a ser enviado insere um caracter que sinaliza o fim da mensagem
+        		 * envia para o cliente
+        		 */
+        		for (uint16_t i = 0; i < selectedPeers.size(); i++)
+        		{
+        			((MessagePeerlist*)messageReply)->AddPeer(selectedPeers[i]->GetPeer());
+        		}
+        	}
         }
 
         channelListLock.unlock();
@@ -136,10 +143,10 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message, string sourceA
     {
         messageReply = new MessageError(ERROR_INVALID_CLIENT_VERSION);
     }
-
     messageReply->SetIntegrity();
     return messageReply;
 }
+
 
 void Bootstrap::setChannelState(uint32_t channelId, uint8_t channelState)
 {
@@ -340,7 +347,7 @@ void Bootstrap::CheckPeerList()
         vector<unsigned int> deletedChannel;
         for (map<unsigned int, Channel>::iterator channel = channelList.begin(); channel != channelList.end(); channel++)
         {
-            channel->second.PrintPeerList();
+            //channel->second.PrintPeerList();
             channel->second.CheckActivePeers();
 
             if (!channel->second.HasPeer(channel->second.GetServer()))
@@ -456,3 +463,21 @@ void Bootstrap::UDPReceive()
         }
     }
 }
+
+/*
+void Bootstrap::serverSub_ControlMessage(Peer* peer)
+{
+    Message *message;
+    time_t nowtime;
+    time(&nowtime);
+
+    messageServerAux = new MessageServerSub(NO_SERVER_AUX);
+    message->SetIntegrity();
+
+    ExternalMessageTCP externalConnect(std::string(peer->GetIP()), "5111");
+    if (externalConnect.Sync_write(messageServerAux->GetFirstByte(),messageServerAux->GetSize()) < 0) //Failed to write
+      	cout<<"Falha ao conectar o servidor"<<endl;
+    else
+    	cout<<"CHANNEL STATE CHANGED FOR "<<endl;
+}
+*/

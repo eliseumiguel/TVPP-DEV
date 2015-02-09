@@ -31,6 +31,7 @@
 #include "../common/Messages/MessagePingBoot.hpp"
 #include "../common/Messages/MessagePingBootPerf.hpp"
 #include "../common/Messages/MessageStateChannel.hpp"
+#include "../common/Messages/MessageServerSub.hpp"
 
 #include "../common/Strategy/Strategy.hpp"
 #include "../common/Strategy/TournamentStrategy.hpp"
@@ -64,11 +65,13 @@ class Bootstrap
 
     private:
         vector<bool> RandomlySelectPartners(int num_peer, int num_draft);
+
         Message *HandleTCPMessage(Message* message, string sourceAddress, uint32_t socket);
         void HandleUDPMessage(Message* message, string sourceAddress = "");
         Message *HandleChannelMessage(MessageChannel* message, string sourceAddress = "");
         void HandlePeerlistMessage(MessagePeerlist* message, string sourceAddress = "");
         void HandlePingMessage(MessagePingBoot* message, string sourceAddress = "", uint32_t socket = 0);
+        //void serverSub_ControlMessage(Peer* peer); //envia mensagem ao servidor auxiliar
         void setChannelState(uint32_t channelId, uint8_t channelState);
 
         map<unsigned int, Channel> channelList;

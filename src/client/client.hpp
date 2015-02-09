@@ -36,6 +36,7 @@
 
 #include "../common/Messages/Message.hpp"
 #include "../common/Messages/MessageChannel.hpp"
+#include "../common/Messages/MessageServerSub.hpp"
 #include "../common/Messages/MessagePeerlist.hpp"
 #include "../common/Messages/MessagePeerlistShare.hpp"
 #include "../common/Messages/MessagePeerlistLog.hpp"
@@ -109,6 +110,7 @@ class Client
         void HandlePingMessageOut(vector<int>* pingHeader, MessagePing* message, string sourceAddress = "", uint32_t socket = 0);
         //ECM
         void HandleErrorMessage(MessageError* message, string sourceAddress = "", uint32_t socket = 0);
+        void HandleMessageServerSub(MessageServerSub* message, string sourceAddress = "", uint32_t socket = 0);
         void HandleRequestMessage(MessageRequest* message, string sourceAddress = "", uint32_t socket = 0);
         void HandleDataMessage(MessageData* message, string sourceAddress = "", uint32_t socket = 0);
 

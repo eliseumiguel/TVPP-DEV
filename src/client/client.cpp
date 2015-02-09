@@ -225,7 +225,7 @@ void Client::CyclicTimers()
 
         if (cycle % (10 * 30) == 0)     //Each 30s
         {
-            peerManager.ShowPeerList();
+        	peerManager.ShowPeerList();
         }
         
         cycle++;
@@ -255,6 +255,12 @@ Message *Client::HandleTCPMessage(Message* message, string sourceAddress, uint32
         case OPCODE_PEERLIST:
         {
             HandlePeerlistMessage(new MessagePeerlist(message), sourceAddress, socket);
+            return NULL;
+            break;
+        }
+        case OPCODE_SERVERAUX:
+        {
+        	HandleMessageServerSub(new MessageServerSub(message), sourceAddress, socket);
             return NULL;
             break;
         }
@@ -512,6 +518,43 @@ void Client::HandleErrorMessage(MessageError* message, string sourceAddress, uin
     }
     //delete message;
 }
+
+// SERVER SUB MESSAGE
+//| OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM |  STATECODE | X |
+//|   1    |     1      |     2    |     2    |      1     | 1 | TOTAL: 8 Bytes
+void Client::HandleMessageServerSub(MessageServerSub* message, string sourceAddress, uint32_t socket)
+{
+    vector<int> serverHeader = message->GetHeaderValues();
+    switch (serverHeader[0])
+    {
+        case NO_SERVER_AUX:
+        	cout<<"*************************************"<<endl;
+            cout<<"****** NÃO SOU SERVIDOR **********   "<<endl;
+            cout<<"*************************************"<<endl;
+
+        	break;
+        case  SERVER_AUX_ACTIVE:
+        	//this->peerManager.apagaPeerListout();
+        	cout<<"*************************************"<<endl;
+            cout<<"****** SOU SERVIDOR ATIVO ********   "<<endl;
+            cout<<"*************************************"<<endl;
+
+        	break;
+
+        case SERVER_AUX_MESCLAR:
+        	cout<<"*************************************"<<endl;
+            cout<<"****** SOU SERVIDOR MESCLANDO*****   "<<endl;
+            cout<<"*************************************"<<endl;
+
+        	break;
+
+        default:
+        	 	 cout<<"erro na mensagem de servidor auxiliar"<<endl;
+            break;
+    }
+
+}
+
 
 /* REQUEST PACKET:    | OPCODE | HEADERSIZE | BODYSIZE | CHUNKGUID |  **************************************
 ** Sizes(bytes):      |    1   |     1      |     2    |  4  |  2  |  TOTAL: 10 Bytes  **********************/ 
