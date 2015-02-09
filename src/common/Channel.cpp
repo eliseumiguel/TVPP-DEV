@@ -233,8 +233,8 @@ void Channel::printChannelProfile()
 		for (map<string, PeerData>::iterator j = peerList.begin(); j != peerList.end(); j++)
 	    	if (j->second.GetChannelId_Sub() == i->second.GetchannelId_Sub())
 	    		totalPeerInSubChannel++;
-			//cout<<"Server ["<<i->first<<"] SChannel ["<< i->second.GetchannelId_Sub()<<"] TPeerSub ["<<totalPeerInSubChannel<<"] Life ["<<i->second.GetChannelLife()<<"] Mesclar ["<<i->second.GetMesclar()<<" ReNeW ["<<i->second.GetReNewServerSub()<<endl;
-		    cout<<"scID ["<< i->second.GetchannelId_Sub()<<"] TPeerSub ["<<totalPeerInSubChannel<<"] TLife ["<<i->second.GetChannelLife()<<"] Mesclando? ["<<i->second.GetMesclando()<<"] ReNeW ["<<i->second.GetReNewServerSub()<<"]"<<endl;
+			cout<<"["<<i->first<<"] scID ["<< i->second.GetchannelId_Sub()<<"] TPeerSub ["<<totalPeerInSubChannel<<"] Life ["<<i->second.GetChannelLife()<<"] Mesc ["<<i->second.GetMesclando()<<" ReNeW ["<<i->second.GetReNewServerSub()<<endl;
+		    //cout<<"scID ["<< i->second.GetchannelId_Sub()<<"] TPeerSub ["<<totalPeerInSubChannel<<"] TLife ["<<i->second.GetChannelLife()<<"] Mesclando? ["<<i->second.GetMesclando()<<"] ReNeW ["<<i->second.GetReNewServerSub()<<"]"<<endl;
 	}
 	cout<<"###-------"<<endl;
 }
@@ -338,7 +338,11 @@ vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, uns
     vector<PeerData*> allPeers, selectedPeers;
     int unsigned peerChannelId_Sub = peerList[srcPeer->GetID()].GetChannelId_Sub();  //descobre o subcanal do par requisitante
 
-    if (peerChannelId_Sub != this->channelId) //se o par está em sub canal, inclui o servidor auxiliar na lista de parceiros
+    if (peerChannelId_Sub != this->channelId)
+    	/* Se o par está em sub canal, incluir o servidor auxiliar na lista de parceiros dele
+    	* isso é importante visto que o serverAux->idChannel_Sub é igual ao idChannle do canal principal
+    	* Os servidores auxiliares têm o idChannel_sub na estrutura SubChannelData
+    	*/
     {
     	boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
     	for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
@@ -347,6 +351,10 @@ vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, uns
     	channelSubListLock.unlock();
     }
 
+    /* Garante fazer a vizinhança apenas com os pares que estão no mesmo subcanal
+     * Desta forma, a estratégia de selação já atua na lista allpeers selecionanda
+     * Também, o próprio par não é sugerido a ele mesmo como vizinho
+     */
     for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
         if (srcPeer->GetID() != i->second.GetPeer()->GetID() && peerChannelId_Sub == i->second.GetChannelId_Sub())
             allPeers.push_back(&(i->second));

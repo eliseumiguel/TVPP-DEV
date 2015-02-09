@@ -525,7 +525,7 @@ void Client::HandleErrorMessage(MessageError* message, string sourceAddress, uin
 void Client::HandleMessageServerSub(MessageServerSub* message, string sourceAddress, uint32_t socket)
 {
     vector<int> serverHeader = message->GetHeaderValues();
-    switch (serverHeader[0])
+    switch ((ServerAuxTypes) serverHeader[0])
     {
         case NO_SERVER_AUX:
         	cout<<"*************************************"<<endl;
@@ -552,6 +552,7 @@ void Client::HandleMessageServerSub(MessageServerSub* message, string sourceAddr
         	 	 cout<<"erro na mensagem de servidor auxiliar"<<endl;
             break;
     }
+    peerManager.SetPeerManagerState((ServerAuxTypes) serverHeader[0]);
 
 }
 

@@ -5,6 +5,7 @@
 #include <set>
 #include <string.h>
 #include <stdio.h>
+#include "../common/Defines.hpp"
 #include "../common/PeerData.hpp"
 #include <boost/thread/mutex.hpp>
 
@@ -15,9 +16,12 @@
 class PeerManager
 {
 	private:
+
+	ServerAuxTypes peerManagerState;
 	unsigned int maxActivePeersIn;
 	unsigned int maxActivePeersOut;
 		map<string, PeerData> peerList; //todos conhecidos (vizinhos)
+	map<string, PeerData> peerListMasterChannel; //vizinhos do canal principal (em caso de servidor auxiliar)
 
 	set<string> peerActiveIn; //ativos que enviam dados a este par
 	set<string> peerActiveOut; // ativos que recebem dados deste par
@@ -37,7 +41,11 @@ class PeerManager
         //somente para testes... remover esse método
         //void apagaPeerListout();
 
-		PeerManager(); //atua na lista de vizinhos
+		PeerManager();
+
+	ServerAuxTypes GetPeerManagerState();
+	void SetPeerManagerState(ServerAuxTypes peerManagerState);
+
 	unsigned int GetMaxActivePeers(set<string>* peerActive);
 		void SetMaxActivePeersIn(unsigned int maxActivePeers);
 		void SetMaxActivePeersOut(unsigned int maxActivePeers);
