@@ -529,21 +529,21 @@ void Client::HandleMessageServerSub(MessageServerSub* message, string sourceAddr
     {
         case NO_SERVER_AUX:
         	cout<<"*************************************"<<endl;
-            cout<<"****** NÃO SOU SERVIDOR **********   "<<endl;
+            cout<<" ****** NÃO SOU SERVIDOR **********  "<<endl;
             cout<<"*************************************"<<endl;
 
         	break;
         case  SERVER_AUX_ACTIVE:
         	//this->peerManager.apagaPeerListout();
         	cout<<"*************************************"<<endl;
-            cout<<"****** SOU SERVIDOR ATIVO ********   "<<endl;
+            cout<<" ****** SOU SERVIDOR ATIVO ********  "<<endl;
             cout<<"*************************************"<<endl;
 
         	break;
 
         case SERVER_AUX_MESCLAR:
         	cout<<"*************************************"<<endl;
-            cout<<"****** SOU SERVIDOR MESCLANDO*****   "<<endl;
+            cout<<" ****** SOU SERVIDOR MESCLANDO****   "<<endl;
             cout<<"*************************************"<<endl;
 
         	break;

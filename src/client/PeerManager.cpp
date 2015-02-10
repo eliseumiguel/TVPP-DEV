@@ -22,11 +22,11 @@ ServerAuxTypes PeerManager::GetPeerManagerState()
 	return this->peerManagerState;
 }
 
+/* Atenção... peerActiveListMutex travado na chamada desta função dentro de Client
+ *
+ */
 void PeerManager::SetPeerManagerState(ServerAuxTypes newPeerManagerState)
 {
-	cout<<"ENTRANDO"<<endl;
-	cout<<" novo modo... "<<newPeerManagerState<<endl;
-	cout<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
 	boost::mutex::scoped_lock peerListLock(peerListMutex);
 	boost::mutex::scoped_lock peerActiveLock(peerActiveMutexOut);
 	switch (newPeerManagerState)
@@ -35,66 +35,48 @@ void PeerManager::SetPeerManagerState(ServerAuxTypes newPeerManagerState)
 	case SERVER_AUX_ACTIVE:
 		if (this->peerManagerState == NO_SERVER_AUX) //iniciando o processo de servidor auxiliar
 		{
-			//isso vai virar estratégia ....
+			peerListMasterChannel = peerList;        //separa a lista dos pares do canal principal
 		    peerActiveOut.clear();
-
 		    this->peerManagerState = newPeerManagerState;
-		    cout<<" atuando como servidor auxiliar"<<endl;
 		}
 		break;
 
 	case SERVER_AUX_MESCLAR:
 		if (this->peerManagerState == SERVER_AUX_ACTIVE) //entrando em processo de mesclagem
 		{
-
-			//isso vai virar estratégia
-		    //for (set<string>::iterator i = peerActiveOut.begin(); i != peerActiveOut.end(); i++)
-		    //	peerList[*i].SetChannelId_Sub(0);
-
+            /*neste momento, lá no bootstrap, o Channel já colocou todos os pares deste servidor
+             * auxiliar na rede principal. Isso faz com que esses vizinhos possam iniciar as parcerias
+             * na rede principal e iniciar o processo de deixar o subCanal.
+             * Assim, o servidor auxiliar mantém os pares do canalAuxiliar (de forma interna) neste subcanal
+             * e começa a aceitar conecção Out apenas do canal principal. Desta forma, se a estratégia de mesclagem
+             * removeu algum par do canal auxiliar, este par não consegue voltar ao servidor auxiliar durante a mesclagem
+             */
 			int size = (int) peerActiveOut.size() / 2;
 		    while (size > 0)
 			{
 		    	size--;
-	    		peerActiveOut.erase(peerActiveOut.begin());
+		    	peerList[*(peerActiveOut.begin())].SetChannelId_Sub(0); //faz primeiro ser do canal principal interno
+	    		peerActiveOut.erase(peerActiveOut.begin());             //remove primeiro da lista de out
 		    }
-
+		    peerListMasterChannel.clear();
 			this->peerManagerState = newPeerManagerState;
-			cout<<" atuando como servidor de mesclagem"<<endl;
 		}
 		break;
 
 	case NO_SERVER_AUX:
 
-		if (this->peerManagerState == SERVER_AUX_MESCLAR) //fim da mesclagem
-		{
-		    for (set<string>::iterator i = peerActiveOut.begin(); i != peerActiveOut.end(); i++)
-		    	peerList[*i].SetChannelId_Sub(0);
+	    for (set<string>::iterator i = peerActiveOut.begin(); i != peerActiveOut.end(); i++)
+	    	peerList[*i].SetChannelId_Sub(0);
 
-			this->peerManagerState = newPeerManagerState;
-		}
+	    peerListMasterChannel.clear();
+		this->peerManagerState = newPeerManagerState;
 
-		if (this->peerManagerState == SERVER_AUX_ACTIVE) //saindo de server sem mesclar
-		{
-		    for (set<string>::iterator i = peerActiveOut.begin(); i != peerActiveOut.end(); i++)
-		    	peerList[*i].SetChannelId_Sub(0);
-
-		    int size = (int) peerActiveOut.size() / 2;
-		    while (size > 0)
-			{
-		    	size--;
-	    		peerActiveOut.erase(peerActiveOut.begin());
-		    }
-
-			this->peerManagerState = newPeerManagerState;
-		}
-		cout<<" atuando como servidor não servidor auxiliar"<<endl;
-        break;
+		break;
 
     default:
         cout<<"Não houve mudança no Estado do PeerManager"<<endl;
         break;
 	}
-	cout<<"novo estado do manager "<<peerManagerState<<endl;
 	peerActiveLock.unlock();
 	peerListLock.unlock();
 }
@@ -109,7 +91,8 @@ unsigned int PeerManager::GetMaxActivePeers(set<string>* peerActive)
 void PeerManager::SetMaxActivePeersIn(unsigned int maxActivePeers)
 {
 	// se a estratégia de mesclagem permitir mudar o tamanho da lista, usar o mutex
-	//boost::mutex::scoped_lock peerActiveLock(peerActiveMutexOut);
+	//boost::mutex::scoped_lock peerActiveLock(peerActiveMutexIn);
+	//Função usada somente no construtor do Client. Sem risco deadlock
 	this->maxActivePeersIn = maxActivePeers;
 	//peerActiveLock.unlock();
 }
@@ -117,6 +100,7 @@ void PeerManager::SetMaxActivePeersOut(unsigned int maxActivePeers)
 {
 	// se a estratégia de mesclagem permitir mudar o tamanho da lista, usar o mutex
 	//boost::mutex::scoped_lock peerActiveLock(peerActiveMutexOut);
+	//Função usada somente no construtor do Client. Sem risco deadlock
 	this->maxActivePeersOut = maxActivePeers;
 	//peerActiveLock.unlock();
 }
@@ -262,21 +246,15 @@ PeerData* PeerManager::GetPeerData(string peer)
 	return &peerList[peer];
 }
 
-
+//essa função só serve para o connectorIn
 map<string, PeerData>* PeerManager::GetPeerList()
 {
-	//mutex travado pelo usuário: Classe Connector...
+
 	if (peerManagerState == SERVER_AUX_ACTIVE)
-	{
-	    for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
-	    	if (i->second.GetChannelId_Sub() == 1)
-	    		peerListMasterChannel[i->first] = i->second;
-	    //cout<<"enviando lista auliliar. Modo = "<<peerManagerState<<endl;
 	    return &peerListMasterChannel;
-	}
-	//cout<<"enviando lista total ao connector"<<endl;
 	return &peerList;
 }
+
 boost::mutex* PeerManager::GetPeerListMutex()
 {
 	return &peerListMutex;
@@ -421,11 +399,14 @@ void PeerManager::ShowPeerList()
 	j = 0;
 	cout<<endl<<"- Peer List Total -"<<endl;
 	boost::mutex::scoped_lock peerListLock(peerListMutex);
+	/*
+	 * comentado somente para teste
     for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++, j++)
 	{
 		cout<<"Key: "<<i->first<< endl;
 		cout<<"ID: "<<i->second.GetPeer()->GetID()<<" Mode: "<<(int)i->second.GetMode()<<" TTLIn: "<<i->second.GetTTLIn() <<" TTLOut: "<<i->second.GetTTLOut() << " RTT(delay): " <<i->second.GetDelay()<< "s PR: "<<i->second.GetPendingRequests() << endl;
 	}
+	*/
 	peerListLock.unlock();
 	cout<<"Total PeerList: "<<j<<endl<<endl;
 

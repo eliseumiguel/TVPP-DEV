@@ -15,8 +15,8 @@
 #include "Strategy/Strategy.hpp"
 
 #define MAXPEER_CHANNELSUB 2 //30               //máximo de pares em um sub canal
-#define MAX_CHANNELSUB 2                        //máximo de subcanais permitido
-#define MAXPEER_CHANNEL_SUB_CANDIDATE 3 //10    //máximo de candidatos a servidor auxiliar
+#define MAX_CHANNELSUB 1                        //máximo de subcanais permitido
+#define MAXPEER_CHANNEL_SUB_CANDIDATE 1 //10    //máximo de candidatos a servidor auxiliar
 
 #define MESCLAR_REDES 1 //true
 

@@ -233,7 +233,7 @@ void Channel::printChannelProfile()
 		for (map<string, PeerData>::iterator j = peerList.begin(); j != peerList.end(); j++)
 	    	if (j->second.GetChannelId_Sub() == i->second.GetchannelId_Sub())
 	    		totalPeerInSubChannel++;
-			cout<<"["<<i->first<<"] scID ["<< i->second.GetchannelId_Sub()<<"] TPeerSub ["<<totalPeerInSubChannel<<"] Life ["<<i->second.GetChannelLife()<<"] Mesc ["<<i->second.GetMesclando()<<" ReNeW ["<<i->second.GetReNewServerSub()<<endl;
+			cout<<"["<<i->first<<"] scID ["<< i->second.GetchannelId_Sub()<<"] TPeerSub ["<<totalPeerInSubChannel<<"] Life ["<<i->second.GetChannelLife()<<"] Mesc ["<<i->second.GetMesclando()<<"] ReNeW ["<<i->second.GetReNewServerSub()<<"]"<<endl;
 		    //cout<<"scID ["<< i->second.GetchannelId_Sub()<<"] TPeerSub ["<<totalPeerInSubChannel<<"] TLife ["<<i->second.GetChannelLife()<<"] Mesclando? ["<<i->second.GetMesclando()<<"] ReNeW ["<<i->second.GetReNewServerSub()<<"]"<<endl;
 	}
 	cout<<"###-------"<<endl;
