@@ -35,14 +35,24 @@ enum PeerModes
     MODE_FREERIDER_GOOD    = 0x02,          // Modo Freerider Good
     MODE_FULLCHUNKMAP      = 0x03,          // Modo Anunciando FULL ChunkMap
     MODE_SUPERNODE         = 0x04,          // Modo Supernode
-    MODE_AUXILIAR_SERVER   = 0x05,          // Modo de servidor auxiliar em sub canal
+    //MODE_AUXILIAR_SERVER   = 0x05,          // não usado
+};
+
+//CHANNEL MESSAGES FLAGS
+enum ChannelFlags
+{
+    CHANNEL_CREATE      = 0x00,
+    CHANNEL_CONNECT     = 0x01,
+    CHANGE_STATE        = 0X02,
+    //CONFIRM_STATE       = 0X03,   //ainda não usado
 };
 
 enum ChannelModes
 {
-	NULL_MODE               =0x00,          // Usado para desconsiderar esse campo em mensagesn ao Channel
-	MODE_NORMAL             =0x01,          // Modo Normal
-	MODE_FLASH_CROWD        =0x02,          // Modo que ativa os sub-canais
+	NULL_MODE               	=0x00,          // Usado para desconsiderar esse campo em mensagesn ao Channel
+	MODE_NORMAL             	=0x01,          // Modo Normal
+	MODE_FLASH_CROWD        	=0x02,          // Modo que ativa os sub-canais
+	MODE_FLASH_CROWD_MESCLAR	=0X03,
 };
 
 //Operation Codes
@@ -57,14 +67,6 @@ enum Opcodes
     OPCODE_SERVERAUX    = 0x06,
 };
 
-//CHANNEL MESSAGES FLAGS
-enum ChannelFlags
-{
-    CHANNEL_CREATE      = 0x00,
-    CHANNEL_CONNECT     = 0x01,
-    CHANGE_STATE        = 0X02,
-    CONFIRM_STATE       = 0X03,
-};
 
 //PING MESSAGES FLAGS
 enum PingTypes

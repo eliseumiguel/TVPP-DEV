@@ -15,10 +15,10 @@
 #include "Strategy/Strategy.hpp"
 
 #define MAXPEER_CHANNELSUB 2 //30               //máximo de pares em um sub canal
-#define MAX_CHANNELSUB 1                        //máximo de subcanais permitido
-#define MAXPEER_CHANNEL_SUB_CANDIDATE 1 //10    //máximo de candidatos a servidor auxiliar
+#define MAX_CHANNELSUB 2                        //máximo de subcanais permitido
+#define MAXPEER_CHANNEL_SUB_CANDIDATE 2 //10    //máximo de candidatos a servidor auxiliar
 
-#define MESCLAR_REDES 1 //true
+//#define MESCLAR_REDES 1 //true
 
 using namespace std;
 
@@ -40,7 +40,7 @@ class Channel
         		unsigned int maxPeerInSubChannel = MAXPEER_CHANNELSUB,
         		unsigned int maxSubChannel = MAX_CHANNELSUB,
         		unsigned int maxSubServerAux = MAXPEER_CHANNEL_SUB_CANDIDATE,
-        		bool mesclar = MESCLAR_REDES);
+        		bool mesclar = false);
 
         ChunkUniqueID GetServerNewestChunkID();
 		void SetServerNewestChunkID(ChunkUniqueID serverNewestChunkID);
@@ -92,7 +92,7 @@ class Channel
         boost::mutex* channel_Sub_Candidates_Mutex;
 
         map<string, SubChannelData> channel_Sub_List;
-        map<string, SubChannelCandidateDate> server_Sub_Candidates;
+        map<string, SubChannelCandidateData> server_Sub_Candidates;
 
         ChannelModes channelMode;
         unsigned int maxPeer_ChannelSub;

@@ -12,7 +12,7 @@
 #include "Strategy/Strategy.hpp"
 
 #define CHANNEL_LIFE 50
-#define RENEW_SERVER 70
+#define RENEW_SERVER 90
 
 using namespace std;
 
@@ -75,10 +75,10 @@ class SubChannelData
 };
 
 
-class SubChannelCandidateDate
+class SubChannelCandidateData
 {
     public:
-		SubChannelCandidateDate(ServerAuxTypes serverState = NO_SERVER_AUX, bool peerWaitInform = false);
+		SubChannelCandidateData(ServerAuxTypes serverState = NO_SERVER_AUX, bool peerWaitInform = false);
 
 		ServerAuxTypes GetState();
         void SetState(ServerAuxTypes serverState);

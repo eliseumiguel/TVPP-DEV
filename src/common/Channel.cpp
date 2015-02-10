@@ -169,7 +169,7 @@ bool Channel::Create_New_ChannelSub()
 	boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
 	boost::mutex::scoped_lock channelSubCandidatesLock(*channel_Sub_Candidates_Mutex);
 
-	for (map<string,SubChannelCandidateDate>::iterator i = server_Sub_Candidates.begin(); i != server_Sub_Candidates.end(); i++)
+	for (map<string,SubChannelCandidateData>::iterator i = server_Sub_Candidates.begin(); i != server_Sub_Candidates.end(); i++)
 		if (channel_Sub_List.count(i->first) == 0 )
 			peerServerAuxNew =  new string(i->first);
 
@@ -201,7 +201,7 @@ void Channel::analizePeerToBeServerAux(Peer* source)
 		boost::mutex::scoped_lock channelSubCandidatesLock(*channel_Sub_Candidates_Mutex);
 		if (this->HasPeer(source) && server_Sub_Candidates.size() < this->max_ServerSubCandidate && source->GetID() != this->GetServer()->GetID())
 		{
-			server_Sub_Candidates[source->GetID()] = SubChannelCandidateDate();
+			server_Sub_Candidates[source->GetID()] = SubChannelCandidateData();
 		}
 		channelSubCandidatesLock.unlock();
 		//printPossibleServerAux();
@@ -217,7 +217,7 @@ void Channel::printChannelProfile()
 
 	//cout<<"Servidor Auxiliar Disponívl"<<endl;
 	int auxiliarServerDisponiveis = 0;
-	for (map<string,SubChannelCandidateDate>::iterator i = server_Sub_Candidates.begin(); i != server_Sub_Candidates.end(); i++)
+	for (map<string,SubChannelCandidateData>::iterator i = server_Sub_Candidates.begin(); i != server_Sub_Candidates.end(); i++)
 	{
 		//cout<<" ["<<i->first<<"] ";
 		auxiliarServerDisponiveis++;
@@ -259,38 +259,69 @@ void Channel::SetChannelMode(ChannelModes channelMode)
 	boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
 	boost::mutex::scoped_lock channelSubCandidatesLock(*channel_Sub_Candidates_Mutex);
 
-	if (this->channelMode == MODE_FLASH_CROWD  && channelMode == MODE_NORMAL)
-	{
+    switch (channelMode)
+    {
+    	case MODE_NORMAL:
+        {
+        	if (this->channelMode == MODE_FLASH_CROWD)
+            /* Esta mudança é radical e não considera se o flash crowd é com mesclagem ou não.
+             * Simplesmente, muda-se o estado finalizando todos os subcanais.
+             * Não é de se esperar que este estado seja realizado sem que os subcanais terminem a execução.
+             * Detalhe. Este modo foi implementado para finalizer um flash crowd que não é com tempo de vida.
+             * Assim, pode-se permitir que o ambiente fique em flash crowd por um tempo e finalize as subredes
+             * sem preocupar com a mesclagem.
+             */
+        	{
+        		//faz com que todos os pares passem a pertencentes ao canal principal. Mutex de peerList fechado no bootstrap,
+       			for (map<string,SubChannelCandidateData>::iterator i = server_Sub_Candidates.begin(); i != server_Sub_Candidates.end(); i++)
+       				if (i->second.GetState()!= NO_SERVER_AUX)
+       				{
+       					i->second.SetState(NO_SERVER_AUX);
+       					i->second.SetPeerWaitInfor(true);
+       				}
+       			this->Remove_AllChannelSub(false);  // @false pois não faz mesclagem
+        	}
 
-		/*faz com que todos os pares passem a pertencentes ao canal principal
-		 * Neste ponto deverá ser tratada a mesclagem das redes
-		 * o mutex da lista peerList é fechado no bootstrap,
-		 * onde a mensagem para mudar o estado é tratada.
-		 */
-		if (!mesclarRedes)
-		{
-			for (map<string,SubChannelCandidateDate>::iterator i = server_Sub_Candidates.begin(); i != server_Sub_Candidates.end(); i++)
-				if (i->second.GetState()!= NO_SERVER_AUX)
-				{
-					i->second.SetState(NO_SERVER_AUX);
-					i->second.SetPeerWaitInfor(true);
-				}
-			this->Remove_AllChannelSub(mesclarRedes);
-		}
-	}
-	else // por enquanto, seria alterar de normal para flash crowd. (ou não alterar)
+        	this->channelMode = channelMode;
+        	break;
+        }
 
-		for (map<string,SubChannelCandidateDate>::iterator i = server_Sub_Candidates.begin(); i != server_Sub_Candidates.end(); i++)
-		{
-			i->second.SetState(SERVER_AUX_ACTIVE);
-			i->second.SetPeerWaitInfor(true);
-		}
+    	case MODE_FLASH_CROWD_MESCLAR:
+    	{
+    	   	this->mesclarRedes = true;
 
-	this->channelMode = channelMode;
+    	   	channelMode = MODE_FLASH_CROWD;
+    	   	/* NÃO TEM BREAK
+    	   	 *  Continua o código do flash crowd no case seguinte
+    	   	 */
+    	}
 
-	channelSubListLock.unlock();
-	channelSubCandidatesLock.unlock();
+    	case MODE_FLASH_CROWD:
+        {
+        	if (this->channelMode == MODE_NORMAL)
+        	/*faz todos os cadidatos a servidor auxilar tornarem-se disponíveis para o flash crwod
+        	 * seria melhor por demanda, porém isso exige fazer um sistema de contenção dos recém chegados
+        	 */
+        	{
+        		for (map<string,SubChannelCandidateData>::iterator i = server_Sub_Candidates.begin(); i != server_Sub_Candidates.end(); i++)
+        		{
+        			i->second.SetState(SERVER_AUX_ACTIVE);
+        			i->second.SetPeerWaitInfor(true);
+        		}
+            this->channelMode = channelMode;
+        	}
+        	break;
+
+        }
+        default:
+            cout <<"Não houve mudança no estado do Channel"<<endl;
+            break;
+
+    	channelSubListLock.unlock();
+    	channelSubCandidatesLock.unlock();
+    }
 }
+
 
 void Channel::Remove_AllChannelSub(bool mesclar)
 {
@@ -359,6 +390,18 @@ vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, uns
         if (srcPeer->GetID() != i->second.GetPeer()->GetID() && peerChannelId_Sub == i->second.GetChannelId_Sub())
             allPeers.push_back(&(i->second));
 
+    /* nao enviar um par em estado de mesclagem a um servidor auxiliar
+     * O par em estado de mesclagem deve encontrar outro par na rede e não entrar em um sub canal
+     */
+    if (channel_Sub_List.count(srcPeer->GetID()) > 0)
+    {
+        for (vector<PeerData*>::iterator i = allPeers.begin(); i != allPeers.end(); i++)
+        {
+// implementar  a forma de excluir um par em estado de mesclagem da lista de envio a um servidor auxiliar ativo
+        }
+    }
+
+
     if (this->GetPeerListSizeChannel_Sub(peerChannelId_Sub) <= peerQuantity)
         return allPeers;
     else
@@ -401,9 +444,12 @@ void Channel::CheckAllSubChannel()
 {
 	for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
 	{
-		i->second.DecChannelLif();
-		i->second.DecReNewServerSub();
-
+		//garente o processo após o servidor auxiliar ser informado pelo bootstrap
+		if (!server_Sub_Candidates[i->first].GetPeerWaitInform())
+		{
+			i->second.DecChannelLif();
+			i->second.DecReNewServerSub();
+		}
 		//servidor auxiliar pode ser usado em outro subcanal
 		if (i->second.GetReNewServerSub() == 0)
 		{
@@ -460,7 +506,6 @@ void Channel::CheckActivePeers()
 
     	RemovePeer(*peerId);
     }
-    cout<<"Mesclar redes é "<<mesclarRedes<<endl;
     if (mesclarRedes)
     	this->CheckAllSubChannel();
     /*usado para testes de implementação...

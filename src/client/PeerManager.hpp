@@ -1,3 +1,12 @@
+/* Alterações: Eliseu César Miguel
+ * 13/01/2015
+ * Controle de channelId_Sub
+ * 				0 -> peer está na rede principal
+ * 				1 -> peer está na rede auxiliar
+ * 				2 -> peer está em mesclagem
+ */
+
+
 #ifndef PEERMANAGER_H
 #define PEERMANAGER_H
 
@@ -11,8 +20,6 @@
 
 #define PEER_ACTIVE_COOLDOWN 5
 
-// Alterações: Eliseu César Miguel
-// 13/01/2015
 class PeerManager
 {
 	private:
@@ -20,27 +27,28 @@ class PeerManager
 	ServerAuxTypes peerManagerState;
 	unsigned int maxActivePeersIn;
 	unsigned int maxActivePeersOut;
-		map<string, PeerData> peerList; //todos conhecidos (vizinhos)
-	map<string, PeerData> peerListMasterChannel; //vizinhos do canal principal (em caso de servidor auxiliar)
 
-	set<string> peerActiveIn; //ativos que enviam dados a este par
-	set<string> peerActiveOut; // ativos que recebem dados deste par
+		map<string, PeerData> peerList;                  //todos conhecidos (vizinhos)
+	map<string, PeerData> peerListMasterChannel;         //vizinhos do canal principal (em caso de servidor auxiliar)
 
-	map<string, unsigned int> peerActiveCooldownIn; // pares que podem ser removidos por pouca atividade
+	set<string> peerActiveIn;                             //ativos que enviam dados a este par
+	set<string> peerActiveOut;                            // ativos que recebem dados deste par
+	set<string> peerActiveOut_TEMP;                       // ativos temporários da rede principal enquanto é Servidor Auxiliar
+
+	map<string, unsigned int> peerActiveCooldownIn;       // pares que podem ser removidos por pouca atividade
 	map<string, unsigned int> peerActiveCooldownOut;
 		//Mutexes
 		boost::mutex peerListMutex;
     boost::mutex peerActiveMutexIn;
     boost::mutex peerActiveMutexOut;
+    boost::mutex peerActiveMutexOut_TEMP;
+
     //faz a checagem das duas listas de peerActiveCooldown em checkPeerList
     void CheckpeerActiveCooldown(map<string, unsigned int>* peerActiveCooldown);
     // auxilia na funcao showPeerList
     int showPeerActive(set<string>* peerActive);
 
     public:
-        //somente para testes... remover esse método
-        //void apagaPeerListout();
-
 		PeerManager();
 
 	ServerAuxTypes GetPeerManagerState();
@@ -54,6 +62,7 @@ class PeerManager
 
     set<string>* GetPeerActiveIn();
     set<string>* GetPeerActiveOut();
+    set<string>* GetPeerActiveOut_TEMP();
     map<string, unsigned int>* GetPeerActiveCooldown(set<string>* peerActive);
 
 	bool ConnectPeer(string peer, set<string>* peerActive);
@@ -65,7 +74,7 @@ class PeerManager
 	 * unsigned int GetPeerActiveSizeOut()
 	 * porque, assim o método Connector::connector() deverá ser dois, ao contrário de único. */
 	unsigned int GetPeerActiveSize(set<string>* peerActive);
-	unsigned int GetPeerActiveSizeTotal(); //usada para fornecer o total de pares ativos em In + Out sem repetição. Será removida!!!
+	unsigned int GetPeerActiveSizeTotal();  //usada para fornecer o total de pares ativos em In + Out sem repetição. Será removida!!!
 
 	bool IsPeerActive(string peer,set<string>* peerActive);
 		PeerData* GetPeerData(string peer); // a lista de vizinhos é a única que tem os dados do peer

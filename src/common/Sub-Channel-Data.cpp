@@ -73,15 +73,15 @@ FILE* SubChannelData::GetOverlayFile()
 
 
 //***********************************
-SubChannelCandidateDate::SubChannelCandidateDate(ServerAuxTypes serverState, bool peerWaitInform)
+SubChannelCandidateData::SubChannelCandidateData(ServerAuxTypes serverState, bool peerWaitInform)
 {
 	this->serverState = serverState;
 	this->peerWaitInform = peerWaitInform;
 
 }
-ServerAuxTypes SubChannelCandidateDate::GetState(){return this->serverState;}
-void SubChannelCandidateDate::SetState(ServerAuxTypes serverState){this->serverState = serverState;}
+ServerAuxTypes SubChannelCandidateData::GetState(){return this->serverState;}
+void SubChannelCandidateData::SetState(ServerAuxTypes serverState){this->serverState = serverState;}
 
-bool SubChannelCandidateDate::GetPeerWaitInform(){return this->peerWaitInform;}
-void SubChannelCandidateDate::SetPeerWaitInfor(bool peerWaitInform){this->peerWaitInform = peerWaitInform;}
+bool SubChannelCandidateData::GetPeerWaitInform(){return this->peerWaitInform;}
+void SubChannelCandidateData::SetPeerWaitInfor(bool peerWaitInform){this->peerWaitInform = peerWaitInform;}
 

@@ -85,6 +85,7 @@ class PeerData
         int ttlChannel;
 
         unsigned int channelId_Sub;
+
         //**** ECM
         //ECM
 

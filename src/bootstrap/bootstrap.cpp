@@ -46,7 +46,7 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message, string sourceA
     uint16_t externalPort = channelHeader[3];
     uint32_t channelId = channelHeader[4];
     uint32_t clientTime = channelHeader[5];
-    uint8_t  channelState = channelHeader[6]; //ECM used if channelFlag == CHANGE_STATE
+    uint8_t  channelMode = channelHeader[6]; //ECM used if channelFlag == CHANGE_STATE
 
     cout<<"Channel MSG: "<<(uint32_t)channelFlag<<", "<<performingPunch<<", "<<version<<", "<<externalPort<<", "<<channelId<<endl;
 
@@ -91,10 +91,13 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message, string sourceA
             break;
 
         case CHANGE_STATE:
-        	if (channelState != NULL_MODE)
+        	if (channelMode != NULL_MODE)
         	{
-        		this->setChannelState(channelId, channelState);
-            	messageReply = new MessageStateChannel((ChannelModes)channelState);
+        		// o channel cuida de seu estado. Não é problema do bootstrap.
+        		this->setChannelState(channelId, channelMode);
+
+        		//mensagem devolvida ao informante de estado... não usada para nada, mas o método exige replay
+            	messageReply = new MessageStateChannel((ChannelModes)channelMode);
         	}
         	else
         	{

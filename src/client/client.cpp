@@ -414,7 +414,7 @@ void Client::HandlePingMessageIn(vector<int>* pingHeader, MessagePing* message, 
     {
         if (!peerManager.ConnectPeer(sourceAddress, peerManager.GetPeerActiveIn()))
         {
-            cout<<"Ping by "<<sourceAddress<<" tried to connect to me to be a In but failed. Neighborhood ["<<peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn())<<"/"<<peerManager.GetMaxActivePeers(peerManager.GetPeerActiveIn())<<"]"<<endl;
+ // tirar coment           cout<<"Ping by "<<sourceAddress<<" tried to connect to me to be a In but failed. Neighborhood ["<<peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn())<<"/"<<peerManager.GetMaxActivePeers(peerManager.GetPeerActiveIn())<<"]"<<endl;
             return;
         }
     }
@@ -460,7 +460,7 @@ void Client::HandlePingMessageOut(vector<int>* pingHeader, MessagePing* message,
     {
         if (!peerManager.ConnectPeer(sourceAddress, peerManager.GetPeerActiveOut()))
         {
-            cout<<"Ping by "<<sourceAddress<<" tried to connect to me to be Out but failed. Neighborhood ["<<peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut())<<"/"<<peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut())<<"]"<<endl;
+//tirar coment            cout<<"Ping by "<<sourceAddress<<" tried to connect to me to be Out but failed. Neighborhood ["<<peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut())<<"/"<<peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut())<<"]"<<endl;
             return;
         }
     }
@@ -586,7 +586,7 @@ void Client::HandleRequestMessage(MessageRequest* message, string sourceAddress,
     }
     else
     {
-        cout<<"Request Error: Peer "<<sourceAddress<<" requested chunk ["<<requestedChunk<<"], but it is not on PeerActive"<<endl;
+        cout<<"Request Error: Peer "<<sourceAddress<<" requested chunk ["<<requestedChunk<<"], but it is not on PeerActiveOut"<<endl;
         messageReply = new MessageError(ERROR_NO_PARTNERSHIP);
         messageReply->SetIntegrity();
     }
@@ -774,7 +774,7 @@ void Client::HandleDataMessage(MessageData* message, string sourceAddress, uint3
     else
     {
         peerListLock.unlock();
-        cout<<"Data Error: Peer "<<sourceAddress<<" sent chunk ["<<receivedChunk<<"], but it is not on PeerActive"<<endl;
+        cout<<"Data Error: Peer "<<sourceAddress<<" sent chunk ["<<receivedChunk<<"], but it is not on PeerActiveIn"<<endl;
         messageReply = new MessageError(ERROR_NO_PARTNERSHIP);
         messageReply->SetIntegrity();
     }
@@ -912,6 +912,55 @@ void Client::Ping()
             //udp->Send(bootstrap->GetID(), pingMessage->GetFirstByte(), pingMessage->GetSize());
             udp->EnqueueSend(bootstrap->GetID(), pingMessage);
 
+
+
+            /*--------------------------------------------------------------------------------------------------
+             * Parte totalmente incluída para sanar um problema no caso de FLASH CROWD
+             * O problema é: Quando o servidor auxiliar SA remove seus parceiros Out para atender ao subCanal, os parceiros
+             * da rede principal decrementam o ttl de SA (servidor auxiliar) até 0. Assim, a um parceiro P que SA é In,
+             * SA não será removido da lista de parceiros de P. Em consequência, quando SA deixa de ser servidor auxiliar, como
+             * seu ttlOIn continuará sem ser atualizado e P não mais tentará ser parceiro dele. Assim, essa tentativa faz com
+             * que SA seja free-rider bom ao par P por um tempo, enviando a uma lista OutTemp o buffer vazio.
+             */
+            if (peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut_TEMP()) > 0)
+            {
+                pingMessage = new MessagePing(PING_PART_CHUNKMAP, BUFFER_SIZE/8, peerMode, latestReceivedPosition);
+                pingMessage->SetIntegrity();
+                uint8_t headerSize = pingMessage->GetHeaderSize();
+                uint8_t *chunkMap = new uint8_t[BUFFER_SIZE/8];
+
+                // monta mensagem vazia ao parceiro da rede principal
+                for (uint32_t i = 0; i < BUFFER_SIZE/8; i++)
+                {
+                    chunkMap[i] = 0;
+
+                }
+                for (uint32_t i = 0; i < BUFFER_SIZE/8; i++)
+                {
+                    pingMessage->GetFirstByte()[headerSize + i] = chunkMap[i];
+                }
+
+                boost::mutex::scoped_lock peerListLock(*peerManager.GetPeerListMutex());
+                boost::mutex::scoped_lock peerActiveOutLock(*peerManager.GetPeerActiveMutex(peerManager.GetPeerActiveOut_TEMP()));
+                for (set<string>::iterator i = peerManager.GetPeerActiveOut_TEMP()->begin(); i != peerManager.GetPeerActiveOut_TEMP()->end(); i++)
+                {
+                    Peer* peer = peerManager.GetPeerData(*i)->GetPeer();
+                    if (peerlistMessage)
+                        peerlistMessage->AddPeer(peer);
+                    if (pingMessage && peer)
+                    {
+                        //udp->Send(peer->GetID(), pingMessage->GetFirstByte(), pingMessage->GetSize());
+                        udp->EnqueueSend(peer->GetID(), pingMessage);
+                    }
+                }
+                peerActiveOutLock.unlock();
+                peerListLock.unlock();
+
+
+             }
+            //--------------- termina aqui esse recureso ------------------------------------------------------
+
+
             /* ping to Active Peer List Out
              * ECM. Aqui, será enviada mensagem com buffermap para os peerActiveOut */
             if (peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut()) > 0)
@@ -926,7 +975,7 @@ void Client::Ping()
                     if (peerMode == MODE_FULLCHUNKMAP)
                         chunkMap[i] = 0xFF;
                 }
-          
+
                 if ((peerMode != MODE_FREERIDER_GOOD) && (peerMode != MODE_FULLCHUNKMAP))
                 {
                     boost::mutex::scoped_lock bufferMapLock(bufferMapMutex);
