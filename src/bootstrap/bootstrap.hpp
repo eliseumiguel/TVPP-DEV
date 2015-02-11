@@ -53,7 +53,7 @@ class Bootstrap
         * @param string 
         * @param int Max TTLChannel value
         */
-        Bootstrap(string udpPort, string peerlistSelectorStrategy);
+        Bootstrap(string udpPort, string peerlistSelectorStrategy, unsigned int maxSubChannel, unsigned int maxServerAuxCandidate, unsigned int maxPeerInSubChannel);
         void TCPStart(const char *);
         void UDPStart();
         void UDPReceive();
@@ -71,7 +71,6 @@ class Bootstrap
         Message *HandleChannelMessage(MessageChannel* message, string sourceAddress = "");
         void HandlePeerlistMessage(MessagePeerlist* message, string sourceAddress = "");
         void HandlePingMessage(MessagePingBoot* message, string sourceAddress = "", uint32_t socket = 0);
-        //void serverSub_ControlMessage(Peer* peer); //envia mensagem ao servidor auxiliar
         void setChannelState(uint32_t channelId, uint8_t channelState);
 
         map<unsigned int, Channel> channelList;
@@ -81,6 +80,12 @@ class Bootstrap
         boost::mutex channelListMutex;
         FILE *pfile;
         Strategy* peerlistSelectorStrategy;
+
+        //para o canal em flash crowd
+		unsigned int maxSubChannel;
+		unsigned int maxServerAuxCandidate;
+		unsigned int maxPeerInSubChannel;
+
         friend class BootstrapTCPServer;    
 };
 

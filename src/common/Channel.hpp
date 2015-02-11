@@ -1,5 +1,35 @@
 #ifndef CHANNEL_H
 #define CHANNEL_H
+/* Mudanças aguardadas no Channel:
+ *  1) configurar por parâmentro: MAXPEER_CHANNELSUB, MAX_CHANNELSUB, MAXPEER_CHANNEL_SUB_CANDIDATE.
+ *  2) Modificar a forma de ser avisado do Flash Crowd. Solução é tansformar
+ *
+ *			  enum ChannelModes
+				{
+					NULL_MODE               	=0x00,          // Usado para desconsiderar esse campo em mensagesn ao Channel
+					MODE_NORMAL             	=0x01,          // Modo Normal
+					MODE_FLASH_CROWD        	=0x02,          // Modo que ativa os sub-canais
+					MODE_FLASH_CROWD_MESCLAR	=0X03,
+				};
+
+				em:
+*
+*			  enum ChannelModes
+				{
+					NULL_MODE               	=0x00,          // Usado para desconsiderar esse campo em mensagesn ao Channel
+					MODE_NORMAL             	=0x01,          // Modo Normal
+					MODE_FLASH_CROWD_E2        	=0x02,          // flash crowd Estratégia 2
+					MODE_FLASH_CROWD_E3     	=0X03,          // flash crowd Estratégia 3
+					.
+					.
+					.
+					MODE_FLASH_CROWD_EN         =0X0N           // flash crowd Estratégia N
+				};
+Com isso, a estratégia é passada diretamente ao servidor auxiliar. Importante é lembrar que o atributo bool mesclarRedes é local.
+Ele deve ser configurado pela estratégia ou deverá ser eliminado. Uma solução é o campo mesclarRedes ser configurado na estratégia base
+assim o channel precisa conhecer apenas a estratégia base, enquanto os servidores auxiliares poderão ver a estratégia derivada.
+ *
+ */
 
 #include <string>
 #include <iostream>
@@ -13,12 +43,6 @@
 #include "PeerData.hpp"
 #include "Sub-Channel-Data.hpp"
 #include "Strategy/Strategy.hpp"
-
-#define MAXPEER_CHANNELSUB 2 //30               //máximo de pares em um sub canal
-#define MAX_CHANNELSUB 2                        //máximo de subcanais permitido
-#define MAXPEER_CHANNEL_SUB_CANDIDATE 2 //10    //máximo de candidatos a servidor auxiliar
-
-//#define MESCLAR_REDES 1 //true
 
 using namespace std;
 
@@ -37,10 +61,10 @@ class Channel
         * @param idServer server ip and port (ip:port)
         */
         Channel(unsigned int channelId = 0, Peer* serverPeer = NULL,
-        		unsigned int maxPeerInSubChannel = MAXPEER_CHANNELSUB,
-        		unsigned int maxSubChannel = MAX_CHANNELSUB,
-        		unsigned int maxSubServerAux = MAXPEER_CHANNEL_SUB_CANDIDATE,
-        		bool mesclar = false);
+        		unsigned int maxSubChannel = 0,
+        		unsigned int maxServerAuxCandidate = 0,
+        		unsigned int maxPeerInSubChannel = 0,
+           		bool mesclar = false);
 
         ChunkUniqueID GetServerNewestChunkID();
 		void SetServerNewestChunkID(ChunkUniqueID serverNewestChunkID);
@@ -95,9 +119,9 @@ class Channel
         map<string, SubChannelCandidateData> server_Sub_Candidates;
 
         ChannelModes channelMode;
-        unsigned int maxPeer_ChannelSub;
-        unsigned int max_channelSub;
-        unsigned int max_ServerSubCandidate;
+        unsigned int maxPeerInSubChannel;
+        unsigned int maxSubChannel;
+        unsigned int maxServerAuxCandidate;
         bool mesclarRedes;
 
         bool AddPeerChannel(Peer* peer);

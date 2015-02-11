@@ -26,6 +26,29 @@ int main(int argc, char* argv[]) {
     string myUDPPort = UDPPORT;
     string peerlistSelectorStrategy = "";
 
+    unsigned int maxSubChannel = 6;
+    unsigned int maxServerAuxCandidate = 6;
+    unsigned int maxPeerInSubChannel = 60;
+
+    string arg1 = argv[1];
+    if(arg1 == "--help")
+    {
+        cout << "\nUsage: ./bootstrap [OPTIONS]" <<endl;
+        cout <<"\nMain operation mode:"<<endl;
+        cout <<"\n";
+        cout <<"  -tcpPort                     define the tcp bootstrap port (default: "<<myTCPPort<<")"<<endl;
+        cout <<"  -udpPort                     define the tcp bootstrap port (default: "<<myUDPPort<<")"<<endl;
+        cout <<"  -peerlistSelectorStrategy    define the tcp bootstrap port (default: RandomStrategy)"<<endl;
+        cout <<endl;
+        cout <<"                           FLASH CROWD"<<endl;
+
+        cout <<"  -maxSubChannel               define the sub channel limit                  (default: "<<maxSubChannel<<")"<<endl;
+        cout <<"  -maxServerAuxCandidate       define the server limit to create sub channel (default: "<<maxServerAuxCandidate<<")"<<endl;
+        cout <<"  -maxPeerInSubChannel         define the peer number in new sub channel     (default: "<<maxPeerInSubChannel<<")"<<endl;
+
+        exit(1);
+    }
+
     int optind=1;
     // decode arguments
     while ((optind < argc) && (argv[optind][0]=='-')) {
@@ -43,6 +66,20 @@ int main(int argc, char* argv[]) {
             optind++;
             peerlistSelectorStrategy = argv[optind];
         }
+        //flash crowd
+        else if (swtc=="-maxSubChannel") {
+            optind++;
+            maxSubChannel = (unsigned int) atoi(argv[optind]);
+        }
+        else if (swtc=="-maxServerAuxCandidate") {
+            optind++;
+            maxServerAuxCandidate = (unsigned int) atoi(argv[optind]);
+        }
+        else if (swtc=="-maxPeerInSubChannel") {
+            optind++;
+            maxPeerInSubChannel = (unsigned int) atoi(argv[optind]);
+        }
+
         else {
             cout << "Invalid Arguments"<<endl; 
             exit(1);
@@ -51,7 +88,7 @@ int main(int argc, char* argv[]) {
     }
 
     XPConfig::Instance()->OpenConfigFile("");
-    Bootstrap bootstrapInstance(myUDPPort, peerlistSelectorStrategy);
+    Bootstrap bootstrapInstance(myUDPPort, peerlistSelectorStrategy, maxSubChannel, maxServerAuxCandidate, maxPeerInSubChannel);
     
     boost::thread TTCPSERVER(boost::bind(&Bootstrap::TCPStart, &bootstrapInstance, myTCPPort.c_str()));
     boost::thread TUDPSERVER(boost::bind(&Bootstrap::UDPStart, &bootstrapInstance));

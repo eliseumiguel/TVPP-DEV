@@ -3,7 +3,7 @@
 using namespace std;
 
 /** Construtor **/
-Bootstrap::Bootstrap(string udpPort, string peerlistSelectorStrategy) 
+Bootstrap::Bootstrap(string udpPort, string peerlistSelectorStrategy, unsigned int maxSubChannel, unsigned int maxServerAuxCandidate, unsigned int maxPeerInSubChannel)
 {
     if (peerlistSelectorStrategy == "TournamentStrategy")
         this->peerlistSelectorStrategy = new TournamentStrategy();
@@ -17,6 +17,12 @@ Bootstrap::Bootstrap(string udpPort, string peerlistSelectorStrategy)
     udp = new UDPServer(boost::lexical_cast<uint32_t>(udpPort),0,NULL,new FIFOMessageScheduler());
 
     cout <<"Starting Bootstrap Version["<<VERSION<<"]" <<endl;
+
+    // para configurar o channel para o flash crowd.
+	this->maxSubChannel = maxSubChannel;
+	this->maxServerAuxCandidate = maxServerAuxCandidate;
+	this->maxPeerInSubChannel = maxPeerInSubChannel;
+
 }
 
 Message *Bootstrap::HandleTCPMessage(Message* message, string sourceAddress, uint32_t socket)
@@ -63,7 +69,7 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message, string sourceA
         case  CHANNEL_CREATE:
             if (channelList.find(channelId) == channelList.end())
             {
-                channelList[channelId] = Channel(channelId, source);
+                channelList[channelId] = Channel(channelId, source, maxSubChannel, maxServerAuxCandidate, maxPeerInSubChannel);
             }
             else
             {
@@ -467,21 +473,3 @@ void Bootstrap::UDPReceive()
         }
     }
 }
-
-/*
-void Bootstrap::serverSub_ControlMessage(Peer* peer)
-{
-    Message *message;
-    time_t nowtime;
-    time(&nowtime);
-
-    messageServerAux = new MessageServerSub(NO_SERVER_AUX);
-    message->SetIntegrity();
-
-    ExternalMessageTCP externalConnect(std::string(peer->GetIP()), "5111");
-    if (externalConnect.Sync_write(messageServerAux->GetFirstByte(),messageServerAux->GetSize()) < 0) //Failed to write
-      	cout<<"Falha ao conectar o servidor"<<endl;
-    else
-    	cout<<"CHANNEL STATE CHANGED FOR "<<endl;
-}
-*/

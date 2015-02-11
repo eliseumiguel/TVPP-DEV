@@ -81,6 +81,12 @@ int main(int argc, char* argv[])
         	optind++;
         	channelMode = atoi(argv[optind]);
         }
+        else
+        {
+            cout << "Invalid Arguments. Try --help"<<endl;
+            exit(1);
+        }
+
         optind++;
     }
 
@@ -95,7 +101,7 @@ int main(int argc, char* argv[])
     if (externalConnect.Sync_write(message->GetFirstByte(),message->GetSize()) < 0) //Failed to write
       	cout<<"Falha ao conectar o servidor"<<endl;
     else
-    	cout<<"CHANNEL STATE CHANGED FOR "<<endl;
+    	cout<<"CHANNEL STATE CHANGED: Channel Mode ["<<(int)channelMode<<"]"<<endl;
 
     cout<<"fechando.... "<<endl;
 }
