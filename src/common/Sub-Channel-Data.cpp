@@ -83,5 +83,5 @@ ServerAuxTypes SubChannelCandidateData::GetState(){return this->serverState;}
 void SubChannelCandidateData::SetState(ServerAuxTypes serverState){this->serverState = serverState;}
 
 bool SubChannelCandidateData::GetPeerWaitInform(){return this->peerWaitInform;}
-void SubChannelCandidateData::SetPeerWaitInfor(bool peerWaitInform){this->peerWaitInform = peerWaitInform;}
+void SubChannelCandidateData::SetPeerWaitInform(bool peerWaitInform){this->peerWaitInform = peerWaitInform;}
 

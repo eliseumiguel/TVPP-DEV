@@ -386,8 +386,11 @@ void Client::HandlePeerlistMessage(MessagePeerlist* message, string sourceAddres
                 if (Peer* newPeer = message->GetPeer(i))
                 {    
                     peerManager.AddPeer(newPeer);
+    //                cout<<"Recebendo :"<<newPeer->GetID();
                 }
             }
+            //tirar
+      //      cout<<endl;
             //ECM
             this->connectorIn->Connect();
         }
@@ -922,6 +925,7 @@ void Client::Ping()
              * seu ttlOIn continuará sem ser atualizado e P não mais tentará ser parceiro dele. Assim, essa tentativa faz com
              * que SA seja free-rider bom ao par P por um tempo, enviando a uma lista OutTemp o buffer vazio.
              */
+            /*
             if (peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut_TEMP()) > 0)
             {
                 pingMessage = new MessagePing(PING_PART_CHUNKMAP, BUFFER_SIZE/8, peerMode, latestReceivedPosition);

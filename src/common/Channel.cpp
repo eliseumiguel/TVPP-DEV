@@ -94,7 +94,7 @@ void Channel::SetServerSubWaitInform(Peer* peer, bool waiting)
 {
 	boost::mutex::scoped_lock channelSubCandidatesLock(*channel_Sub_Candidates_Mutex);
 	if (server_Sub_Candidates.count(peer->GetID()) > 0)
-		this->server_Sub_Candidates[peer->GetID()].SetPeerWaitInfor(waiting);
+		this->server_Sub_Candidates[peer->GetID()].SetPeerWaitInform(waiting);
 	channelSubCandidatesLock.unlock();
 }
 
@@ -231,7 +231,7 @@ void Channel::printChannelProfile()
 	{
 		int totalPeerInSubChannel=0;
 		for (map<string, PeerData>::iterator j = peerList.begin(); j != peerList.end(); j++)
-	    	if (j->second.GetChannelId_Sub() == i->second.GetchannelId_Sub())
+	    	if (j->second.GetChannelId_Sub() == (int)i->second.GetchannelId_Sub())
 	    		totalPeerInSubChannel++;
 			cout<<"["<<i->first<<"] scID ["<< i->second.GetchannelId_Sub()<<"] TPeerSub ["<<totalPeerInSubChannel<<"] Life ["<<i->second.GetChannelLife()<<"] Mesc ["<<i->second.GetMesclando()<<"] ReNeW ["<<i->second.GetReNewServerSub()<<"]"<<endl;
 		    //cout<<"scID ["<< i->second.GetchannelId_Sub()<<"] TPeerSub ["<<totalPeerInSubChannel<<"] TLife ["<<i->second.GetChannelLife()<<"] Mesclando? ["<<i->second.GetMesclando()<<"] ReNeW ["<<i->second.GetReNewServerSub()<<"]"<<endl;
@@ -277,9 +277,9 @@ void Channel::SetChannelMode(ChannelModes channelMode)
        				if (i->second.GetState()!= NO_SERVER_AUX)
        				{
        					i->second.SetState(NO_SERVER_AUX);
-       					i->second.SetPeerWaitInfor(true);
+       					i->second.SetPeerWaitInform(true);
        				}
-       			this->Remove_AllChannelSub(false);  // @false pois não faz mesclagem
+       			this->Remove_AllChannelSub();
         	}
 
         	this->channelMode = channelMode;
@@ -306,7 +306,7 @@ void Channel::SetChannelMode(ChannelModes channelMode)
         		for (map<string,SubChannelCandidateData>::iterator i = server_Sub_Candidates.begin(); i != server_Sub_Candidates.end(); i++)
         		{
         			i->second.SetState(SERVER_AUX_ACTIVE);
-        			i->second.SetPeerWaitInfor(true);
+        			i->second.SetPeerWaitInform(true);
         		}
             this->channelMode = channelMode;
         	}
@@ -322,14 +322,17 @@ void Channel::SetChannelMode(ChannelModes channelMode)
     }
 }
 
+/*este método não permite mesclar
+ * deve ser usado para situações radicais em que todos os
+ * subcanais deixarão de existir. Por exemplo, em experimentos
+ * sem temporização ou mesclagem
+ */
 
-void Channel::Remove_AllChannelSub(bool mesclar)
+void Channel::Remove_AllChannelSub()
 {
-    for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
+	for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
 		i->second.SetChannelId_Sub(this->channelId);
-
-    if (!mesclar)
-    	channel_Sub_List.clear();
+    channel_Sub_List.clear();
 }
 
 /* TODO ECM conferir o mutex que está em bootstrap
@@ -338,16 +341,21 @@ void Channel::Remove_AllChannelSub(bool mesclar)
  */
 void Channel::Remove_ChannelSub(const string* source, bool mesclar)
 {
-	cout<<"Mesclando do pares de: ["<<*source<<"] na rede principal *****"<<endl;
-    for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
-    	if (i->second.GetChannelId_Sub() == channel_Sub_List[*source].GetchannelId_Sub())
-    		i->second.SetChannelId_Sub(this->channelId);
-    if (!mesclar)
+    if (mesclar)
     {
+    	for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
+    		if (i->second.GetChannelId_Sub() == (int)channel_Sub_List[*source].GetchannelId_Sub())
+    			i->second.SetChannelId_Sub(-1);
+    }
+    else
+    {
+        for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
+        	if (i->second.GetChannelId_Sub() == (int)channel_Sub_List[*source].GetchannelId_Sub())
+        		i->second.SetChannelId_Sub(this->channelId);
     	channel_Sub_List.erase(*source);
-    	cout<<"Removendo o sub canal definitivamente"<<endl;
     }
 }
+
 ChannelModes Channel::GetChannelMode()
 {
 	return channelMode;
@@ -367,19 +375,21 @@ void Channel::SetmaxPeer_ChannelSub(int unsigned maxpeerChannelSub)
 vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, unsigned int peerQuantity)
 {
     vector<PeerData*> allPeers, selectedPeers;
-    int unsigned peerChannelId_Sub = peerList[srcPeer->GetID()].GetChannelId_Sub();  //descobre o subcanal do par requisitante
+    int peerChannelId_Sub = peerList[srcPeer->GetID()].GetChannelId_Sub();  //descobre o subcanal do par requisitante
 
-    if (peerChannelId_Sub != this->channelId)
+    boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
+
+   	if (peerChannelId_Sub != (int)this->channelId && peerChannelId_Sub != -1)
     	/* Se o par está em sub canal, incluir o servidor auxiliar na lista de parceiros dele
     	* isso é importante visto que o serverAux->idChannel_Sub é igual ao idChannle do canal principal
     	* Os servidores auxiliares têm o idChannel_sub na estrutura SubChannelData
+    	* No caso de -1, ele estará em fase de mesclagem e pertence à rede principal
     	*/
     {
-    	boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
     	for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
-    		if (peerChannelId_Sub == i->second.GetchannelId_Sub())
+    		if (peerChannelId_Sub == (int)i->second.GetchannelId_Sub())
     			allPeers.push_back(&(peerList[i->second.GetServer_Sub()->GetID()]));
-    	channelSubListLock.unlock();
+
     }
 
     /* Garante fazer a vizinhança apenas com os pares que estão no mesmo subcanal
@@ -387,20 +397,47 @@ vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, uns
      * Também, o próprio par não é sugerido a ele mesmo como vizinho
      */
     for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
-        if (srcPeer->GetID() != i->second.GetPeer()->GetID() && peerChannelId_Sub == i->second.GetChannelId_Sub())
+        if (srcPeer->GetID() != i->second.GetPeer()->GetID() &&                                         // (se não é ele mesmo) e
+        		(peerChannelId_Sub == i->second.GetChannelId_Sub() ||                                   // (se o sub = sub) ou
+        	     (peerChannelId_Sub == -1 &&  i->second.GetChannelId_Sub() == (int)this->channelId)))   // ((se esta em mesclagem) e (outro rede principal))
             allPeers.push_back(&(i->second));
 
-    /* nao enviar um par em estado de mesclagem a um servidor auxiliar
+
+    /* -----------------------------------------------------------------------------------------
+     *  nao enviar um par em estado de mesclagem a um servidor auxiliar
      * O par em estado de mesclagem deve encontrar outro par na rede e não entrar em um sub canal
      */
-    if (channel_Sub_List.count(srcPeer->GetID()) > 0)
+    //if (channel_Sub_List.count(srcPeer->GetID()) > 0)
+    if (server_Sub_Candidates.count(srcPeer->GetID())> 0)
     {
         for (vector<PeerData*>::iterator i = allPeers.begin(); i != allPeers.end(); i++)
         {
-// implementar  a forma de excluir um par em estado de mesclagem da lista de envio a um servidor auxiliar ativo
+        	if((*i)->GetChannelId_Sub() == (-1))
+        		allPeers.erase(i);
         }
     }
+    //como os servidores não são executados por demanda, todos da lista de candidatos
+    //são configurados como servidor. Por isso, para evitar mandar um par em mesclagem
+    // ao servidor, procuro pela lista de candidatos e não de servidores com subcanais.
 
+    // não deve mandar um servidor auxiliar para um peer que está em mesclagem
+    if (peerChannelId_Sub == -1)
+        for (vector<PeerData*>::iterator i = allPeers.begin(); i != allPeers.end(); i++)
+        {
+        	//como os servidores não são executados por demanda, todos da lista de candidatos
+        	//são configurados como servidor. Por isso, para evitar mandar um par em mesclagem
+        	// ao servidor, procuro pela lista de candidatos e não de servidores com subcanais.
+
+            //if (channel_Sub_List.count((*i)->GetPeer()->GetID()) > 0)
+        	if (server_Sub_Candidates.count(srcPeer->GetID())> 0)
+            {
+            	allPeers.erase(i);
+      		}
+
+        }
+    //---------------------------------------------------------------------------------------------
+
+  	channelSubListLock.unlock();
 
     if (this->GetPeerListSizeChannel_Sub(peerChannelId_Sub) <= peerQuantity)
         return allPeers;
@@ -416,7 +453,7 @@ vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, uns
   * retorna o tamanho da lista do peer (subcanal ou canal principal)
   * caso não esteja em flash crowd, retorna peerList.size (todos peers em canal principal)
   */
-unsigned int Channel::GetPeerListSizeChannel_Sub(unsigned int channelId_Sub)
+unsigned int Channel::GetPeerListSizeChannel_Sub(int channelId_Sub)
 {
 	unsigned int count = 0;
 	for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
@@ -449,32 +486,38 @@ void Channel::CheckAllSubChannel()
 		{
 			i->second.DecChannelLif();
 			i->second.DecReNewServerSub();
-		}
-		//servidor auxiliar pode ser usado em outro subcanal
-		if (i->second.GetReNewServerSub() == 0)
-		{
-			this->Remove_ChannelSub(&(i->first), false);
-			i->second.SetMesclando(false);
 
-			server_Sub_Candidates[i->first].SetState(NO_SERVER_AUX);
-			server_Sub_Candidates[i->first].SetPeerWaitInfor(true);
-			cout<<"&&&&&& REMOVENDO &&&&& subChannel ["<<i->second.GetchannelId_Sub()<<"]"<<endl;
-		}
-		else
-			//servidor permanece em estado de mesclagem
-			if (i->second.GetChannelLife() == 0)
+			/*No tempo 1 o bootstrap é preparado
+			 * para informar ao servidor o novo estado
+			 */
+			if (i->second.GetReNewServerSub() == 1)
 			{
-				/* ECM Neste deve enviar uma mensagem ao cliente
-				 * definindo o estado de fim de exclusividade e
-				 * o indicando para ele executar a mesclagem
-				 */
-				this->Remove_ChannelSub(&(i->first), true);
-				i->second.SetMesclando(true);
-
-				server_Sub_Candidates[i->first].SetState(SERVER_AUX_MESCLAR);
-				server_Sub_Candidates[i->first].SetPeerWaitInfor(true);
-				cout<<"&&&&& MESCLANDO &&&&& subChannel ["<<i->second.GetchannelId_Sub()<<"]"<<endl;
+				server_Sub_Candidates[i->first].SetState(NO_SERVER_AUX);
+				server_Sub_Candidates[i->first].SetPeerWaitInform(true);
 			}
+			else
+				if (i->second.GetReNewServerSub() == 0) //no tempo 0 o canal é atualizado
+				{
+					this->Remove_ChannelSub(&(i->first), false);
+					i->second.SetMesclando(false);
+					cout<<"&&&&&& REMOVENDO &&&&& subChannel ["<<i->second.GetchannelId_Sub()<<"]"<<endl;
+				}
+
+			//servidor permanece em estado de mesclagem. Canal atua quando peer for informado (permite sincronizar)
+			if (i->second.GetChannelLife() == 1)
+			{
+				server_Sub_Candidates[i->first].SetState(SERVER_AUX_MESCLAR);
+				server_Sub_Candidates[i->first].SetPeerWaitInform(true);
+			}
+			else
+				if (i->second.GetChannelLife() == 0)
+				{
+					this->Remove_ChannelSub(&(i->first), true);
+					i->second.SetMesclando(true);
+					cout<<"&&&&& MESCLANDO &&&&& subChannel ["<<i->second.GetchannelId_Sub()<<"]"<<endl;
+				}
+
+		} //primeiro if...
 	}
 }
 
@@ -525,18 +568,18 @@ void Channel::PrintPeerList()
 
 FILE* Channel::GetPerformanceFile(Peer* srcPeer)
 {
-	if (peerList[srcPeer->GetID()].GetChannelId_Sub() != this->channelId)
+	if (peerList[srcPeer->GetID()].GetChannelId_Sub() != (int)this->channelId)
 		for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
-			if (peerList[srcPeer->GetID()].GetChannelId_Sub() == i->second.GetchannelId_Sub())
+			if (peerList[srcPeer->GetID()].GetChannelId_Sub() == (int)i->second.GetchannelId_Sub())
 					return i->second.GetPerformanceFile();
 	return performanceFile;
 }
 
 FILE* Channel::GetOverlayFile(Peer* srcPeer)
 {
-	if (peerList[srcPeer->GetID()].GetChannelId_Sub() != this->channelId)
+	if (peerList[srcPeer->GetID()].GetChannelId_Sub() != (int)this->channelId)
 		for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
-			if (peerList[srcPeer->GetID()].GetChannelId_Sub() == i->second.GetchannelId_Sub())
+			if (peerList[srcPeer->GetID()].GetChannelId_Sub() == (int)i->second.GetchannelId_Sub())
 					return i->second.GetOverlayFile();
 
     return overlayFile;

@@ -13,6 +13,12 @@ using namespace std;
 
 /**
 * This class implements the information about the peers
+* OBS. Quanto ao channelId_Sub, este pode ter os seguintes valores:
+*      channelId_Sub >= 0. O Peer está no canal principal ou em um subcanal quando flash crowd
+*      channelId_Sub = -1  O peer está em estado de mesclagem. isso é importante para ele não ser
+*                          enviado a um peer que é servidor de sub canal em execução. Um peer em mesclagem
+*                          deve obter parceiros na rede principal do canal. Caso contrário, ele entra em outro subcanal
+*
 */
 class PeerData
 {
@@ -26,7 +32,6 @@ class PeerData
         /**
         * @param channelId_Sub usado para criar novo sub canal na classe Channel
         */
-        //PeerData(unsigned int channelId_Sub, Peer* p, int ttlIn = TTLIn, int ttlOut = TTLOut, int ttlChannel = TTLChannel, int size = STD_BUFFERSIZE);
         Peer* GetPeer();
         
         /**
@@ -45,8 +50,8 @@ class PeerData
         void SetTTLChannel(int v);
         void DecTTLChannel();
 
-        unsigned int GetChannelId_Sub();
-        void SetChannelId_Sub(unsigned int channelId_Sub);
+        int GetChannelId_Sub();
+        void SetChannelId_Sub( int channelId_Sub);
 
         //ECM
 
@@ -84,7 +89,13 @@ class PeerData
         int ttlOut;
         int ttlChannel;
 
-        unsigned int channelId_Sub;
+
+        /* channelId_Sub é do tipo int e não unsigned int para permitir
+         * que o peer informe o channelId_Sub = -1 que é o estado de
+         * mesclagem a um peer qualquer na rede
+         */
+
+        int channelId_Sub;
 
         //**** ECM
         //ECM

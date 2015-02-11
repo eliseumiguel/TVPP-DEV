@@ -70,7 +70,7 @@ class Channel
         vector<PeerData*> SelectPeerList(Strategy* strategy, Peer* srcPeer, unsigned int peerQuantity);
         unsigned int GetPeerListSize(); //usada apenas pelo bootstrap em HHTLog
 
-        unsigned int GetPeerListSizeChannel_Sub(unsigned int channelId_Sub); //retorna quantos pares estão em um subcanal
+        unsigned int GetPeerListSizeChannel_Sub(int channelId_Sub); //retorna quantos pares estão em um subcanal
         unsigned int GetTotalChannel_Sub(); //retorna quantos subcanis existem
 
         void CheckActivePeers();
@@ -102,7 +102,7 @@ class Channel
 
         bool AddPeerChannel(Peer* peer);
         bool Create_New_ChannelSub();
-        void Remove_AllChannelSub(bool mesclar = false);
+        void Remove_AllChannelSub();
         void Remove_ChannelSub(const string* source, bool mesclar = false);
         void CheckAllSubChannel();
 

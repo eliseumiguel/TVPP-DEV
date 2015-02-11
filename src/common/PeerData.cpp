@@ -64,12 +64,12 @@ void PeerData::DecTTLChannel()
     ttlChannel--;
 }
 
-unsigned int PeerData::GetChannelId_Sub()
+int PeerData::GetChannelId_Sub()
 {
 	return channelId_Sub;
 }
 
-void PeerData::SetChannelId_Sub(unsigned int channelId_Sub)
+void PeerData::SetChannelId_Sub(int channelId_Sub)
 {
 	this->channelId_Sub = channelId_Sub;
 }

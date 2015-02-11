@@ -84,7 +84,7 @@ class SubChannelCandidateData
         void SetState(ServerAuxTypes serverState);
 
 		bool GetPeerWaitInform();
-        void SetPeerWaitInfor(bool peerWaitInform);
+        void SetPeerWaitInform(bool peerWaitInform);
 
     private:
 

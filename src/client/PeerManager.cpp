@@ -28,7 +28,7 @@ void PeerManager::SetPeerManagerState(ServerAuxTypes newPeerManagerState)
 		if (this->peerManagerState == NO_SERVER_AUX) //iniciando o processo de servidor auxiliar
 		{
 			peerListMasterChannel = peerList;        //separa a lista dos pares do canal principal
-			peerActiveOut_TEMP = peerActiveOut;
+			//peerActiveOut_TEMP = peerActiveOut;
 		    peerActiveOut.clear();
 		    this->peerManagerState = newPeerManagerState;
 		}
@@ -44,13 +44,17 @@ void PeerManager::SetPeerManagerState(ServerAuxTypes newPeerManagerState)
              * e começa a aceitar conecção Out apenas do canal principal. Desta forma, se a estratégia de mesclagem
              * removeu algum par do canal auxiliar, este par não consegue voltar ao servidor auxiliar durante a mesclagem
              */
-			int size = (int) peerActiveOut.size()/ 2;
+			int size = (int) peerActiveOut.size() ;//  / 2;
 		    while (size > 0)
 			{
 		    	size--;
-		    	peerList[*(peerActiveOut.begin())].SetChannelId_Sub(2); //faz primeiro ser do canal principal interno
-	    		peerActiveOut.erase(peerActiveOut.begin());             //remove primeiro da lista de out
-		    }                                                           //código de mesclagem ChannelId ==2
+		    	//peerList[*(peerActiveOut.begin())].SetChannelId_Sub(2); 	//faz primeiro ser do canal principal interno
+		    																//remove primeiro da lista de out
+		    																//código de mesclagem ChannelId ==2
+
+		    	peerList.erase(*(peerActiveOut.begin()));
+	    		peerActiveOut.erase(peerActiveOut.begin());
+		    }
 		    peerListMasterChannel.clear();
 			this->peerManagerState = newPeerManagerState;
 		}
@@ -62,7 +66,7 @@ void PeerManager::SetPeerManagerState(ServerAuxTypes newPeerManagerState)
 	    	peerList[*i].SetChannelId_Sub(0);
 
 	    peerListMasterChannel.clear();
-	    peerActiveOut_TEMP.clear();
+	    //peerActiveOut_TEMP.clear();
 
 		this->peerManagerState = newPeerManagerState;
 		break;
@@ -123,12 +127,12 @@ set<string>* PeerManager::GetPeerActiveOut()
 {
 	return &peerActiveOut;
 }
-
+/*
 set<string>* PeerManager::GetPeerActiveOut_TEMP()
 {
 	return &peerActiveOut_TEMP;
 }
-
+*/
 map<string, unsigned int>* PeerManager::GetPeerActiveCooldown(set<string>* peerActive)
 {
 	if (peerActive == &peerActiveIn) return &peerActiveCooldownIn;
@@ -268,7 +272,7 @@ boost::mutex* PeerManager::GetPeerActiveMutex(set<string>* peerActive)
 {
 	if (peerActive == &peerActiveIn) return &peerActiveMutexIn;
 	if (peerActive == &peerActiveOut) return &peerActiveMutexOut;
-	if (peerActive == &peerActiveOut_TEMP) return &peerActiveMutexOut_TEMP;
+	//if (peerActive == &peerActiveOut_TEMP) return &peerActiveMutexOut_TEMP;
 	return NULL;
 }
 
