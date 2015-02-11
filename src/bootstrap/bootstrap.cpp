@@ -205,7 +205,7 @@ void Bootstrap::HandlePeerlistMessage(MessagePeerlist* message, string sourceAdd
         {
             if (channelList[channelId].HasPeer(srcPeer))
             {
-                FILE* overlayFile = channelList[channelId].GetOverlayFile(srcPeer);
+                vector<FILE*> overlayFile = channelList[channelId].GetOverlayFile(srcPeer);
                 channelListLock.unlock();
 
                 string overlayLog  = sourceAddress + " ";                           //PeerID
@@ -220,10 +220,10 @@ void Bootstrap::HandlePeerlistMessage(MessagePeerlist* message, string sourceAdd
                 }
                 overlayLog += "\n";
 
-                if (overlayFile)
+                for (vector<FILE*>::iterator f = overlayFile.begin(); f != overlayFile.end(); f++)  //if (overlayFile)
                 {
-                    fwrite(overlayLog.c_str(), 1, overlayLog.size(), overlayFile);
-                    fflush(overlayFile);
+                	fwrite(overlayLog.c_str(), 1, overlayLog.size(), *f);                              //overlayFile);
+                	fflush(*f);                                                                         //overlayFile);
                 }
             }
             else
@@ -269,7 +269,7 @@ void Bootstrap::HandlePingMessage(MessagePingBoot* message, string sourceAddress
                 channelList[channelId].SetServerEstimatedStreamRate(serverStreamRate);
             }
 
-            FILE* performanceFile = channelList[channelId].GetPerformanceFile(srcPeer);
+            vector<FILE*> performanceFile = channelList[channelId].GetPerformanceFile(srcPeer);
             channelListLock.unlock();
 
             //If it has performance measures
@@ -305,10 +305,11 @@ void Bootstrap::HandlePingMessage(MessagePingBoot* message, string sourceAddress
                 performanceLog += boost::lexical_cast<string>(pingHeader[indexPerfStart + 17]) + " ";    //SampleChunk.Time
                 performanceLog += boost::lexical_cast<string>(pingHeader[indexPerfStart + 18]) + " ";    //MsgTime
                 performanceLog += boost::lexical_cast<string>(rawtime) + "\n";            //NowTime
-                if (performanceFile)
+                //if (performanceFile)
+                for (vector<FILE*>::iterator f = performanceFile.begin(); f != performanceFile.end(); f++)
                 {
-                    fwrite(performanceLog.c_str(), 1, performanceLog.size(), performanceFile);
-                    fflush(performanceFile);
+                    fwrite(performanceLog.c_str(), 1, performanceLog.size(), *f);
+                    fflush(*f);
                 }
 
                 int peerUpload = pingHeader[indexPerfStart + 1];

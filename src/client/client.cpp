@@ -25,7 +25,6 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
     Bootstrap_IP = host_ip;
     TCP_server_PORT = TCP_server_port;
     UDP_server_PORT = udp_port;
-    //peers_UDP_PORT = StartUDPConnection(peers_udp_port);
     peers_UDP_PORT = peers_udp_port;
     externalIp = "";
     externalPort = boost::lexical_cast<uint16_t>(peers_udp_port);
@@ -96,7 +95,7 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
     if (peerMode == MODE_SERVER)
     {
         this->connectorIn = NULL;
-        //this->connectorOut = NULL;
+        //this->connectorOut = NULL; // pode ser usado se quiser oferecer dados a quem não te conhece....
         delete requester;
         this->requester = NULL;
     }
@@ -168,10 +167,10 @@ bool Client::ConnectToBootstrap()
         message = new MessageChannel(CHANNEL_CONNECT, perform_udp_punch, externalPort, idChannel, nowtime);
     message->SetIntegrity();
     int32_t peers_port;
-    if(perform_udp_punch)  //perform_udp_punch é usado para informar (uma vez) a porta udp atrás do NAT
+    if(perform_udp_punch)    //perform_udp_punch é usado para informar (uma vez) a porta udp atrás do NAT
     {
         peers_port = cbSession->Punch_connect();
-        if(peers_port < 0)///Failed
+        if(peers_port < 0)   ///Failed
             return false;
     }
     else///!perform_udp_punch
@@ -384,14 +383,10 @@ void Client::HandlePeerlistMessage(MessagePeerlist* message, string sourceAddres
             for (uint16_t i = 0; i < peersReceived; i++)
             {
                 if (Peer* newPeer = message->GetPeer(i))
-                {    
                     peerManager.AddPeer(newPeer);
-    //                cout<<"Recebendo :"<<newPeer->GetID();
-                }
+
             }
-            //tirar
-      //      cout<<endl;
-            //ECM
+             //ECM
             this->connectorIn->Connect();
         }
     }
@@ -417,7 +412,7 @@ void Client::HandlePingMessageIn(vector<int>* pingHeader, MessagePing* message, 
     {
         if (!peerManager.ConnectPeer(sourceAddress, peerManager.GetPeerActiveIn()))
         {
- // tirar coment           cout<<"Ping by "<<sourceAddress<<" tried to connect to me to be a In but failed. Neighborhood ["<<peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn())<<"/"<<peerManager.GetMaxActivePeers(peerManager.GetPeerActiveIn())<<"]"<<endl;
+        	cout<<"Ping by "<<sourceAddress<<" tried to connect to me to be a In but failed. Neighborhood ["<<peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn())<<"/"<<peerManager.GetMaxActivePeers(peerManager.GetPeerActiveIn())<<"]"<<endl;
             return;
         }
     }
@@ -463,7 +458,7 @@ void Client::HandlePingMessageOut(vector<int>* pingHeader, MessagePing* message,
     {
         if (!peerManager.ConnectPeer(sourceAddress, peerManager.GetPeerActiveOut()))
         {
-//tirar coment            cout<<"Ping by "<<sourceAddress<<" tried to connect to me to be Out but failed. Neighborhood ["<<peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut())<<"/"<<peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut())<<"]"<<endl;
+        	cout<<"Ping by "<<sourceAddress<<" tried to connect to me to be Out but failed. Neighborhood ["<<peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut())<<"/"<<peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut())<<"]"<<endl;
             return;
         }
     }
@@ -537,7 +532,6 @@ void Client::HandleMessageServerSub(MessageServerSub* message, string sourceAddr
 
         	break;
         case  SERVER_AUX_ACTIVE:
-        	//this->peerManager.apagaPeerListout();
         	cout<<"*************************************"<<endl;
             cout<<" ****** SOU SERVIDOR ATIVO ********  "<<endl;
             cout<<"*************************************"<<endl;
@@ -572,9 +566,9 @@ void Client::HandleRequestMessage(MessageRequest* message, string sourceAddress,
 
     if (peerManager.IsPeerActive(sourceAddress, peerManager.GetPeerActiveOut()))
     {
-        if ((mediaBuffer->Available(requestedChunk.GetPosition())) //If i have the chunk 
-            && (latestReceivedPosition >= requestedChunk) //The request is for past chunks
-            && ((latestReceivedPosition - requestedChunk).GetCycle() == 0)) //1 cycle max diff
+        if ((mediaBuffer->Available(requestedChunk.GetPosition()))             //If i have the chunk
+            && (latestReceivedPosition >= requestedChunk)                      //The request is for past chunks
+            && ((latestReceivedPosition - requestedChunk).GetCycle() == 0))    //1 cycle max diff
         {
             uploadPerSecDone += mediaBuffer->GetChunkSize(requestedChunk.GetPosition());
             chunksSent++;
@@ -924,9 +918,10 @@ void Client::Ping()
              * SA não será removido da lista de parceiros de P. Em consequência, quando SA deixa de ser servidor auxiliar, como
              * seu ttlOIn continuará sem ser atualizado e P não mais tentará ser parceiro dele. Assim, essa tentativa faz com
              * que SA seja free-rider bom ao par P por um tempo, enviando a uma lista OutTemp o buffer vazio.
+             * Caso não queira usar, basta fazer a lista GetPeerActiveOut_Master vazia
              */
-            /*
-            if (peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut_TEMP()) > 0)
+
+            if (peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut_Master()) > 0)
             {
                 pingMessage = new MessagePing(PING_PART_CHUNKMAP, BUFFER_SIZE/8, peerMode, latestReceivedPosition);
                 pingMessage->SetIntegrity();
@@ -945,8 +940,8 @@ void Client::Ping()
                 }
 
                 boost::mutex::scoped_lock peerListLock(*peerManager.GetPeerListMutex());
-                boost::mutex::scoped_lock peerActiveOutLock(*peerManager.GetPeerActiveMutex(peerManager.GetPeerActiveOut_TEMP()));
-                for (set<string>::iterator i = peerManager.GetPeerActiveOut_TEMP()->begin(); i != peerManager.GetPeerActiveOut_TEMP()->end(); i++)
+                boost::mutex::scoped_lock peerActiveOutLock(*peerManager.GetPeerActiveMutex(peerManager.GetPeerActiveOut_Master()));
+                for (set<string>::iterator i = peerManager.GetPeerActiveOut_Master()->begin(); i != peerManager.GetPeerActiveOut_Master()->end(); i++)
                 {
                     Peer* peer = peerManager.GetPeerData(*i)->GetPeer();
                     if (peerlistMessage)

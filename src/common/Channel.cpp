@@ -33,10 +33,19 @@ Channel::Channel(unsigned int channelId, Peer* serverPeer,
         logFilename += serverPeer->GetIP() + "_" + serverPeer->GetPort() + "-";
         logFilename += timestr;
         logFilename += "-";
-        string logFilenamePerf = logFilename + "perf.txt";
-        string logFilenameOverlay = logFilename + "overlay.txt";
-        performanceFile = fopen(logFilenamePerf.c_str(),"w");
-        overlayFile = fopen(logFilenameOverlay.c_str(),"w");
+
+        string logFilenamePerf_Master = logFilename + "perf_Master.txt";
+        string logFilenameOverlay_Master = logFilename + "overlay_Master.txt";
+
+        string logFilenamePerf_Total = logFilename + "perf_Total.txt";
+        string logFilenameOverlay_Total = logFilename + "overlay_Total.txt";
+
+        performanceFile_Master = fopen(logFilenamePerf_Master.c_str(),"w");
+        poverlayFile_Master = fopen(logFilenameOverlay_Master.c_str(),"w");
+
+        performanceFile_Total = fopen(logFilenamePerf_Total.c_str(),"w");
+        poverlayFile_Total = fopen(logFilenameOverlay_Total.c_str(),"w");
+
     } 
 }
 
@@ -566,21 +575,62 @@ void Channel::PrintPeerList()
         cout<<"PeerID: "<<i->first<<" Mode: "<<(int)i->second.GetMode()<<" TTL: "<<i->second.GetTTLChannel()<<endl;
 }
 
-FILE* Channel::GetPerformanceFile(Peer* srcPeer)
+vector<FILE*> Channel::GetPerformanceFile(Peer* srcPeer)
 {
+	vPerformanceFile.clear();
+	vPerformanceFile.push_back(performanceFile_Total);
+
+	// se for o servidor, retorna todos os arquivos de log
+	if (srcPeer->GetID() == this->GetServer()->GetID())
+	{
+		vPerformanceFile.push_back(performanceFile_Master);
+		for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
+			vPerformanceFile.push_back(i->second.GetPerformanceFile());
+		return vPerformanceFile;
+	}
+
+
+	if (channel_Sub_List.find(srcPeer->GetID()) != channel_Sub_List.end())
+		vPerformanceFile.push_back((channel_Sub_List.find(srcPeer->GetID()))->second.GetPerformanceFile());
+	for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
+
 	if (peerList[srcPeer->GetID()].GetChannelId_Sub() != (int)this->channelId)
 		for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
 			if (peerList[srcPeer->GetID()].GetChannelId_Sub() == (int)i->second.GetchannelId_Sub())
-					return i->second.GetPerformanceFile();
-	return performanceFile;
+			{
+				vPerformanceFile.push_back(i->second.GetPerformanceFile());
+				return vPerformanceFile;
+			}
+	vPerformanceFile.push_back(performanceFile_Master);
+	return vPerformanceFile;
 }
 
-FILE* Channel::GetOverlayFile(Peer* srcPeer)
+vector<FILE*> Channel::GetOverlayFile(Peer* srcPeer)
 {
+	vPoverlayFile.clear();
+	vPoverlayFile.push_back(poverlayFile_Total);
+
+	// se for o servidor, retorna todos os arquivos de log
+	if (srcPeer->GetID() == this->GetServer()->GetID())
+	{
+		vPoverlayFile.push_back(poverlayFile_Master);
+		for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
+			vPoverlayFile.push_back(i->second.GetOverlayFile());
+		return vPoverlayFile;
+	}
+
+
+	if (channel_Sub_List.find(srcPeer->GetID()) != channel_Sub_List.end())
+		vPoverlayFile.push_back((channel_Sub_List.find(srcPeer->GetID()))->second.GetOverlayFile());
+	for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
+
 	if (peerList[srcPeer->GetID()].GetChannelId_Sub() != (int)this->channelId)
 		for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
 			if (peerList[srcPeer->GetID()].GetChannelId_Sub() == (int)i->second.GetchannelId_Sub())
-					return i->second.GetOverlayFile();
-
-    return overlayFile;
+			{
+				vPoverlayFile.push_back(i->second.GetOverlayFile());
+				return vPoverlayFile;
+			}
+	vPoverlayFile.push_back(poverlayFile_Master);
+	return vPoverlayFile;
 }

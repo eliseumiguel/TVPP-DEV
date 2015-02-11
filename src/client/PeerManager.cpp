@@ -28,8 +28,15 @@ void PeerManager::SetPeerManagerState(ServerAuxTypes newPeerManagerState)
 		if (this->peerManagerState == NO_SERVER_AUX) //iniciando o processo de servidor auxiliar
 		{
 			peerListMasterChannel = peerList;        //separa a lista dos pares do canal principal
-			//peerActiveOut_TEMP = peerActiveOut;
-		    peerActiveOut.clear();
+
+			peerActiveOut_Master.clear();
+			/* caso queira enviar chunkmap vazio aos parceiros antigos durante o flash crowd,
+			 * basta descomentar esta linha...
+			*/
+			//if(fazer um estado interno)
+			// 	  peerActiveOut_Master = peerActiveOut;
+
+			peerActiveOut.clear();
 		    this->peerManagerState = newPeerManagerState;
 		}
 		break;
@@ -44,13 +51,22 @@ void PeerManager::SetPeerManagerState(ServerAuxTypes newPeerManagerState)
              * e começa a aceitar conecção Out apenas do canal principal. Desta forma, se a estratégia de mesclagem
              * removeu algum par do canal auxiliar, este par não consegue voltar ao servidor auxiliar durante a mesclagem
              */
-			int size = (int) peerActiveOut.size() ;//  / 2;
+			int size = (int) peerActiveOut.size()/2;
 		    while (size > 0)
 			{
 		    	size--;
-		    	//peerList[*(peerActiveOut.begin())].SetChannelId_Sub(2); 	//faz primeiro ser do canal principal interno
-		    																//remove primeiro da lista de out
-		    																//código de mesclagem ChannelId ==2
+
+		    	/* faz primeiro ser do canal principal interno
+		    	 * remove primeiro da lista de out
+		    	 * código de mesclagem ChannelId ==2
+		    	 * Isso já foi tratado dentro de channel. lá ele
+		    	 * testa se o peer está em mesclagem e não permite
+		    	 * que qualquer servidor auxiliar e qualquer peer
+		    	 * em mesclagem se conheçam. Mesmo assim, esta opção
+		    	 * pode ser usada para um tratamento interno ao servidor
+		    	 * auxiliar
+		    	*/
+		    	//peerList[*(peerActiveOut.begin())].SetChannelId_Sub(2);
 
 		    	peerList.erase(*(peerActiveOut.begin()));
 	    		peerActiveOut.erase(peerActiveOut.begin());
@@ -66,7 +82,7 @@ void PeerManager::SetPeerManagerState(ServerAuxTypes newPeerManagerState)
 	    	peerList[*i].SetChannelId_Sub(0);
 
 	    peerListMasterChannel.clear();
-	    //peerActiveOut_TEMP.clear();
+	    peerActiveOut_Master.clear();
 
 		this->peerManagerState = newPeerManagerState;
 		break;
@@ -127,12 +143,12 @@ set<string>* PeerManager::GetPeerActiveOut()
 {
 	return &peerActiveOut;
 }
-/*
-set<string>* PeerManager::GetPeerActiveOut_TEMP()
+
+set<string>* PeerManager::GetPeerActiveOut_Master()
 {
-	return &peerActiveOut_TEMP;
+	return &peerActiveOut_Master;
 }
-*/
+
 map<string, unsigned int>* PeerManager::GetPeerActiveCooldown(set<string>* peerActive)
 {
 	if (peerActive == &peerActiveIn) return &peerActiveCooldownIn;
@@ -272,7 +288,7 @@ boost::mutex* PeerManager::GetPeerActiveMutex(set<string>* peerActive)
 {
 	if (peerActive == &peerActiveIn) return &peerActiveMutexIn;
 	if (peerActive == &peerActiveOut) return &peerActiveMutexOut;
-	//if (peerActive == &peerActiveOut_TEMP) return &peerActiveMutexOut_TEMP;
+	if (peerActive == &peerActiveOut_Master) return &peerActiveMutexOut_Master;
 	return NULL;
 }
 
@@ -396,7 +412,7 @@ int PeerManager::showPeerActive(set<string>* peerActive)
         	ttlRotulo == "TTLOut";
         }
 
-//	    cout<<"Key: "<<*i<<" ID: "<<peerList[*i].GetPeer()->GetID()<<" Mode: "<<(int)peerList[*i].GetMode()<<ttlRotulo<<": "<<ttl << " PR: "<<peerList[*i].GetPendingRequests() << endl;
+	    cout<<"Key: "<<*i<<" ID: "<<peerList[*i].GetPeer()->GetID()<<" Mode: "<<(int)peerList[*i].GetMode()<<ttlRotulo<<": "<<ttl << " PR: "<<peerList[*i].GetPendingRequests() << endl;
 	}
 	peerActiveLock.unlock();
 	return j;
@@ -411,17 +427,17 @@ void PeerManager::ShowPeerList()
     k = showPeerActive(&peerActiveIn);
     j = showPeerActive(&peerActiveOut);
     cout<<"Total In ["<<k<<"]  Total Out ["<<j<<"]"<<endl;
-//    cout<<"Total different Peers Active: ["<<this->GetPeerActiveSizeTotal()<<"] "<<endl<<endl;
-//	j = 0;
-//	cout<<endl<<"- Peer List Total -"<<endl;
+    cout<<"Total different Peers Active: ["<<this->GetPeerActiveSizeTotal()<<"] "<<endl<<endl;
+	j = 0;
+	cout<<endl<<"- Peer List Total -"<<endl;
 	boost::mutex::scoped_lock peerListLock(peerListMutex);
 
     for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++, j++)
 	{
-//		cout<<"Key: "<<i->first<< endl;
-//		cout<<"ID: "<<i->second.GetPeer()->GetID()<<" Mode: "<<(int)i->second.GetMode()<<" TTLIn: "<<i->second.GetTTLIn() <<" TTLOut: "<<i->second.GetTTLOut() << " RTT(delay): " <<i->second.GetDelay()<< "s PR: "<<i->second.GetPendingRequests() << endl;
+		cout<<"Key: "<<i->first<< endl;
+		cout<<"ID: "<<i->second.GetPeer()->GetID()<<" Mode: "<<(int)i->second.GetMode()<<" TTLIn: "<<i->second.GetTTLIn() <<" TTLOut: "<<i->second.GetTTLOut() << " RTT(delay): " <<i->second.GetDelay()<< "s PR: "<<i->second.GetPendingRequests() << endl;
 	}
-//	peerListLock.unlock();
+	peerListLock.unlock();
 	cout<<"Total PeerList: "<<j<<endl<<endl;
 
 }

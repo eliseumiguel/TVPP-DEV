@@ -77,8 +77,8 @@ class Channel
         void PrintPeerList();
         void analizePeerToBeServerAux(Peer* source);
 
-        FILE* GetPerformanceFile(Peer* srcPeer);
-        FILE* GetOverlayFile(Peer* srcPeer);
+        vector<FILE*> GetPerformanceFile(Peer* srcPeer);
+        vector<FILE*> GetOverlayFile(Peer* srcPeer);
 		
 		friend bool operator<(const Channel &a, const Channel &b) {return a.channelId<b.channelId;};
 		
@@ -116,8 +116,15 @@ class Channel
 
 		time_t creationTime;
 
-        FILE* performanceFile;
-        FILE* overlayFile;
+        vector<FILE*> vPerformanceFile;
+        vector<FILE*> vPoverlayFile;
+
+        FILE* performanceFile_Master;
+        FILE* poverlayFile_Master;
+
+        FILE* performanceFile_Total;
+        FILE* poverlayFile_Total;
+
 };
 
 

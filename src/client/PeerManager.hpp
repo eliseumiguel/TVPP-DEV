@@ -33,7 +33,7 @@ class PeerManager
 
 	set<string> peerActiveIn;                             //ativos que enviam dados a este par
 	set<string> peerActiveOut;                            // ativos que recebem dados deste par
-	//set<string> peerActiveOut_TEMP;                       // ativos temporários da rede principal enquanto é Servidor Auxiliar
+	set<string> peerActiveOut_Master;                     // ativos temporários da rede principal enquanto é Servidor Auxiliar
 
 	map<string, unsigned int> peerActiveCooldownIn;       // pares que podem ser removidos por pouca atividade
 	map<string, unsigned int> peerActiveCooldownOut;
@@ -41,7 +41,7 @@ class PeerManager
 		boost::mutex peerListMutex;
     boost::mutex peerActiveMutexIn;
     boost::mutex peerActiveMutexOut;
-    //boost::mutex peerActiveMutexOut_TEMP;
+    boost::mutex peerActiveMutexOut_Master;
 
     //faz a checagem das duas listas de peerActiveCooldown em checkPeerList
     void CheckpeerActiveCooldown(map<string, unsigned int>* peerActiveCooldown);
@@ -62,7 +62,7 @@ class PeerManager
 
     set<string>* GetPeerActiveIn();
     set<string>* GetPeerActiveOut();
-    //set<string>* GetPeerActiveOut_TEMP();
+    set<string>* GetPeerActiveOut_Master();
     map<string, unsigned int>* GetPeerActiveCooldown(set<string>* peerActive);
 
 	bool ConnectPeer(string peer, set<string>* peerActive);
