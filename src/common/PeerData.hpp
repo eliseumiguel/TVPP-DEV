@@ -94,7 +94,6 @@ class PeerData
          * que o peer informe o channelId_Sub = -1 que é o estado de
          * mesclagem a um peer qualquer na rede
          */
-
         int channelId_Sub;
 
         //**** ECM

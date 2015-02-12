@@ -1,8 +1,8 @@
 #ifndef CHANNEL_H
 #define CHANNEL_H
 /* Mudanças aguardadas no Channel:
- *  1) configurar por parâmentro: MAXPEER_CHANNELSUB, MAX_CHANNELSUB, MAXPEER_CHANNEL_SUB_CANDIDATE.
- *  2) Modificar a forma de ser avisado do Flash Crowd. Solução é tansformar
+ *
+ *  1) Modificar a forma de ser avisado do Flash Crowd. Solução é tansformar
  *
  *			  enum ChannelModes
 				{

@@ -45,12 +45,6 @@ void terminate (int param)
  */
 int main (int argc, char* argv[])
 {
-    /*void (*prev_fn)(int);//TODO CONCERTAR O SIGNAL TREATMENT
-
-    prev_fn = signal (SIGTERM,terminate);
-    if (prev_fn==SIG_IGN) signal (SIGTERM,SIG_IGN);
-    prev_fn = signal (SIGINT,terminate);
-    if (prev_fn==SIG_IGN) signal (SIGINT,SIG_IGN);*/
 
     char *ip = argv[1];
     string tcpPort = BOOTSTRAP_TCP_PORT;
@@ -97,8 +91,8 @@ int main (int argc, char* argv[])
             cout <<"                                (Options: FIFO, RR - RoundRobin, Random, CDF - Closest Deadline First)"<<endl;
             cout <<"  -messageReceiveScheduler      select a strategy for message reception (default: "<<messageReceiveScheduler<<")"<<endl;
             cout <<"                                (Options: FIFO, RR - RoundRobin, Random, CDF - Closest Deadline First)"<<endl;
-            cout <<"  -limitDownload                limits the download bandwidht usage in B/s (default: "<<limitDownload<<")"<<endl;
-            cout <<"  -limitUpload                  limits the upload bandwidht usage in B/s (default: "<<limitUpload<<")"<<endl;
+            //cout <<"  -limitDownload                limits the download bandwidht usage in B/s (default: "<<limitDownload<<")"<<endl;
+            //cout <<"  -limitUpload                  limits the upload bandwidht usage in B/s (default: "<<limitUpload<<")"<<endl;
             cout <<"  -maxPartnersIn                maximum number of neighbors-In(default: "<<maxPartnersIn<<")"<<endl;
             cout <<"  -maxPartnersOut               maximum number of neighbors-Out(default: "<<maxPartnersOut<<")"<<endl;
             cout <<"  -mode                         define the type of client. (default: "<<mode<<")"<<endl;
@@ -116,7 +110,7 @@ int main (int argc, char* argv[])
             cout <<"  --playerDisabled              disables stream dispatch to player"<<endl;
             cout <<"  --blockFreeriders             blocks requests to freeriders"<<endl;
             cout <<"  --clientLogsDisabled          disables client logging service"<<endl;
-            cout <<"  --leakyBucketDataFilter       forces data packets only to pass through upload leaky bucket"<<endl;
+            //cout <<"  --leakyBucketDataFilter       forces data packets only to pass through upload leaky bucket"<<endl;
             exit(1);
         }
         else

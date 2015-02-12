@@ -32,9 +32,11 @@ void PeerManager::SetPeerManagerState(ServerAuxTypes newPeerManagerState)
 			peerActiveOut_Master.clear();
 			/* caso queira enviar chunkmap vazio aos parceiros antigos durante o flash crowd,
 			 * basta descomentar esta linha...
+			 * Isso mantém o TTLIn do servidor auxiliar a seus antigos parceiros durante o flash crowd.
+			 * Com isso, o servidor auxiliar pode voltar a ser parceiro dos antigos parceiros na rede principal
 			*/
-			//if(fazer um estado interno)
-			// 	  peerActiveOut_Master = peerActiveOut;
+			//if(true) // implementar controle para esta opção. Isso deverá ser implementado na estratégia.
+			 	  peerActiveOut_Master = peerActiveOut;
 
 			peerActiveOut.clear();
 		    this->peerManagerState = newPeerManagerState;
@@ -58,7 +60,7 @@ void PeerManager::SetPeerManagerState(ServerAuxTypes newPeerManagerState)
 
 		    	/* faz primeiro ser do canal principal interno
 		    	 * remove primeiro da lista de out
-		    	 * código de mesclagem ChannelId ==2
+		    	 * código de mesclagem ChannelId == -1
 		    	 * Isso já foi tratado dentro de channel. lá ele
 		    	 * testa se o peer está em mesclagem e não permite
 		    	 * que qualquer servidor auxiliar e qualquer peer
@@ -66,7 +68,7 @@ void PeerManager::SetPeerManagerState(ServerAuxTypes newPeerManagerState)
 		    	 * pode ser usada para um tratamento interno ao servidor
 		    	 * auxiliar
 		    	*/
-		    	//peerList[*(peerActiveOut.begin())].SetChannelId_Sub(2);
+		    	//peerList[*(peerActiveOut.begin())].SetChannelId_Sub(-1);
 
 		    	peerList.erase(*(peerActiveOut.begin()));
 	    		peerActiveOut.erase(peerActiveOut.begin());
@@ -183,7 +185,7 @@ bool PeerManager::ConnectPeer(string peer, set<string>* peerActive)
 			* channelId_Sub = 3 durante a mesclagem
 			*/
 			if (peerManagerState == SERVER_AUX_MESCLAR)
-				if (peerList[peer].GetChannelId_Sub() != 2)
+				if (peerList[peer].GetChannelId_Sub() != -1)
 				{
 					return false;
 				}
@@ -348,13 +350,14 @@ void PeerManager::CheckPeerList()
     			desconectaPeerIn.insert(*i);
     			isPeerActiveIn = false;
     			/*
-    			 * problema descoberto.... se o servidor auxiliar corta os parceiros da lista, depois fica
-    			 * com ttlin 0 e como o out não é zero, ele continua parceiro mas não recupera o ttlin para
-    			 * voltar a ser parceiro.
-    			 * Uma solução é ele ser free rider bom por algum tempo. Ao mesclar, isso se resolve...
-    			 *teste para o problema do servidor auxiliar não atender mais niguém após o subcanal
-    			if (peerList[*i].GetTTLOut() > 0)
-    				peerList[*i].SetTTLIn(peerList[*i].GetTTLOut());
+    			 * problema descoberto.... quando o servidor auxiliar Sa elimina os parceiros da rede principal em peerListOut,
+    			 * todos esses parceiros vão decrementar o TTLIn de Sa até chegar em 0. Caso Sa seja parceiro Out destes mesmos
+    			 * parceiros, o TTLOut de Sa não chegará a 0 enquanto ele for peerActiveOut e, com isso, ele nunca irá recuperar
+    			 * seu TTLIn em cada um de seus parceiros. Assim, ao retornar do processo de servidor auxiliar, ele não será
+    			 * visto pelos antigos parceiros como uma possível fonte de dados.
+    			 * Uma solução é ele ser free rider bom por algum tempo. Ao mesclar, isso se resolve...(já  implementado no client)
+    			 * Esta solução faz com que ele mantenha ping para os antigos contatos durante as atividades de servidor auxiliar e,
+    			 * com isso, ele poderá ser uma fonte de dados ao finalizar a rede paralela.
     			*/
     		}
     	}
