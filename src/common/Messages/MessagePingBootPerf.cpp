@@ -3,12 +3,14 @@
 MessagePingBootPerf::MessagePingBootPerf(PeerModes mode, ChunkUniqueID chunkuid, uint32_t estimatedStreamRate, uint32_t channelId,
                                     uint32_t chunksGeneratedPerSecond, uint32_t chunksSentPerSecond, uint32_t chunksReceivedPerSecond, uint32_t chunksOverloadPerSecond,
                                     uint32_t requestsSentPerSecond, uint32_t requestsRecvPerSecond, uint32_t requestsRetriesPerSecond, uint32_t chunksMissed, uint32_t chunksExpected, float meanHop, float meanTries,  float meanTriesPerRequest,
-                                    uint16_t neighborhoodSize, ChunkUniqueID* lastMediaID, int lastMediaHopCount, int lastMediaTriesCount, uint32_t lastMediaTime, uint32_t nowtime)
+                                    uint16_t neighborhoodSize, ChunkUniqueID* lastMediaID, int lastMediaHopCount, int lastMediaTriesCount, uint32_t lastMediaTime, uint32_t nowtime,
+                                    uint16_t neighborhoodSizeIn, uint16_t neighborhoodSizeOut)
 {
     vector<int> data = GetHeaderValuesDataVector(mode, chunkuid, estimatedStreamRate, channelId,
                     chunksGeneratedPerSecond, chunksSentPerSecond, chunksReceivedPerSecond, chunksOverloadPerSecond,
                     requestsSentPerSecond, requestsRecvPerSecond, requestsRetriesPerSecond, chunksMissed, chunksExpected, meanHop, meanTries, meanTriesPerRequest, neighborhoodSize, 
-                    lastMediaID, lastMediaHopCount, lastMediaTriesCount, lastMediaTime, nowtime);
+                    lastMediaID, lastMediaHopCount, lastMediaTriesCount, lastMediaTime, nowtime,
+                    neighborhoodSizeIn, neighborhoodSizeOut);
                     
     firstByte = new uint8_t[MESSAGE_PING_BOOT_PERF_HEADER_SIZE];
     Message::AssembleHeader(OPCODE_PING, MESSAGE_PING_BOOT_PERF_HEADER_SIZE, 0, data);
@@ -17,22 +19,26 @@ MessagePingBootPerf::MessagePingBootPerf(PeerModes mode, ChunkUniqueID chunkuid,
 vector<int> MessagePingBootPerf::GetHeaderValuesDataVector(PeerModes mode, ChunkUniqueID chunkuid, uint32_t estimatedStreamRate, uint32_t channelId,
                                     uint32_t chunksGeneratedPerSecond, uint32_t chunksSentPerSecond, uint32_t chunksReceivedPerSecond, uint32_t chunksOverloadPerSecond,
                                     uint32_t requestsSentPerSecond, uint32_t requestsRecvPerSecond, uint32_t requestsRetriesPerSecond, uint32_t chunksMissed, uint32_t chunksExpected, float meanHop, float meanTries, float meanTriesPerRequest,
-                                    uint16_t neighborhoodSize, ChunkUniqueID* lastMediaID, int lastMediaHopCount, int lastMediaTriesCount, uint32_t lastMediaTime, uint32_t nowtime)
+                                    uint16_t neighborhoodSize, ChunkUniqueID* lastMediaID, int lastMediaHopCount, int lastMediaTriesCount, uint32_t lastMediaTime, uint32_t nowtime,
+                                    uint16_t neighborhoodSizeIn, uint16_t neighborhoodSizeOut)
 {
     return GetHeaderValuesDataVector(PING_BOOT_PERF, mode, chunkuid, estimatedStreamRate, channelId,
                     chunksGeneratedPerSecond, chunksSentPerSecond, chunksReceivedPerSecond, chunksOverloadPerSecond,
                     requestsSentPerSecond, requestsRecvPerSecond, requestsRetriesPerSecond, chunksMissed, chunksExpected, meanHop, meanTries, meanTriesPerRequest, neighborhoodSize, 
-                    lastMediaID, lastMediaHopCount, lastMediaTriesCount, lastMediaTime, nowtime);
+                    lastMediaID, lastMediaHopCount, lastMediaTriesCount, lastMediaTime, nowtime,
+                    neighborhoodSizeIn, neighborhoodSizeOut);
 }
 
 vector<int> MessagePingBootPerf::GetHeaderValuesDataVector(PingTypes pingType, PeerModes mode, ChunkUniqueID chunkuid, uint32_t estimatedStreamRate, uint32_t channelId,
                                     uint32_t chunksGeneratedPerSecond, uint32_t chunksSentPerSecond, uint32_t chunksReceivedPerSecond, uint32_t chunksOverloadPerSecond,
                                     uint32_t requestsSentPerSecond, uint32_t requestsRecvPerSecond, uint32_t requestsRetriesPerSecond, uint32_t chunksMissed, uint32_t chunksExpected, float meanHop, float meanTries, float meanTriesPerRequest,
-                                    uint16_t neighborhoodSize, ChunkUniqueID* lastMediaID, int lastMediaHopCount, int lastMediaTriesCount, uint32_t lastMediaTime, uint32_t nowtime)
+                                    uint16_t neighborhoodSize, ChunkUniqueID* lastMediaID, int lastMediaHopCount, int lastMediaTriesCount, uint32_t lastMediaTime, uint32_t nowtime,
+                                    uint16_t neighborhoodSizeIn, uint16_t neighborhoodSizeOut)
 {
     vector<int> data = MessagePingBoot::GetHeaderValuesDataVector(pingType, mode, chunkuid, estimatedStreamRate, channelId);
     int prevSize = data.size();
-    data.resize(prevSize + 19);
+    //ECM //data.resize(prevSize + 19);
+    data.resize(prevSize + 21);
     //Performance
     data[prevSize + 0]  = chunksGeneratedPerSecond;
     data[prevSize + 1]  = chunksSentPerSecond;
@@ -64,6 +70,11 @@ vector<int> MessagePingBootPerf::GetHeaderValuesDataVector(PingTypes pingType, P
         data[prevSize + 17] = -1;
     }
     data[prevSize + 18] = nowtime;
+
+    //ECM
+    data[prevSize + 19] = neighborhoodSizeIn ;
+    data[prevSize + 20] = neighborhoodSizeOut;
+
     return data;
 }
 
@@ -71,7 +82,9 @@ vector<uint8_t> MessagePingBootPerf::GetHeaderValuesSizeVector()
 {
     vector<uint8_t> sizes = MessagePingBoot::GetHeaderValuesSizeVector();
     int prevSize = sizes.size();
-    sizes.resize(prevSize + 19);
+    //ECM //sizes.resize(prevSize + 19);
+    sizes.resize(prevSize + 21);
+
     sizes[prevSize + 0] = 32;                                                    //STAT.ChunksGenerated
     sizes[prevSize + 1] = 32;                                                    //STAT.ChunksSent
     sizes[prevSize + 2] = 32;                                                    //STAT.ChunksReceived
@@ -91,5 +104,8 @@ vector<uint8_t> MessagePingBootPerf::GetHeaderValuesSizeVector()
     sizes[prevSize + 16] = 32;                                                    //STAT.SampleChunk.TriesCount
     sizes[prevSize + 17] = 32;                                                    //STAT.SampleChunk.Time
     sizes[prevSize + 18] = 32;                                                    //STAT.NowTime
+    //ECM
+    sizes[prevSize + 19] = 16;                                                    //STAT.NeighborhoodSize IN
+    sizes[prevSize + 20] = 16;                                                    //STAT.NeighborhoodSize OUT
     return sizes;
 }

@@ -310,7 +310,12 @@ void Bootstrap::HandlePingMessage(MessagePingBoot* message, string sourceAddress
                 performanceLog += boost::lexical_cast<string>(pingHeader[indexPerfStart + 16]) + " ";    //SampleChunk.TriesCount
                 performanceLog += boost::lexical_cast<string>(pingHeader[indexPerfStart + 17]) + " ";    //SampleChunk.Time
                 performanceLog += boost::lexical_cast<string>(pingHeader[indexPerfStart + 18]) + " ";    //MsgTime
-                performanceLog += boost::lexical_cast<string>(rawtime) + "\n";            //NowTime
+
+                performanceLog += boost::lexical_cast<string>(rawtime) + " "; //+ "\n";            //NowTime
+
+                performanceLog += boost::lexical_cast<string>(pingHeader[indexPerfStart + 19]) + " ";    //ECM NeighborhoodSizeIn
+                performanceLog += boost::lexical_cast<string>(pingHeader[indexPerfStart + 20]) + "\n";    //ECM NeighborhoodSizeOut
+
                 //if (performanceFile)
                 for (vector<FILE*>::iterator f = performanceFile.begin(); f != performanceFile.end(); f++)
                 {

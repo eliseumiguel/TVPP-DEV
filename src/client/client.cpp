@@ -865,7 +865,8 @@ void Client::Ping()
                                     chunksMissed, chunksExpected,
                                     meanHop, meanTries, meanTriesPerRequest, peerManager.GetPeerActiveSizeTotal(),
                                     lastMediaID, lastMediaHopCount, lastMediaTriesCount, lastMediaTime + bootstrapTimeShift,
-                                    nowtime + bootstrapTimeShift);
+                                    nowtime + bootstrapTimeShift,
+                                    peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()),peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut()));
 
             peerlistMessage = new MessagePeerlistLog(peerManager.GetPeerActiveSizeTotal(), idChannel, nowtime + bootstrapTimeShift);
 

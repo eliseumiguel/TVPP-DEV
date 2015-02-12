@@ -24,7 +24,7 @@
 #define MESSAGE_PEERLIST_LOG_HEADER_SIZE        18
 #define MESSAGE_PING_HEADER_SIZE                14
 #define MESSAGE_PING_BOOT_HEADER_SIZE           22
-#define MESSAGE_PING_BOOT_PERF_HEADER_SIZE      94
+#define MESSAGE_PING_BOOT_PERF_HEADER_SIZE      98  // aumento de 2 In e 2 Out  valor antigo = 94
 #define MESSAGE_DATA_HEADER_SIZE                22
 
 //Client Operation Modes
