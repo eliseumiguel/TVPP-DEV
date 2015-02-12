@@ -26,6 +26,7 @@ Channel::Channel(unsigned int channelId, Peer* serverPeer,
         cout<< "maxSubChannel            = "<< maxSubChannel<<endl;
         cout<< "maxServerAuxCandidate    = "<< maxServerAuxCandidate<<endl;
         cout<<"Mesclar Redes = ["<<mesclarRedes<<"]"<<endl;
+        cout<<" -------------------------------------------------"<<endl;
 
         //Logging
         struct tm * timeinfo;
