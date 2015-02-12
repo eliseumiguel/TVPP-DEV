@@ -314,7 +314,8 @@ void Bootstrap::HandlePingMessage(MessagePingBoot* message, string sourceAddress
                 performanceLog += boost::lexical_cast<string>(rawtime) + " "; //+ "\n";            //NowTime
 
                 performanceLog += boost::lexical_cast<string>(pingHeader[indexPerfStart + 19]) + " ";    //ECM NeighborhoodSizeIn
-                performanceLog += boost::lexical_cast<string>(pingHeader[indexPerfStart + 20]) + "\n";    //ECM NeighborhoodSizeOut
+                performanceLog += boost::lexical_cast<string>(pingHeader[indexPerfStart + 20]) + " ";    //ECM NeighborhoodSizeOut
+                performanceLog += boost::lexical_cast<string>(channelList[channelId].GetPeerData(srcPeer).GetChannelId_Sub()) +"\n"; //ECM
 
                 //if (performanceFile)
                 for (vector<FILE*>::iterator f = performanceFile.begin(); f != performanceFile.end(); f++)

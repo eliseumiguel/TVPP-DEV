@@ -9,6 +9,7 @@
 #define TTLIn 10
 #define TTLOut 10
 #define TTLChannel 10
+#define CHANNEL_ID_MESCLANDO -1
 
 #define SECONDS 1000000000
 

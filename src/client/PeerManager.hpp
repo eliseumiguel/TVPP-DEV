@@ -19,6 +19,7 @@
 #include <boost/thread/mutex.hpp>
 
 #define PEER_ACTIVE_COOLDOWN 5
+#define SERVER_AUX_SUB_CHANNEL_ID 1
 
 class PeerManager
 {

@@ -60,7 +60,7 @@ void PeerManager::SetPeerManagerState(ServerAuxTypes newPeerManagerState)
 
 		    	/* faz primeiro ser do canal principal interno
 		    	 * remove primeiro da lista de out
-		    	 * código de mesclagem ChannelId == -1
+		    	 * código de mesclagem ChannelId == CHANNEL_ID_MESCLANDO
 		    	 * Isso já foi tratado dentro de channel. lá ele
 		    	 * testa se o peer está em mesclagem e não permite
 		    	 * que qualquer servidor auxiliar e qualquer peer
@@ -68,7 +68,7 @@ void PeerManager::SetPeerManagerState(ServerAuxTypes newPeerManagerState)
 		    	 * pode ser usada para um tratamento interno ao servidor
 		    	 * auxiliar
 		    	*/
-		    	//peerList[*(peerActiveOut.begin())].SetChannelId_Sub(-1);
+		    	//peerList[*(peerActiveOut.begin())].SetChannelId_Sub(CHANNEL_ID_MESCLANDO);
 
 		    	peerList.erase(*(peerActiveOut.begin()));
 	    		peerActiveOut.erase(peerActiveOut.begin());
@@ -128,7 +128,7 @@ bool PeerManager::AddPeer(Peer* newPeer)
 	{
 		peerList[newPeer->GetID()] = PeerData(newPeer);
 		if (peerManagerState == SERVER_AUX_ACTIVE)
-			peerList[newPeer->GetID()].SetChannelId_Sub(1);
+			peerList[newPeer->GetID()].SetChannelId_Sub(SERVER_AUX_SUB_CHANNEL_ID);
 		peerListLock.unlock();
 		cout<<"Peer "<<newPeer->GetID()<<" added to PeerList"<<endl;
 		return true;
@@ -174,7 +174,7 @@ bool PeerManager::ConnectPeer(string peer, set<string>* peerActive)
 			 * aceita somente pares da rede paralela
 			 */
 			if (peerManagerState == SERVER_AUX_ACTIVE)
-				if (peerList[peer].GetChannelId_Sub() != 1)
+				if (peerList[peer].GetChannelId_Sub() != SERVER_AUX_SUB_CHANNEL_ID)
 				{
 					return false;
 				}
@@ -185,7 +185,7 @@ bool PeerManager::ConnectPeer(string peer, set<string>* peerActive)
 			* channelId_Sub = 3 durante a mesclagem
 			*/
 			if (peerManagerState == SERVER_AUX_MESCLAR)
-				if (peerList[peer].GetChannelId_Sub() != -1)
+				if (peerList[peer].GetChannelId_Sub() != CHANNEL_ID_MESCLANDO)
 				{
 					return false;
 				}
