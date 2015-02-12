@@ -162,6 +162,8 @@ void Bootstrap::setChannelState(uint32_t channelId, uint8_t channelState) {
 
 	if (channelState == MODE_FLASH_CROWD)
 		cout << " ***** CHANNEL STATE NEW * FLASH CROWD ****" << endl;
+	if (channelState == MODE_FLASH_CROWD_MESCLAR)
+		cout << " ***** CHANNEL STATE NEW * FLASH CROWD MESCLAR ****" << endl;
 	if (channelState == MODE_NORMAL)
 		cout << " **** CHANNEL STATE NEW * MODE_NORMAL ****" << endl;
 }

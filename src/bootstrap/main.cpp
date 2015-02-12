@@ -30,7 +30,10 @@ int main(int argc, char* argv[]) {
     unsigned int maxServerAuxCandidate = 6;
     unsigned int maxPeerInSubChannel = 60;
 
-    string arg1 = argv[1];
+    string arg1 = "";
+    if( argv[1] != NULL)
+    	arg1 = argv[1];
+
     if(arg1 == "--help")
     {
         cout << "\nUsage: ./bootstrap [OPTIONS]" <<endl;
@@ -50,6 +53,7 @@ int main(int argc, char* argv[]) {
     }
 
     int optind=1;
+
     // decode arguments
     while ((optind < argc) && (argv[optind][0]=='-')) {
         string swtc = argv[optind];
