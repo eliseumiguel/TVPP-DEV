@@ -103,7 +103,7 @@ int main(int argc, char* argv[])
     else
     	cout<<"CHANNEL STATE CHANGED: Channel Mode ["<<(int)channelMode<<"]"<<endl;
 
-    cout<<"fechando.... "<<endl;
+    cout<<"configurado.... "<<endl;
 }
 
 

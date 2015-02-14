@@ -20,12 +20,32 @@ SubChannelData::SubChannelData(unsigned int channelId, unsigned int channelIdSub
          timeinfo = localtime(&creationTime);
          strftime (timestr,20,"%Y%m%d%H%M",timeinfo);
          string logFilename = "log-";
-         logFilename += boost::lexical_cast<string>(channelId_Master) + ":" + boost::lexical_cast<string>(channelId_Sub) + "-";
-         logFilename += serverPeer_Sub->GetIP() + "_" + serverPeer_Sub->GetPort() + "-";
+         logFilename += boost::lexical_cast<string>(channelId_Master) + "-";
+
+         string ip = serverPeer_Sub->GetIP();
+         int tamanho = ip.size();
+         for (int j = 0; j < 20 - tamanho ; j++)
+         {
+              ip = "0" + ip;
+         }
+         logFilename += ip +  "_" ;
+
+
+         logFilename += serverPeer_Sub->GetPort() + "-";
          logFilename += timestr;
          logFilename += "-";
-         string logFilenamePerf = logFilename + "perf.txt";
-         string logFilenameOverlay = logFilename + "overlay.txt";
+
+         string channelS = boost::lexical_cast<string>(channelId_Sub);
+         tamanho = channelS.size();
+         for (int j = 0; j < 3 - tamanho ; j++)
+         {
+              channelS ="0" + channelS;
+         }
+
+         logFilename += channelS;
+
+         string logFilenamePerf = logFilename + "-perf.txt";
+         string logFilenameOverlay = logFilename + "-overlay.txt";
          performanceFile = fopen(logFilenamePerf.c_str(),"w");
          overlayFile = fopen(logFilenameOverlay.c_str(),"w");
 

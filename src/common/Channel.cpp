@@ -36,15 +36,24 @@ Channel::Channel(unsigned int channelId, Peer* serverPeer,
         strftime (timestr,20,"%Y%m%d%H%M",timeinfo);
         string logFilename = "log-";
         logFilename += boost::lexical_cast<string>(channelId) + "-";
-        logFilename += serverPeer->GetIP() + "_" + serverPeer->GetPort() + "-";
+
+        string ip = serverPeer->GetIP();
+        int tamanho = ip.size();
+        for (int j = 0; j < 20 - tamanho ; j++)
+        {
+             ip = "0" + ip;
+        }
+        logFilename += ip + "_" ;
+
+        logFilename += serverPeer->GetPort() + "-";
         logFilename += timestr;
         logFilename += "-";
 
-        string logFilenamePerf_Master = logFilename + "perf_Master.txt";
-        string logFilenameOverlay_Master = logFilename + "overlay_Master.txt";
+        string logFilenamePerf_Master = logFilename + "mas-perf.txt";
+        string logFilenameOverlay_Master = logFilename + "mas-overlay.txt";
 
-        string logFilenamePerf_Total = logFilename + "perf_Total.txt";
-        string logFilenameOverlay_Total = logFilename + "overlay_Total.txt";
+        string logFilenamePerf_Total = logFilename + "all-perf.txt";
+        string logFilenameOverlay_Total = logFilename + "all-overlay.txt";
 
         performanceFile_Master = fopen(logFilenamePerf_Master.c_str(),"w");
         poverlayFile_Master = fopen(logFilenameOverlay_Master.c_str(),"w");
