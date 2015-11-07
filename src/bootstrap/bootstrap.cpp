@@ -124,7 +124,7 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
 			} else {
 				vector<PeerData*> selectedPeers =
 						channelList[channelId].SelectPeerList(
-								peerlistSelectorStrategy, source, 20);
+								peerlistSelectorStrategy, source, 20, XPConfig::Instance()->GetBool("isolaVirtutalPeerSameIP"));
 
 				time_t nowtime;
 				time(&nowtime);

@@ -48,9 +48,14 @@ int main(int argc, char* argv[]) {
         cout <<"  -maxSubChannel               define the sub channel limit                  (default: "<<maxSubChannel<<")"<<endl;
         cout <<"  -maxServerAuxCandidate       define the server limit to create sub channel (default: "<<maxServerAuxCandidate<<")"<<endl;
         cout <<"  -maxPeerInSubChannel         define the peer number in new sub channel     (default: "<<maxPeerInSubChannel<<")"<<endl;
+        cout <<"  --isolaVirtutalPeerSameIP    permit only different IP partner "<<endl;
 
         exit(1);
     }
+
+
+    XPConfig::Instance()->OpenConfigFile("");
+    XPConfig::Instance()->SetBool("isolaVirtutalPeerSameIP", false);
 
     int optind=1;
 
@@ -83,6 +88,10 @@ int main(int argc, char* argv[]) {
             optind++;
             maxPeerInSubChannel = (unsigned int) atoi(argv[optind]);
         }
+        else if (swtc=="--isolaVirtutalPeerSameIP")
+        {
+            XPConfig::Instance()->SetBool("isolaVirtutalPeerSameIP", true);
+        }
 
         else {
             cout << "Invalid Arguments"<<endl; 
@@ -91,7 +100,8 @@ int main(int argc, char* argv[]) {
         optind++;
     }
 
-    XPConfig::Instance()->OpenConfigFile("");
+
+
     Bootstrap bootstrapInstance(myUDPPort, peerlistSelectorStrategy, maxSubChannel, maxServerAuxCandidate, maxPeerInSubChannel);
     
     boost::thread TTCPSERVER(boost::bind(&Bootstrap::TCPStart, &bootstrapInstance, myTCPPort.c_str()));

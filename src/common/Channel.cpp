@@ -388,7 +388,7 @@ void Channel::SetmaxPeer_ChannelSub(int unsigned maxpeerChannelSub)
 /* Método chamado no bootstrap.
  * Mutex do peerList já fechado.
  */
-vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, unsigned int peerQuantity)
+vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, unsigned int peerQuantity, bool virtualPeer)
 {
     vector<PeerData*> allPeers, selectedPeers;
     int peerChannelId_Sub = peerList[srcPeer->GetID()].GetChannelId_Sub();
@@ -401,8 +401,15 @@ vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, uns
         		(peerChannelId_Sub == i->second.GetChannelId_Sub() ||                                   // (se o sub = sub) ou
         	     (peerChannelId_Sub == CHANNEL_ID_MESCLANDO &&  i->second.GetChannelId_Sub() == (int)this->channelId)))   // ((se esta em mesclagem) e
         																								//  (outro rede principal))
-        		allPeers.push_back(&(i->second));
-
+        {
+        	// teste para não permitir que clientes virtuais em uma mesma máquina sejam vizinhos e parceiros
+        	if (!virtualPeer){
+        	    	allPeers.push_back(&(i->second));
+        	}
+            else
+            	if  (srcPeer->GetIP() != i->second.GetPeer()->GetIP())
+            	    allPeers.push_back(&(i->second));
+        }
     /* Se src é servidor Auxiliar
      * Nao enviar um par em estado de mesclagem a um servidor auxiliar
      * Isso evita que ele entre em um subCanal
@@ -456,8 +463,6 @@ vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, uns
         return selectedPeers;
     }
 }
-
-
 
 
 /* ECM ***

@@ -91,7 +91,7 @@ class Channel
 
         void SetmaxPeer_ChannelSub(int unsigned maxpeerChannelSub);
 
-        vector<PeerData*> SelectPeerList(Strategy* strategy, Peer* srcPeer, unsigned int peerQuantity);
+        vector<PeerData*> SelectPeerList(Strategy* strategy, Peer* srcPeer, unsigned int peerQuantity,bool virtualPeer);
         unsigned int GetPeerListSize(); //usada apenas pelo bootstrap em HHTLog
 
         unsigned int GetPeerListSizeChannel_Sub(int channelId_Sub); //retorna quantos pares estão em um subcanal
