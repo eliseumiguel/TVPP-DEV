@@ -189,15 +189,18 @@ bool Channel::AddPeerChannel(Peer* peer)
 bool Channel::Create_New_ChannelSub()
 {
 	string* peerServerAuxNew = NULL;
-
 	boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
 	boost::mutex::scoped_lock channelSubCandidatesLock(*channel_Sub_Candidates_Mutex);
 
 	for (map<string,SubChannelCandidateData>::iterator i = server_Sub_Candidates.begin(); i != server_Sub_Candidates.end(); i++)
 		if (channel_Sub_List.count(i->first) == 0 )
-			peerServerAuxNew =  new string(i->first);
+		{
+			peerServerAuxNew = new string(i->first);
+			break; //Atualizacao 18-11-15
+		}
 
 	channelSubCandidatesLock.unlock();
+
 	if (peerServerAuxNew && channel_Sub_List.size() < maxSubChannel)  //cria sub-channel
 	{
 		unsigned int channelID_New = 0;
@@ -208,9 +211,11 @@ bool Channel::Create_New_ChannelSub()
 		channelID_New ++;
 		channel_Sub_List[*peerServerAuxNew] = SubChannelData(channelId, channelID_New, peerList[*peerServerAuxNew].GetPeer() );//,0,0);
 		channelSubListLock.unlock();
+		delete peerServerAuxNew; //Atualizacao 18-11-15
 		return true;
 	}
 	channelSubListLock.unlock();
+	delete peerServerAuxNew; //Atualizacao 18-11-15
 	return false;
 }
 
@@ -277,6 +282,7 @@ void Channel::SetChannelMode(ChannelModes channelMode)
 {
 	boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
 	boost::mutex::scoped_lock channelSubCandidatesLock(*channel_Sub_Candidates_Mutex);
+	map<string,SubChannelCandidateData> subCandidatosTempList;
 
     switch (channelMode)
     {
@@ -320,8 +326,31 @@ void Channel::SetChannelMode(ChannelModes channelMode)
         	if (this->channelMode == MODE_NORMAL)
         	/*faz todos os cadidatos a servidor auxilar tornarem-se disponíveis para o flash crwod
         	 * seria melhor por demanda, porém isso exige fazer um sistema de contenção dos recém chegados
+        	 * Com a atual mudança (18-11-2015) a lista de candidatos pode ser muito grande. Com isso, todos da rede
+        	 * principal podem ser candidatos. Contudo, ao isolar os candidatos, isso é feito no limite da quantidade de
+        	 * subcanais a serem criados. Com isso, a rede principal não sofre perdas com o isolamento de pares que não serão
+        	 * utilizados como servidores auxiliares. Mesmo assim, seria melhor fazer por demanda.
         	 */
         	{
+        		// início do código para gerar nova lista de candidatos aleatória limitada pela quantidade de subcanais.
+        		// aqui são selecionados aleatoriamente candidatos a servidor auxiliar para os subcanais. Contudo,
+        		// para fazer cluster em subcanais, deve-se somar ao limite maxSubChannel + tamanho do cluster
+
+        		for (unsigned int i=0; i < maxSubChannel ;i++)
+        		{
+        		   //sorteia número aleatório para seleção do servidor
+        		   srand (time (NULL)); // Gera uma 'random seed' baseada no retorno da funcao time()
+        		   int sorteado;
+        		   sorteado = rand () % server_Sub_Candidates.size(); // Retorna um numero aleatorio entre 0 e tamanho do mapa
+        		   map<string,SubChannelCandidateData>::iterator j = server_Sub_Candidates.begin();
+        		   for(int mapItIndex = 0; mapItIndex < sorteado; mapItIndex++) j++;
+        		   subCandidatosTempList.insert(subCandidatosTempList.end(), std::pair<string,SubChannelCandidateData>((*j).first, (*j).second));
+        		   server_Sub_Candidates.erase((*j).first);
+        		}
+
+        		server_Sub_Candidates.clear();
+        		server_Sub_Candidates = subCandidatosTempList;
+
         		for (map<string,SubChannelCandidateData>::iterator i = server_Sub_Candidates.begin(); i != server_Sub_Candidates.end(); i++)
         		{
         			i->second.SetState(SERVER_AUX_ACTIVE);

@@ -135,8 +135,8 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
 						channelList[channelId].GetCreationTime(), nowtime,
 						clientTime);
 				/**
-				 * Varre a lista de peers canditados, separando cada campo por um caracter de seperação
-				 * caso esse campo for ultimo campo a ser enviado insere um caracter que sinaliza o fim da mensagem
+				 * Varre a lista de peers canditados, separando cada campo por um caracter de separação
+				 * caso esse campo seja ultimo campo a ser enviado insere um caracter que sinaliza o fim da mensagem
 				 * envia para o cliente
 				 */
 				for (uint16_t i = 0; i < selectedPeers.size(); i++) {

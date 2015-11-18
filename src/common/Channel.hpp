@@ -40,6 +40,8 @@ assim o channel precisa conhecer apenas a estratégia base, enquanto os servidor
 #include <vector>
 #include <map>
 #include <set>
+#include <stdlib.h> // para gerar numeros aleatorios
+#include <time.h> // para gerar a 'random seed' baseada no tempo
 #include "PeerData.hpp"
 #include "Sub-Channel-Data.hpp"
 #include "Strategy/Strategy.hpp"
