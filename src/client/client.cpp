@@ -18,7 +18,7 @@ Client::Client(){}
 void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, uint32_t idChannel, 
             string peers_udp_port, string streamingPort, PeerModes mode, uint32_t buffer, 
             int maxPeersIn, int maxPeersOut, int janela, int num, int ttlIn, int ttlOut, int maxRequestAttempt, int tipOffsetTime, int limitDownload, int limitUpload,
-            string disconnectorStrategy, string connectorStrategy, string chunkSchedulerStrategy, 
+            string disconnectorStrategyIn, string disconnectorStrategyOut, int quantityDisconnect, string connectorStrategy, string chunkSchedulerStrategy,
             string messageSendScheduler, string messageReceiveScheduler)
 {
     cout <<"Starting Client Version["<<VERSION<<"]" <<endl;
@@ -75,17 +75,17 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
 
     uint64_t updatePeerListPeriod = 30; 
     updatePeerListPeriod = updatePeerListPeriod*SECONDS;
-    if (disconnectorStrategy == "None")
-    {
+    //ECM 2016-01-16
+    if (disconnectorStrategyIn == "None")
         this->disconnectorIn = NULL;
-        this->disconnectorOut = NULL;
-    } 
-    //TODO OportunisticDisconnect
     else
-    {
-        this->disconnectorIn = new Disconnector(new RandomStrategy(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveIn());
-        this->disconnectorOut = new Disconnector(new RandomStrategy(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveOut());
-    }
+        this->disconnectorIn = new Disconnector(new RandomStrategy(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveIn(), quantityDisconnect);
+
+    if (disconnectorStrategyOut == "None")
+        this->disconnectorOut = NULL;
+    else
+        this->disconnectorOut = new Disconnector(new RandomStrategy(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveOut(), quantityDisconnect);
+
     if (disconnectorIn) temporizableList.push_back(disconnectorIn);
     if (disconnectorOut) temporizableList.push_back(disconnectorOut);
 
@@ -155,6 +155,9 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
   
     srand ( time(NULL) );
 } //Client
+
+//ECM Informes bootstrap if the peer is or not parallel auxiliary candidate
+bool Client::isServerCandidate(){return  XPConfig::Instance()->GetBool("serverCandidate");}
 
 bool Client::ConnectToBootstrap()
 {
@@ -785,13 +788,14 @@ void Client::HandleDataMessage(MessageData* message, string sourceAddress, uint3
 void Client::Ping()
 {
     Message* pingMessage;
-    MessagePeerlistLog* peerlistMessage;
+    MessagePeerlistLog* peerlistMessage;  //ECM usado para gerar o log de overlay
+                                          //Recebe os IP parceiros Out + 000.000.0.00 + parceiros In
     uint32_t pingsSend = 1;
     uint32_t step = 10;
     boost::xtime xt;
     time_t nowtime;
     Peer* bootstrap = new Peer(Bootstrap_IP, UDP_server_PORT);
-
+    Peer peerNulo("10.0.0.0","0"); //ECM - Usado para cirar um separador entre Out e In no log do Overlay
     /** 
      * Loop principal
      * Envia uma mensagem ao servidor de bootstrap dizendo que este cliente está vivo
@@ -858,7 +862,7 @@ void Client::Ping()
             time(&nowtime);
 
             int chunksExpected = chunksMissed + chunksPlayed;
-            //TODO ECM - alterar parâmetros para enviar PeerActiveSizeIn() e PeerActiveSizeOut() ao contrário de PeerActiveSizeTotal()
+
             pingMessage = new MessagePingBootPerf(peerMode, latestReceivedPosition, Statistics::Instance()->GetEstimatedChunkRate(), idChannel,
                                     chunksGeneratedPerSecond, chunksSentPerSecond, chunksReceivedPerSecond, chunksOverloadPerSecond,
                                     requestsSentPerSecond, requestsRecvPerSecond, requestRetriesPerSecond,
@@ -868,7 +872,9 @@ void Client::Ping()
                                     nowtime + bootstrapTimeShift,
                                     peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()),peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut()));
 
-            peerlistMessage = new MessagePeerlistLog(peerManager.GetPeerActiveSizeTotal(), idChannel, nowtime + bootstrapTimeShift);
+            //peerlistMessage = new MessagePeerlistLog(peerManager.GetPeerActiveSizeTotal(), idChannel, nowtime + bootstrapTimeShift);
+            //o tamanho da mensagem é o número de pares out, mais um separador + o número de pares In
+            peerlistMessage = new MessagePeerlistLog( 1 + peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut())+peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()), idChannel, nowtime + bootstrapTimeShift);
 
             //Calculate an estimated chunk rate
             if (peerMode == MODE_SERVER)
@@ -945,8 +951,8 @@ void Client::Ping()
                 for (set<string>::iterator i = peerManager.GetPeerActiveOut_Master()->begin(); i != peerManager.GetPeerActiveOut_Master()->end(); i++)
                 {
                     Peer* peer = peerManager.GetPeerData(*i)->GetPeer();
-                    if (peerlistMessage)
-                        peerlistMessage->AddPeer(peer);
+                    //código retirado para não inserir os parceiros Out de Master no log de overlay dos servidores auxiliares
+                    //if (peerlistMessage){peerlistMessage->AddPeer(peer);}
                     if (pingMessage && peer)
                     {
                         //udp->Send(peer->GetID(), pingMessage->GetFirstByte(), pingMessage->GetSize());
@@ -958,7 +964,7 @@ void Client::Ping()
 
 
              }
-            //--------------- termina aqui esse recureso ------------------------------------------------------
+            //--------------- termina aqui esse recurso ------------------------------------------------------
 
 
             /* ping to Active Peer List Out
@@ -994,7 +1000,7 @@ void Client::Ping()
                 {
                     Peer* peer = peerManager.GetPeerData(*i)->GetPeer();
                     if (peerlistMessage)
-                        peerlistMessage->AddPeer(peer);
+                        peerlistMessage->AddPeer(peer); //insere pares out no log de ovrelay do participante
                     if (pingMessage && peer)
                     {
                         //udp->Send(peer->GetID(), pingMessage->GetFirstByte(), pingMessage->GetSize()); 
@@ -1013,18 +1019,20 @@ void Client::Ping()
                 pingMessage->SetIntegrity();
 
                 boost::mutex::scoped_lock peerListLock(*peerManager.GetPeerListMutex());
-                boost::mutex::scoped_lock peerActiveIntLock(*peerManager.GetPeerActiveMutex(peerManager.GetPeerActiveIn()));
+                boost::mutex::scoped_lock peerActiveInLock(*peerManager.GetPeerActiveMutex(peerManager.GetPeerActiveIn()));
+                if (peerlistMessage)
+                    peerlistMessage->AddPeer(&peerNulo); //ECM insere separador entre pares Out e In no log de Overlay
                 for (set<string>::iterator i = peerManager.GetPeerActiveIn()->begin(); i != peerManager.GetPeerActiveIn()->end(); i++)
                 {
                     Peer* peer = peerManager.GetPeerData(*i)->GetPeer();
                     if (peerlistMessage)
-                        peerlistMessage->AddPeer(peer);
+                        peerlistMessage->AddPeer(peer); //ECM insere pares In no log de overlay do participante
                     if (pingMessage && peer)
                     {
                         udp->EnqueueSend(peer->GetID(), pingMessage);
                     }
                 }
-                peerActiveIntLock.unlock();
+                peerActiveInLock.unlock();
                 peerListLock.unlock();
 
             }

@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
     string peerlistSelectorStrategy = "";
 
     unsigned int maxSubChannel = 6;
-    unsigned int maxServerAuxCandidate = 6;
+    unsigned int maxServerAuxCandidate = 200; //ECM quando ocorre o flash crowd, são selecionados o total de pares necessários para os subcanais
     unsigned int maxPeerInSubChannel = 60;
 
     string arg1 = "";

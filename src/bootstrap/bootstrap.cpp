@@ -187,7 +187,7 @@ void Bootstrap::HandleUDPMessage(Message* message, string sourceAddress) {
 }
 
 /* PEERLIST PACKET:    | OPCODE | HEADERSIZE | BODYSIZE | EXTPORT | CHUNKGUID | QTDPEERS | PEERLIST |  **************************************
- ** Sizes(bytes):       |   1    |     1      |     2    |    2    |  4  |  2  |    2     |    6     |  TOTAL: 14 Bytes + 6*QTDPEERS *********/
+ ** Sizes(bytes):      |   1    |     1      |     2    |    2    |  4  |  2  |    2     |    6     |  TOTAL: 14 Bytes + 6*QTDPEERS *********/
 void Bootstrap::HandlePeerlistMessage(MessagePeerlist* message,
 		string sourceAddress) {
 	Peer* srcPeer = new Peer(sourceAddress);

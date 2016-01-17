@@ -64,8 +64,10 @@ int main (int argc, char* argv[])
     int tipOffsetTime = 3;
     int limitDownload = -1;
     int limitUpload = -1;
-	string disconnectorStrategy = "None";
-	string connectorStrategy = "Random";
+	string disconnectorStrategyIn = "None";    //ECM separate In and Out to be possible disconnect only Out or In or both
+	string disconnectorStrategyOut = "Random"; //ECM ensures that make peerListOut new connections
+	unsigned int quantityDisconnect = 1;       //ECM quantity of peer to be disconnected
+	string connectorStrategy = "Random";       //ECM for In and Out. But, in client, the connectorOut is unable
     string chunkSchedulerStrategy = "Random";
     string messageSendScheduler = "FIFO";
     string messageReceiveScheduler = "FIFO";
@@ -81,8 +83,10 @@ int main (int argc, char* argv[])
             cout <<"\n";
             cout <<"  -bufferSize                   define the buffermap message size (default: "<<bufferSize<<")"<<endl;
             cout <<"  -channelId                    select a channel to transmit/receive (default: "<<idChannel<<")"<<endl;
-			cout <<"  -disconnectorStrategy         select a strategy for peer disconnection (default: "<<disconnectorStrategy<<")"<<endl;
+			cout <<"  -disconnectorStrategyIn       select a strategy for peer disconnection (default: "<<disconnectorStrategyIn<<")"<<endl;
+			cout <<"  -disconnectorStrategyOut      select a strategy for peer disconnection (default: "<<disconnectorStrategyOut<<")"<<endl;
             cout <<"                                (Options: None, Random)"<<endl;
+            cout <<"  -quantityDisconnect           number of peer to be disconnected by disconnectorStrategy (default: "<<quantityDisconnect<<")"<<endl;
 			cout <<"  -connectorStrategy            select a strategy for peer connection (default: "<<connectorStrategy<<")"<<endl;
             cout <<"                                (Options: Random)"<<endl;
             cout <<"  -chunkSchedulerStrategy       select a strategy for chunk scheduling (default: "<<chunkSchedulerStrategy<<")"<<endl;
@@ -91,16 +95,16 @@ int main (int argc, char* argv[])
             cout <<"                                (Options: FIFO, RR - RoundRobin, Random, CDF - Closest Deadline First)"<<endl;
             cout <<"  -messageReceiveScheduler      select a strategy for message reception (default: "<<messageReceiveScheduler<<")"<<endl;
             cout <<"                                (Options: FIFO, RR - RoundRobin, Random, CDF - Closest Deadline First)"<<endl;
-            //cout <<"  -limitDownload                limits the download bandwidht usage in B/s (default: "<<limitDownload<<")"<<endl;
-            //cout <<"  -limitUpload                  limits the upload bandwidht usage in B/s (default: "<<limitUpload<<")"<<endl;
+            cout <<"  -limitDownload                limits the download bandwidht usage in b/s (default: "<<limitDownload<<")"<<endl;
+            cout <<"  -limitUpload                  limits the upload bandwidht usage in b/s (default: "<<limitUpload<<")"<<endl;
             cout <<"  -maxPartnersIn                maximum number of neighbors-In(default: "<<maxPartnersIn<<")"<<endl;
             cout <<"  -maxPartnersOut               maximum number of neighbors-Out(default: "<<maxPartnersOut<<")"<<endl;
             cout <<"  -mode                         define the type of client. (default: "<<mode<<")"<<endl;
-            cout <<"                                (Options: client (0); server (1); free-rider-good (2) *[free-rider-bad -limitUpload 0])"<<endl;
+            cout <<"                                (Options: client (0); server (1); free-rider-good (2))"<<endl;
             cout <<"  -peerPort                     port for inter peer comunication (default: "<<peerPort<<")"<<endl;
             cout <<"  -maxRequestAttempt            maximum number of attempts to perform a request(default: "<<maxRequestAttempt<<")"<<endl;;
             cout <<"  -tipOffsetTime                amount of seconds from where to start requesting chunks prior to stream tip (default: "<<tipOffsetTime<<" )"<<endl;;
-            //cout <<"  -requestLimit               define the amount of chunks that can be simultaneously asked (default: "<<requestLimit<<" )"<<endl;
+            cout <<"  -requestLimit                 define the amount of chunks that can be simultaneously asked (default: "<<requestLimit<<" )"<<endl;
             cout <<"  -streamingPort                port used by media stream (mode-dependent) (default: "<<streamingPort<<")"<<endl;
             cout <<"  -tcpPort                      bootstrap tcp port (default: "<<tcpPort<<")"<<endl;
             cout <<"  -ttlIn                        partnership time to live list In (default: "<<ttlIn<<")"<<endl;
@@ -110,7 +114,8 @@ int main (int argc, char* argv[])
             cout <<"  --playerDisabled              disables stream dispatch to player"<<endl;
             cout <<"  --blockFreeriders             blocks requests to freeriders"<<endl;
             cout <<"  --clientLogsDisabled          disables client logging service"<<endl;
-            //cout <<"  --leakyBucketDataFilter       forces data packets only to pass through upload leaky bucket"<<endl;
+            cout <<"  --leakyBucketDataFilter       forces data packets only to pass through upload leaky bucket"<<endl;
+            cout <<"  --serverCandidate             permits that peer becomes a auxiliary server on parallel network"<<endl;
             exit(1);
         }
         else
@@ -213,10 +218,20 @@ int main (int argc, char* argv[])
             optind++;
            	limitUpload = atoi(argv[optind]);
          }
-		else if (swtc=="-disconnectorStrategy")
+		else if (swtc=="-disconnectorStrategyIn")
         {
             optind++;
-            disconnectorStrategy = argv[optind];
+            disconnectorStrategyIn = argv[optind];
+        }
+		else if (swtc=="-disconnectorStrategyOut")
+        {
+            optind++;
+            disconnectorStrategyOut = argv[optind];
+        }
+		else if (swtc=="-quantityDisconnect")
+        {
+            optind++;
+            quantityDisconnect = atoi(argv[optind]);
         }
 		else if (swtc=="-connectorStrategy")
         {
@@ -254,6 +269,10 @@ int main (int argc, char* argv[])
         {
             XPConfig::Instance()->SetBool("leakyBucketDataFilter", true);
         }
+        else if (swtc=="--serverCandidate")
+        {
+            XPConfig::Instance()->SetBool("serverCandidate", true);
+        }
         else
         {
             cout << "Invalid Arguments. Try --help"<<endl;
@@ -265,7 +284,7 @@ int main (int argc, char* argv[])
     clientInstance.ClientInit(ip, tcpPort, udpPort, idChannel, 
                                 peerPort, streamingPort, mode, bufferSize, 
                                 maxPartnersIn, maxPartnersOut, windowOfInterest, requestLimit, ttlIn, ttlOut, maxRequestAttempt, tipOffsetTime, limitDownload, limitUpload,
-                                disconnectorStrategy, connectorStrategy, chunkSchedulerStrategy, 
+                                disconnectorStrategyIn, disconnectorStrategyOut, quantityDisconnect, connectorStrategy, chunkSchedulerStrategy,
                                 messageSendScheduler, messageReceiveScheduler);
     
     boost::thread TPING(boost::bind(&Client::Ping, &clientInstance));
