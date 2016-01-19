@@ -165,9 +165,9 @@ bool Client::ConnectToBootstrap()
     time_t nowtime;
     time(&nowtime);
     if (peerMode == MODE_SERVER && !serverActive)
-        message = new MessageChannel(CHANNEL_CREATE, perform_udp_punch, externalPort, idChannel, nowtime);
+        message = new MessageChannel(CHANNEL_CREATE, perform_udp_punch, externalPort, idChannel, nowtime, XPConfig::Instance()->GetBool("serverCandidate"));
     else
-        message = new MessageChannel(CHANNEL_CONNECT, perform_udp_punch, externalPort, idChannel, nowtime);
+        message = new MessageChannel(CHANNEL_CONNECT, perform_udp_punch, externalPort, idChannel, nowtime, XPConfig::Instance()->GetBool("serverCandidate"));
     message->SetIntegrity();
     int32_t peers_port;
     if(perform_udp_punch)    //perform_udp_punch é usado para informar (uma vez) a porta udp atrás do NAT
@@ -874,7 +874,10 @@ void Client::Ping()
 
             //peerlistMessage = new MessagePeerlistLog(peerManager.GetPeerActiveSizeTotal(), idChannel, nowtime + bootstrapTimeShift);
             //o tamanho da mensagem é o número de pares out, mais um separador + o número de pares In
-            peerlistMessage = new MessagePeerlistLog( 1 + peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut())+peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()), idChannel, nowtime + bootstrapTimeShift);
+            peerlistMessage = new MessagePeerlistLog( 1 + peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut())
+            		                                    + peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()),
+            		                                  idChannel, nowtime + bootstrapTimeShift);
+
 
             //Calculate an estimated chunk rate
             if (peerMode == MODE_SERVER)
@@ -1010,6 +1013,11 @@ void Client::Ping()
                 peerActiveOutLock.unlock();
                 peerListLock.unlock();
             }
+
+            //ECM Insere separador da lista de Out e In no log de overlay
+            if (peerlistMessage)
+                peerlistMessage->AddPeer(&peerNulo); //ECM insere separador entre pares Out e In no log de Overlay
+
             /* ECM - código 100% incluído
              * ping to Active Peer List In
              * aqui, será enviada mensagem simples para informar aos peerActiveIn que this está vivo */
@@ -1020,8 +1028,6 @@ void Client::Ping()
 
                 boost::mutex::scoped_lock peerListLock(*peerManager.GetPeerListMutex());
                 boost::mutex::scoped_lock peerActiveInLock(*peerManager.GetPeerActiveMutex(peerManager.GetPeerActiveIn()));
-                if (peerlistMessage)
-                    peerlistMessage->AddPeer(&peerNulo); //ECM insere separador entre pares Out e In no log de Overlay
                 for (set<string>::iterator i = peerManager.GetPeerActiveIn()->begin(); i != peerManager.GetPeerActiveIn()->end(); i++)
                 {
                     Peer* peer = peerManager.GetPeerData(*i)->GetPeer();

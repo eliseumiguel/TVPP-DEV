@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
             cout <<"\n";
             cout <<"  -channelId                    select a channel to transmit/receive (default: "<<idChannel<<")"<<endl;
             cout <<"  -peers_udp_port               port for inter peer comunication (default: "<<peers_udp_port<<")"<<endl;
-            cout <<"  -channelMode                  select a new channelMode (default: )"<<endl;
+            cout <<"  -channelMode                  select a new channelMode (default:"<<channelMode<<" )"<<endl;
             cout <<"  -tcpPort                      bootstrap tcp port (default: "<<tcpPort<<")"<<endl;
             exit(1);
         }
@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
     time_t nowtime;
     time(&nowtime);
     uint16_t externalPort = boost::lexical_cast<uint16_t>(peers_udp_port);
-    message = new MessageChannel(channelFlag, false, externalPort, idChannel, nowtime, channelMode);
+    message = new MessageChannel(channelFlag, false, externalPort, idChannel, nowtime, false, channelMode);
     message->SetIntegrity();
 
     ExternalMessageTCP externalConnect(std::string(ip), tcpPort);

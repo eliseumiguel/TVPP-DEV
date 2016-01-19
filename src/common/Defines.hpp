@@ -15,7 +15,7 @@
 
 //Message Header Sizes
 #define MESSAGE_HEADER_SIZE                      6
-#define MESSAGE_CHANNEL_HEADER_SIZE             21
+#define MESSAGE_CHANNEL_HEADER_SIZE             22  // aumento de 1 para o valor do booleano serverAux
 #define MESSAGE_REQUEST_HEADER_SIZE             18
 #define MESSAGE_ERROR_HEADER_SIZE                8
 #define MESSAGE_STATE_CHANNEL_SIZE               8

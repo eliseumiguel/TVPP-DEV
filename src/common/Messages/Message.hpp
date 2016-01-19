@@ -3,8 +3,8 @@
 //|   1    |      1      |     2     |     2    |   ?    |   ?  |
 
 // CHANNEL MESSAGE
-//| OPCODE | HEADER_SIZE | BODY_SIZE | CHECKSUM |  CHANNELCODE | PUNCH | VERSION | EXTPORT | CHANNELID | CHANNELSTATE |
-//|   1    |      1      |     2     |     2    |       1      |   1   |    2    |    2    |     4     |       1      |TOTAL: 17 Bytes
+//| OPCODE | HEADER_SIZE | BODY_SIZE | CHECKSUM |  CHANNELCODE | PUNCH | VERSION | EXTPORT | CHANNELID | SERVERAUX |CHANNELSTATE |
+//|   1    |      1      |     2     |     2    |       1      |   1   |    2    |    2    |     4     |     1     |     1       |TOTAL: 18 Bytes
 
 // PEERLIST MESSAGE
 //| OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM |  EXTPORT | CHUNKGUID | QTDPEERS | PEERLIST |  

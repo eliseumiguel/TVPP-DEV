@@ -4,7 +4,8 @@ Channel::Channel(unsigned int channelId, Peer* serverPeer,
 				 unsigned int maxSubChannel,
 				 unsigned int maxServerAuxCandidate,
 				 unsigned int maxPeerInSubChannel,
-				 bool mesclar)
+				 bool mesclar,
+				 unsigned int sizeCluster)
 : channel_Sub_List_Mutex (new boost::mutex()),
   channel_Sub_Candidates_Mutex (new boost::mutex())
 {
@@ -13,6 +14,7 @@ Channel::Channel(unsigned int channelId, Peer* serverPeer,
     	this->channelMode = MODE_NORMAL;
         this->channelId = channelId;
         this->serverPeer = serverPeer;
+        this->sizeCluster = sizeCluster;
         if(serverPeer)
             AddPeer(serverPeer);
         serverEstimatedStreamRate      = 0;
@@ -185,7 +187,8 @@ bool Channel::AddPeerChannel(Peer* peer)
 	}
 	return false;
 }
-
+/* ECM Código original antes da implementação de cluster
+ *
 bool Channel::Create_New_ChannelSub()
 {
 	string* peerServerAuxNew = NULL;
@@ -216,6 +219,54 @@ bool Channel::Create_New_ChannelSub()
 	}
 	channelSubListLock.unlock();
 	delete peerServerAuxNew; //Atualizacao 18-11-15
+	return false;
+}
+  * Código preservado para testes*/
+
+/*ECM 17-01-2015
+ * Novo código de criação de canal com cluster de servidores auxiliares em redes paralelas
+ * Agora, mais de um servidor auxiliar terá o mesmo subCannel_ID. Com isso, contribuirão na mesma rede paralela
+*/
+bool Channel::Create_New_ChannelSub()
+{
+	vector<string*> peerServerAuxNew;
+	unsigned int size = sizeCluster;
+    cout<<" entrou em criando novo sub canal"<<endl;
+	boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
+	boost::mutex::scoped_lock channelSubCandidatesLock(*channel_Sub_Candidates_Mutex);
+
+	for (map<string,SubChannelCandidateData>::iterator i = server_Sub_Candidates.begin(); i != server_Sub_Candidates.end(); i++)
+		if (channel_Sub_List.count(i->first) == 0 )
+		{
+			size--;
+			peerServerAuxNew.push_back(new string(i->first));
+			if (size==0) break; //modified at 17-01-16
+		}
+    cout <<"finalizou o vetor de servidores deste canal"<<endl;
+	channelSubCandidatesLock.unlock();
+
+	if (peerServerAuxNew.size()==sizeCluster && channel_Sub_List.size() < maxSubChannel)  //cria sub-channel
+	{
+		unsigned int channelID_New = 0;
+        //ECM create a new subChannelID
+		for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
+			if (channelID_New < i->second.GetchannelId_Sub())
+				channelID_New = i->second.GetchannelId_Sub();
+		channelID_New ++;
+        cout << "criou o novo ID "<<channelID_New<<endl;
+		for (unsigned int pos=0; pos < sizeCluster; pos++){
+		    channel_Sub_List[*peerServerAuxNew.at(pos)] = SubChannelData(channelId, channelID_New, peerList[*peerServerAuxNew.at(pos)].GetPeer() );//,0,0);
+		}
+		cout<< "configurou os servidores auxiliares"<<endl;
+		channelSubListLock.unlock();
+		for (unsigned int pos=0; pos <peerServerAuxNew.size(); pos++)
+		   delete peerServerAuxNew.at(pos); //Atualizacao 18-11-15
+		cout<<"deletou o vetor temporário"<<endl;
+		return true;
+	}
+	channelSubListLock.unlock();
+	for (unsigned int pos=0; pos <peerServerAuxNew.size(); pos++)
+	   delete peerServerAuxNew.at(pos); //Atualizacao 18-11-15
 	return false;
 }
 
@@ -268,9 +319,9 @@ void Channel::RemovePeer(Peer* peer)
     peerList.erase(peer->GetID());
 }
 
-void Channel::RemovePeer(string peerId)
+void Channel::RemovePeer(string peerID)
 {
-    peerList.erase(peerId);
+    peerList.erase(peerID);
 }
 
 PeerData& Channel::GetPeerData(Peer* peer)
@@ -283,6 +334,9 @@ void Channel::SetChannelMode(ChannelModes channelMode)
 	boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
 	boost::mutex::scoped_lock channelSubCandidatesLock(*channel_Sub_Candidates_Mutex);
 	map<string,SubChannelCandidateData> subCandidatosTempList;
+
+	cout<<"estado atual do channel "<<this->channelMode<<endl;
+    cout<<"tentando mudar o estado do channel para "<<channelMode<<endl;
 
     switch (channelMode)
     {
@@ -326,17 +380,17 @@ void Channel::SetChannelMode(ChannelModes channelMode)
         	if (this->channelMode == MODE_NORMAL)
         	/*faz todos os cadidatos a servidor auxilar tornarem-se disponíveis para o flash crwod
         	 * seria melhor por demanda, porém isso exige fazer um sistema de contenção dos recém chegados
-        	 * Com a atual mudança (18-11-2015) a lista de candidatos pode ser muito grande. Com isso, todos da rede
+        	 * Com a atual mudança (18-11-2015) a lista de candidatos pode ser muito grande. Assim, todos da rede
         	 * principal podem ser candidatos. Contudo, ao isolar os candidatos, isso é feito no limite da quantidade de
-        	 * subcanais a serem criados. Com isso, a rede principal não sofre perdas com o isolamento de pares que não serão
-        	 * utilizados como servidores auxiliares. Mesmo assim, seria melhor fazer por demanda.
+        	 * subcanais a serem criados x tamanho do cluster. Com isso, a rede principal não sofre perdas com o isolamento
+        	 * de pares que não serão utilizados como servidores auxiliares. Mesmo assim, seria melhor fazer por demanda.
         	 */
         	{
-        		// início do código para gerar nova lista de candidatos aleatória limitada pela quantidade de subcanais.
+        		// início do código para gerar nova lista de candidatos aleatória limitada pela quantidade de subcanais x cluster.
         		// aqui são selecionados aleatoriamente candidatos a servidor auxiliar para os subcanais. Contudo,
         		// para fazer cluster em subcanais, deve-se somar ao limite maxSubChannel + tamanho do cluster
 
-        		for (unsigned int i=0; i < maxSubChannel ;i++)
+        		for (unsigned int i=0; i < (maxSubChannel * sizeCluster) ;i++)
         		{
         		   //sorteia número aleatório para seleção do servidor
         		   srand (time (NULL)); // Gera uma 'random seed' baseada no retorno da funcao time()
@@ -469,7 +523,7 @@ vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, uns
 
 
 	/* Se o par está em sub canal, incluir o servidor auxiliar na lista de parceiros dele
-	* isso é importante visto que o serverAux->idChannel_Sub é igual ao idChannle do canal principal
+	* isso é importante visto que o serverAux->idChannel_Sub é igual ao idChannel do canal principal
 	* Os servidores auxiliares têm o idChannel_sub na estrutura SubChannelData
 	* No caso de CHANNEL_ID_MESCLANDO -1, ele estará em fase de mesclagem e pertence à rede principal
 	*/
@@ -478,6 +532,8 @@ vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, uns
         boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
     	for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
     		if (peerChannelId_Sub == (int)i->second.GetchannelId_Sub())
+    			//ver isso
+    			//para cluster, informar todos os IDs dos servidores auxiliares
     			allPeers.push_back(&(peerList[i->second.GetServer_Sub()->GetID()]));
       	channelSubListLock.unlock();
     }
@@ -522,20 +578,20 @@ unsigned int Channel::GetPeerListSize()
 
 //Mutex fechados em CheckActiveList
 //Entra neste método se o mesclarRedes == true
-void Channel::CheckAllSubChannel()
+void Channel::CheckAllSubChannel()  //ECM Função chamada apenas em CheckActivePeers
 {
 	for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
 	{
 		//garente o processo após o servidor auxiliar ser informado pelo bootstrap
 		if (!server_Sub_Candidates[i->first].GetPeerWaitInform())
 		{
-			i->second.DecChannelLif();
-			i->second.DecReNewServerSub();
+			i->second.DecChannelLif();  //ECM aparece apenas aqui
+			i->second.DecReNewServerSub(); //ECM aparece apenas aqui
 
 			/*No tempo 1 o bootstrap é preparado
 			 * para informar ao servidor o novo estado
 			 */
-			if (i->second.GetReNewServerSub() == 1)
+			if (i->second.GetReNewServerSub() == 1) //ECM aparece aqui e abaixo (dois lugares)
 			{
 				server_Sub_Candidates[i->first].SetState(NO_SERVER_AUX);
 				server_Sub_Candidates[i->first].SetPeerWaitInform(true);
@@ -549,7 +605,7 @@ void Channel::CheckAllSubChannel()
 				}
 
 			//servidor permanece em estado de mesclagem. Canal atua quando peer for informado (permite sincronizar)
-			if (i->second.GetChannelLife() == 1)
+			if (i->second.GetChannelLife() == 1) //ECM aparece apenas aqui e abaixo (dois lugares)
 			{
 				server_Sub_Candidates[i->first].SetState(SERVER_AUX_MESCLAR);
 				server_Sub_Candidates[i->first].SetPeerWaitInform(true);
@@ -568,7 +624,7 @@ void Channel::CheckAllSubChannel()
 
 //não é necessário saber em qual subcanal o peer está
 //considerar testar se um servidorAuxiliar entrou para remoção
-void Channel::CheckActivePeers()
+void Channel::CheckActivePeers() //ECM Chamada em bootstrap
 {
     vector<string> deletedPeer;
     for (map<string,PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++) 

@@ -66,7 +66,8 @@ class Channel
         		unsigned int maxSubChannel = 0,
         		unsigned int maxServerAuxCandidate = 0,
         		unsigned int maxPeerInSubChannel = 0,
-           		bool mesclar = false);
+           		bool mesclar = false,
+           		unsigned int sizeCluster = 1);
 
         ChunkUniqueID GetServerNewestChunkID();
 		void SetServerNewestChunkID(ChunkUniqueID serverNewestChunkID);
@@ -79,7 +80,7 @@ class Channel
 		void AddPeer(Peer* peer);
 
         void RemovePeer(Peer* peer);
-		void RemovePeer(string peerId);
+		void RemovePeer(string peerID);
 		PeerData& GetPeerData(Peer* peer);
         time_t GetCreationTime();
 
@@ -110,15 +111,16 @@ class Channel
 		
     private:
         unsigned int channelId;
+        unsigned int sizeCluster; //ECM usado para definir o tamanho do cluster se servidores auxiliares
         Peer* serverPeer; 
-        map<string, PeerData> peerList;
+        map<string, PeerData> peerList;  //ECM Em PeerData existe o campo channelID_Sub que informa o subcanal do peer
 
         //ECM ***
         boost::mutex* channel_Sub_List_Mutex;
         boost::mutex* channel_Sub_Candidates_Mutex;
 
-        map<string, SubChannelData> channel_Sub_List;
-        map<string, SubChannelCandidateData> server_Sub_Candidates;
+        map<string, SubChannelData> channel_Sub_List; //ECM estrutura dos subcanais montado
+        map<string, SubChannelCandidateData> server_Sub_Candidates; //ECM estrutura para gerir os candidatos a subcanais
 
         ChannelModes channelMode;
         unsigned int maxPeerInSubChannel;

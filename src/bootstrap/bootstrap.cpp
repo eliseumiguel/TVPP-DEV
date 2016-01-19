@@ -9,7 +9,7 @@ using namespace std;
 /** Construtor **/
 Bootstrap::Bootstrap(string udpPort, string peerlistSelectorStrategy,
 		unsigned int maxSubChannel, unsigned int maxServerAuxCandidate,
-		unsigned int maxPeerInSubChannel) {
+		unsigned int maxPeerInSubChannel, unsigned int sizeCluster) {
 	if (peerlistSelectorStrategy == "TournamentStrategy")
 		this->peerlistSelectorStrategy = new TournamentStrategy();
 	else if (peerlistSelectorStrategy == "NearestIPStrategy")
@@ -28,6 +28,7 @@ Bootstrap::Bootstrap(string udpPort, string peerlistSelectorStrategy,
 	this->maxSubChannel = maxSubChannel;
 	this->maxServerAuxCandidate = maxServerAuxCandidate;
 	this->maxPeerInSubChannel = maxPeerInSubChannel;
+	this->sizeCluster = sizeCluster;
 
 }
 
@@ -57,7 +58,8 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
 	uint16_t externalPort = channelHeader[3];
 	uint32_t channelId = channelHeader[4];
 	uint32_t clientTime = channelHeader[5];
-	uint8_t channelMode = channelHeader[6]; //ECM used if channelFlag == CHANGE_STATE
+	bool auxiliarServerCandidate = channelHeader[6]; //ECM inform bootstrap if peer is or not auxilar server candidate
+	uint8_t channelMode = channelHeader[7]; //ECM used if channelFlag == CHANGE_STATE
 
 	cout << "Channel MSG: " << (uint32_t) channelFlag << ", " << performingPunch
 			<< ", " << version << ", " << externalPort << ", " << channelId
@@ -75,7 +77,7 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
 			if (channelList.find(channelId) == channelList.end()) {
 				channelList[channelId] = Channel(channelId, source,
 						maxSubChannel, maxServerAuxCandidate,
-						maxPeerInSubChannel);
+						maxPeerInSubChannel, this->sizeCluster);
 			} else {
 				messageReply = new MessageError(ERROR_CHANNEL_CANT_BE_CREATED);
 			}
@@ -91,8 +93,12 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
 
 				}
 				/* esse método pode ser mais elaborado e ser chamado para os pares que já estão no canal
-				 * isso seria feito abaixo de  SelectPeerList(...) */
-				channelList[channelId].analizePeerToBeServerAux(source);
+				 * isso seria feito abaixo de  SelectPeerList(...)
+				 * com este teste incluído if(auxiliarServer) o peer será candidato apenas se informado ao bootstrap
+				 * Inplementação de 17-01-2016*/
+				if (auxiliarServerCandidate){
+				   channelList[channelId].analizePeerToBeServerAux(source);
+				}
 			}
 			break;
 
@@ -386,7 +392,7 @@ void Bootstrap::CheckPeerList() {
 				channel != channelList.end(); channel++) {
 			//ECM - comentar esse opção para testes com flash crowd. Assim, fica mais fácil acompanhar a tela do bootstrap
 			channel->second.PrintPeerList();
-			channel->second.CheckActivePeers();
+			channel->second.CheckActivePeers(); //ECM (corrigir no subchannel)-> chamada que decrementa o tempo de vida do subCanal
 
 			if (!channel->second.HasPeer(channel->second.GetServer()))
 				deletedChannel.push_back(channel->first);

@@ -53,7 +53,7 @@ class Bootstrap
         * @param string 
         * @param int Max TTLChannel value
         */
-        Bootstrap(string udpPort, string peerlistSelectorStrategy, unsigned int maxSubChannel, unsigned int maxServerAuxCandidate, unsigned int maxPeerInSubChannel);
+        Bootstrap(string udpPort, string peerlistSelectorStrategy, unsigned int maxSubChannel, unsigned int maxServerAuxCandidate, unsigned int maxPeerInSubChannel, unsigned int sizeCluster);
         void TCPStart(const char *);
         void UDPStart();
         void UDPReceive();
@@ -85,6 +85,7 @@ class Bootstrap
 		unsigned int maxSubChannel;
 		unsigned int maxServerAuxCandidate;
 		unsigned int maxPeerInSubChannel;
+		unsigned int sizeCluster;
 
         friend class BootstrapTCPServer;    
 };

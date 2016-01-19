@@ -11,10 +11,10 @@ class Disconnector : public Temporizable
 		Strategy *strategy;
 		PeerManager* peerManager;
 		set<string>* peerActive;
-		int quantity;
+		unsigned int quantity;
 
     public:
-		Disconnector(Strategy *disconnectorStrategy, PeerManager* peerManager, uint64_t timerPeriod, set<string>* peerActive, int quantity);
+		Disconnector(Strategy *disconnectorStrategy, PeerManager* peerManager, uint64_t timerPeriod, set<string>* peerActive, unsigned int quantity);
 		void Disconnect();
 		void TimerAlarm(uint64_t timerPeriod, string timerName);
 };

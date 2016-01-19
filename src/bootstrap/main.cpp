@@ -29,6 +29,7 @@ int main(int argc, char* argv[]) {
     unsigned int maxSubChannel = 6;
     unsigned int maxServerAuxCandidate = 200; //ECM quando ocorre o flash crowd, são selecionados o total de pares necessários para os subcanais
     unsigned int maxPeerInSubChannel = 60;
+    unsigned int sizeCluster = 1; //ECM auxiliary server total in each subChannel
 
     string arg1 = "";
     if( argv[1] != NULL)
@@ -48,6 +49,7 @@ int main(int argc, char* argv[]) {
         cout <<"  -maxSubChannel               define the sub channel limit                  (default: "<<maxSubChannel<<")"<<endl;
         cout <<"  -maxServerAuxCandidate       define the server limit to create sub channel (default: "<<maxServerAuxCandidate<<")"<<endl;
         cout <<"  -maxPeerInSubChannel         define the peer number in new sub channel     (default: "<<maxPeerInSubChannel<<")"<<endl;
+        cout <<"  -sizeCluster                 define the cluster size for each sub channel  (default: "<<sizeCluster<<")"<<endl;
         cout <<"  --isolaVirtutalPeerSameIP    permit only different IP partner "<<endl;
 
         exit(1);
@@ -88,6 +90,10 @@ int main(int argc, char* argv[]) {
             optind++;
             maxPeerInSubChannel = (unsigned int) atoi(argv[optind]);
         }
+        else if (swtc=="-sizeCluster") {
+            optind++;
+            sizeCluster = (unsigned int) atoi(argv[optind]);
+        }
         else if (swtc=="--isolaVirtutalPeerSameIP")
         {
             XPConfig::Instance()->SetBool("isolaVirtutalPeerSameIP", true);
@@ -102,7 +108,7 @@ int main(int argc, char* argv[]) {
 
 
 
-    Bootstrap bootstrapInstance(myUDPPort, peerlistSelectorStrategy, maxSubChannel, maxServerAuxCandidate, maxPeerInSubChannel);
+    Bootstrap bootstrapInstance(myUDPPort, peerlistSelectorStrategy, maxSubChannel, maxServerAuxCandidate, maxPeerInSubChannel, sizeCluster);
     
     boost::thread TTCPSERVER(boost::bind(&Bootstrap::TCPStart, &bootstrapInstance, myTCPPort.c_str()));
     boost::thread TUDPSERVER(boost::bind(&Bootstrap::UDPStart, &bootstrapInstance));

@@ -27,7 +27,7 @@ class SubChannelData
  	    		       int clife = CHANNEL_LIFE, int rnew = RENEW_SERVER);
 
         Peer* GetServer_Sub();
-        void CheckActivePeers();
+        //void CheckActivePeers(); //ECM método não implementado!
 
         int GetChannelLife();
         void SetChannelLife(int v);
@@ -74,7 +74,7 @@ class SubChannelData
         FILE* overlayFile;
 };
 
-
+//ECM classe usada para pares que são candidatos a servidores
 class SubChannelCandidateData
 {
     public:
