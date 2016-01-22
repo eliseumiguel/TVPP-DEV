@@ -40,8 +40,8 @@ assim o channel precisa conhecer apenas a estratégia base, enquanto os servidor
 #include <vector>
 #include <map>
 #include <set>
-#include <stdlib.h> // para gerar numeros aleatorios
-#include <time.h> // para gerar a 'random seed' baseada no tempo
+#include <stdlib.h>             // para gerar numeros aleatorios
+#include <time.h>               // para gerar a 'random seed' baseada no tempo
 #include "PeerData.hpp"
 #include "Sub-Channel-Data.hpp"
 #include "Strategy/Strategy.hpp"
@@ -66,8 +66,8 @@ class Channel
         		unsigned int maxSubChannel = 0,
         		unsigned int maxServerAuxCandidate = 0,
         		unsigned int maxPeerInSubChannel = 0,
-           		bool mesclar = false,
-           		unsigned int sizeCluster = 1);
+        		unsigned int sizeCluster = 1,
+        		bool mesclar = false);
 
         ChunkUniqueID GetServerNewestChunkID();
 		void SetServerNewestChunkID(ChunkUniqueID serverNewestChunkID);

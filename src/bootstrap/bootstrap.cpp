@@ -77,7 +77,7 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
 			if (channelList.find(channelId) == channelList.end()) {
 				channelList[channelId] = Channel(channelId, source,
 						maxSubChannel, maxServerAuxCandidate,
-						maxPeerInSubChannel, this->sizeCluster);
+						maxPeerInSubChannel, this->sizeCluster, false);
 			} else {
 				messageReply = new MessageError(ERROR_CHANNEL_CANT_BE_CREATED);
 			}
@@ -97,7 +97,9 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
 				 * com este teste incluído if(auxiliarServer) o peer será candidato apenas se informado ao bootstrap
 				 * Inplementação de 17-01-2016*/
 				if (auxiliarServerCandidate){
+				   cout<<"pode ser aqui que está mudando o cara..."<<endl;
 				   channelList[channelId].analizePeerToBeServerAux(source);
+				   cout<<"se deu pau eu achei"<<endl;
 				}
 			}
 			break;
@@ -123,6 +125,8 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
 		}
 
 		if (!messageReply && (channelFlag != CHANGE_STATE)) {
+			cout<<"em bootstrap mandando mensagem ao cliente "<<source->GetID()
+					<<" "<<channelList[channelId].GetServerSubWaitInform(source)<<endl;//teste
 			if (channelList[channelId].GetServerSubWaitInform(source)) {
 				messageReply = new MessageServerSub(
 						channelList[channelId].GetServerSubNewMode(source));
@@ -391,7 +395,7 @@ void Bootstrap::CheckPeerList() {
 		for (map<unsigned int, Channel>::iterator channel = channelList.begin();
 				channel != channelList.end(); channel++) {
 			//ECM - comentar esse opção para testes com flash crowd. Assim, fica mais fácil acompanhar a tela do bootstrap
-			channel->second.PrintPeerList();
+			//channel->second.PrintPeerList();
 			channel->second.CheckActivePeers(); //ECM (corrigir no subchannel)-> chamada que decrementa o tempo de vida do subCanal
 
 			if (!channel->second.HasPeer(channel->second.GetServer()))

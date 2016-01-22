@@ -18,8 +18,8 @@
 #include "../common/PeerData.hpp"
 #include <boost/thread/mutex.hpp>
 
-#define PEER_ACTIVE_COOLDOWN 5
-#define SERVER_AUX_SUB_CHANNEL_ID 1
+#define PEER_ACTIVE_COOLDOWN 3                           //Tempo original = 5. Foi passado para 3 para dar oportunidade a bons parceiros de retornar...
+#define SERVER_AUX_SUB_CHANNEL_ID 1                      // ... caso sejam desconectados pela estratégia aleatória que flexibiliza a rede.
 
 class PeerManager
 {
@@ -30,15 +30,15 @@ class PeerManager
 	unsigned int maxActivePeersOut;
 
 		map<string, PeerData> peerList;                  //todos conhecidos (vizinhos)
-	map<string, PeerData> peerListMasterChannel;         //vizinhos do canal principal (em caso de servidor auxiliar)
+	map<string, PeerData> peerListMasterChannel;         //vizinhos do canal principal (em caso de servidor auxiliar). Armazenamento temporário
 
 	set<string> peerActiveIn;                             //ativos que enviam dados a este par
 	set<string> peerActiveOut;                            // ativos que recebem dados deste par
 	set<string> peerActiveOut_Master;                     // ativos temporários da rede principal enquanto é Servidor Auxiliar
 
-	map<string, unsigned int> peerActiveCooldownIn;       // pares que podem ser removidos por pouca atividade
-	map<string, unsigned int> peerActiveCooldownOut;
-		//Mutexes
+	map<string, unsigned int> peerActiveCooldownIn;       // pares que podem ser removidos por pouca atividade. Não é usado para controle de ...
+	map<string, unsigned int> peerActiveCooldownOut;      // ... free-rider pelo SURE. Pode-se evitar enviar um participante a esta lista caso ...
+		//Mutexes                                         // ... ele tenha sido removido apenas para flexibilização da rede
 		boost::mutex peerListMutex;
     boost::mutex peerActiveMutexIn;
     boost::mutex peerActiveMutexOut;

@@ -7,6 +7,8 @@
 
 PeerManager::PeerManager()
 {
+	//Garante que o peer não seja servidor auxiliar ao iniciar o experimento
+	this->peerManagerState = NO_SERVER_AUX;
 }
 
 ServerAuxTypes PeerManager::GetPeerManagerState()
@@ -172,10 +174,12 @@ bool PeerManager::ConnectPeer(string peer, set<string>* peerActive)
 
 			/* controle de servidor auxiliar
 			 * aceita somente pares da rede paralela
+			 * Pode aceitar pares In da rede principal, não entra se peerActive == peerActiveIn
 			 */
-			if (peerManagerState == SERVER_AUX_ACTIVE)
+			if (peerManagerState == SERVER_AUX_ACTIVE && peerActive == &peerActiveOut)
 				if (peerList[peer].GetChannelId_Sub() != SERVER_AUX_SUB_CHANNEL_ID)
 				{
+					cout<<"Tentando inserir "<<peer<<"mas ID channel Sub ="<<peerList[peer].GetChannelId_Sub()<<" e canal sub é "<<SERVER_AUX_SUB_CHANNEL_ID<<endl;
 					return false;
 				}
 
@@ -183,10 +187,14 @@ bool PeerManager::ConnectPeer(string peer, set<string>* peerActive)
 			* durante a mesclagem não reconecta para out um par da rede
 			* paralalela que ele removeu. O par removido passa a ter
 			* channelId_Sub = 3 durante a mesclagem
+			* Caso o Id Sub seja 0, pode-se permitir que ele conecte pois trata-se de um par da rede principal.
+			* isso deve ser revisto nas estratégias de mesclagem
+			* * Pode aceitar pares In da rede principal, não entra se peerActive == peerActiveIn
 			*/
-			if (peerManagerState == SERVER_AUX_MESCLAR)
-				if (peerList[peer].GetChannelId_Sub() != CHANNEL_ID_MESCLANDO)
+			if (peerManagerState == SERVER_AUX_MESCLAR && peerActive == &peerActiveOut)
+				if (peerList[peer].GetChannelId_Sub() != CHANNEL_ID_MESCLANDO && peerList[peer].GetChannelId_Sub() != 0)
 				{
+					cout<<"Tentando inserir "<<peer<<"mas ID channel Sub ="<<peerList[peer].GetChannelId_Sub()<<" e canal sub é "<<CHANNEL_ID_MESCLANDO<<endl;
 					return false;
 				}
 
@@ -206,7 +214,12 @@ bool PeerManager::ConnectPeer(string peer, set<string>* peerActive)
 	}
 	return false;
 }
-
+//ECM Quando um peer é desconectado, automaticamente ele entra na lista peerActiveCooldown
+//O problema é que enquanto ele está nesta lista, determinado pelo tempo PEER_ACTIVE_COOLDOWN
+//O participante não consegue ser aceito novamente até que seja removido de peerList para, em seguida voltar.
+//Uma alternativa é, caso ele peça reconexão e esteja na lista, ele pode sair da lista PEER_ACTIVE_COOLDOWN.
+//Isso resolve o problema de ele estar novamente tentando ser ativo, mas possibilita que o free rider apareça e volte
+//ao ambiente. Seria bom separar quem está indo para a lista por ser free rider ruim dos que são desconectados aleatóriamente
 void PeerManager::DisconnectPeer(string peer, set<string>* peerActive)
 {
 	boost::mutex* peerActiveMutex = this->GetPeerActiveMutex(peerActive);

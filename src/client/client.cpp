@@ -1288,6 +1288,7 @@ void Client::FazPedidos(int stepInMs)
             }
 
             (*it)->SearchPeers(&peerActiveWithData);
+            //ECM com essa estratégia pode se usar o SURE
             Peer* chosenPeer = (*it)->GetPeer(chunkSchedulerStrategy);
             if (chosenPeer)
             {

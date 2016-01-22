@@ -96,6 +96,7 @@ FILE* SubChannelData::GetOverlayFile()
 SubChannelCandidateData::SubChannelCandidateData(ServerAuxTypes serverState, bool peerWaitInform)
 {
 	this->serverState = serverState;
+	std::cout<<"configurando waiting information no construtor" <<endl;
 	this->peerWaitInform = peerWaitInform;
 
 }
