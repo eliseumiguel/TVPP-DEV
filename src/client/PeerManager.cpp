@@ -266,6 +266,15 @@ unsigned int PeerManager::GetPeerActiveSizeTotal()
     return size;
 }
 
+bool PeerManager::IsPeerInPeerList(string peer)
+{
+	boost::mutex::scoped_lock peerListLock(peerListMutex);
+	   if (this->peerList.find (peer) != peerList.end())
+		   return true;
+	   peerListLock.unlock();
+	return false;
+}
+
 bool PeerManager::IsPeerActive(string peer,set<string>* peerActive)
 {
 	boost::mutex* peerActiveMutex = this->GetPeerActiveMutex(peerActive);

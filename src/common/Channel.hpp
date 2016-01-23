@@ -90,10 +90,14 @@ class Channel
         bool GetServerSubWaitInform(Peer* peer);
         void SetServerSubWaitInform(Peer* peer, bool waiting);
 
+        bool GetWaitServerList(Peer* peer);
+        void SetWaitServerList(Peer* peer, bool waitServerList);
+
         ServerAuxTypes GetServerSubNewMode (Peer* peer);
 
         void SetmaxPeer_ChannelSub(int unsigned maxpeerChannelSub);
 
+        vector<PeerData*> MakeServerAuxList(); //Usado para informar os peer da rede principal quem são os serverAux
         vector<PeerData*> SelectPeerList(Strategy* strategy, Peer* srcPeer, unsigned int peerQuantity,bool virtualPeer);
         unsigned int GetPeerListSize(); //usada apenas pelo bootstrap em HHTLog
 
@@ -132,7 +136,7 @@ class Channel
         bool Create_New_ChannelSub();
         void Remove_AllChannelSub();
         void Remove_ChannelSub(const string* source, bool mesclar = false);
-        void CheckAllSubChannel();
+        //void CheckAllSubChannel();
 
         void CheckServerSubState();
 

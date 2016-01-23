@@ -266,6 +266,12 @@ Message *Client::HandleTCPMessage(Message* message, string sourceAddress, uint32
             return NULL;
             break;
         }
+        case OPCODE_SERVERAUXLIST:
+        {
+        	HandleServerAuxListMessage(new MessagePeerlist(message), sourceAddress, socket);
+            return NULL;
+            break;
+        }
         default:
             return NULL;
             break;
@@ -307,6 +313,29 @@ void Client::HandleUDPMessage(Message* message, string sourceAddress)
     }
 }
 
+
+/* PEERLIST PACKET:    | OPCODE | HEADERSIZE | BODYSIZE | EXTPORT | CHUNKGUID | QTDPEERS | PEERLIST |  **************************************
+** Sizes(bytes):       |   1    |     1      |     2    |    2    |  4  |  2  |    2     |    6     |  TOTAL: 14 Bytes + 6*QTDPEERS *********/
+//ECM - Apenas informa os servidores auxiliares aos membros da rede principal
+void Client::HandleServerAuxListMessage(MessagePeerlist* message, string sourceAddress, uint32_t socket)
+{
+    vector<int> peerlistHeader = message->GetHeaderValues();
+    uint16_t peersReceived = peerlistHeader[1];
+
+    cout<<"Recebi servidores auxiliares :::";
+    for (uint16_t i = 0; i < peersReceived; i++)
+    {
+
+        if (Peer* newPeer = message->GetPeer(i)){
+        	if (peerManager.IsPeerInPeerList(newPeer->GetID()))
+        		peerManager.GetPeerData(newPeer->GetID())->SetMode(MODE_AUXILIAR_SERVER);
+        cout<<newPeer->GetID()<<" ** ";
+        }
+    }
+    cout <<endl;
+
+}
+
 /* PEERLIST PACKET:    | OPCODE | HEADERSIZE | BODYSIZE | EXTPORT | CHUNKGUID | QTDPEERS | PEERLIST |  **************************************
 ** Sizes(bytes):       |   1    |     1      |     2    |    2    |  4  |  2  |    2     |    6     |  TOTAL: 14 Bytes + 6*QTDPEERS *********/
 //ECM - após receber lista de novos pares, os inclui na lista de In para fazer requisições (mudança apenas na última linha do código.
@@ -328,7 +357,7 @@ void Client::HandlePeerlistMessage(MessagePeerlist* message, string sourceAddres
             + boost::lexical_cast<string>((uint32_t)peerlistHeader[4]) + "." 
             + boost::lexical_cast<string>((uint32_t)peerlistHeader[5]);
         }
-
+        // Servidor principal
         if (peerMode == MODE_SERVER)
         {
             serverActive = true;

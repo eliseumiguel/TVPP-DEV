@@ -105,6 +105,7 @@ class Client
         void FazPedidos(int stepInMs);
         void EnviaDados(string s, string msg);
         
+        void HandleServerAuxListMessage(MessagePeerlist* message, string sourceAddress = "", uint32_t socket = 0);
         void HandlePeerlistMessage(MessagePeerlist* message, string sourceAddress = "", uint32_t socket = 0);
         void HandlePingMessage(MessagePing* message, string sourceAddress = "", uint32_t socket = 0);
         void HandlePingMessageIn(vector<int>* pingHeader, MessagePing* message, string sourceAddress = "", uint32_t socket = 0);

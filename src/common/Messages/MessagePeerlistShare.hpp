@@ -15,7 +15,7 @@ class MessagePeerlistShare : public MessagePeerlist
 {
     public:
 	    MessagePeerlistShare(Message* message) : MessagePeerlist(message) {};
-	    MessagePeerlistShare(uint16_t qtdPeers, string externalIp, uint16_t externalPort, ChunkUniqueID serverTipChunkUId, uint32_t serverStreamRate, uint32_t channelCreationTime, uint32_t nowTime, uint32_t clientTime);
+	    MessagePeerlistShare(uint16_t qtdPeers, string externalIp, uint16_t externalPort, ChunkUniqueID serverTipChunkUId, uint32_t serverStreamRate, uint32_t channelCreationTime, uint32_t nowTime, uint32_t clientTime, Opcodes opcodeMessage = OPCODE_PEERLIST);
         vector<int> GetHeaderValuesDataVector(uint16_t qtdPeers, string externalIp, uint16_t externalPort, ChunkUniqueID serverTipChunkUId, uint32_t serverStreamRate, uint32_t channelCreationTime, uint32_t nowTime, uint32_t clientTime);
         vector<uint8_t> GetHeaderValuesSizeVector();
 };

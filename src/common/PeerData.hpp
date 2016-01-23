@@ -68,6 +68,10 @@ class PeerData
         void SetUploadScore(int value);
         int  GetUploadScore();
         
+		bool GetPeerWaitListServer();
+        void SetPeerWaitListServer(bool peerWaitListServer);
+
+
         ChunkUniqueID GetChunkMapHead();
         void SetChunkMapHead(ChunkUniqueID chunkMapHead);
        
@@ -78,11 +82,20 @@ class PeerData
     private:
         //PeerId
         Peer* peer;
-        PeerModes mode;
+        PeerModes mode;  //ECM informa o modo do cliente. (...)Quando em peerManager os clientes estão na lista peerList, esse modo pode indicar algum
+                         // ... vizinho que é servidor auxiliar. Isso não interfere no modo do servidor auxliar (ServerAuxTypes) por que é
+                         // ... visto apenas pelo cliente que gerencia a lista de seus vizinhos. Essa informação é local ao cliente e não ao servidor
 
         //PartnerChunkMap
         HeadedBitset chunkMap;
         
+        // Este campo é usado pelo Channel. Quando ele vai entrar em estado de flash crowd, ele informa a todos os peerList quais são os servidores
+        // auxliares da rede. Com isso, os servidores auxiliares podem ter privilégios, como não serem removidos da lista de ativos de um participante
+        // caso seja sorteado para desconectar pelo disconnect aleatório. Quando essa opção é verdadeira, o bootstrap informa a todos os clientes da
+        // rede principal que, em suas listas internas peerList (em peerManage) que o modo do cliente informado é MODE_AUXILIAR_SERVER. Com isso, toda
+        // ação enquanto o canal estiver em flash crowd pode ser cautelosa em relação aos servidores auxiliares.
+        bool peerWaitListServer;
+
         //TimeToLive of the partnership or request
         //ECM ****
         int ttlIn;

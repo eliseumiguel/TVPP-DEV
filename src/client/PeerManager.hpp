@@ -25,7 +25,7 @@ class PeerManager
 {
 	private:
 
-	ServerAuxTypes peerManagerState;
+	ServerAuxTypes peerManagerState;                     //Gerencia o estado do servidor auxiliar de redes paralelas. Exclusivo do cliente servidor
 	unsigned int maxActivePeersIn;
 	unsigned int maxActivePeersOut;
 
@@ -76,6 +76,8 @@ class PeerManager
 	 * porque, assim o método Connector::connector() deverá ser dois, ao contrário de único. */
 	unsigned int GetPeerActiveSize(set<string>* peerActive);
 	unsigned int GetPeerActiveSizeTotal();  //usada para fornecer o total de pares ativos em In + Out sem repetição. Será removida!!!
+
+	bool IsPeerInPeerList(string peer);
 
 	bool IsPeerActive(string peer,set<string>* peerActive);
 		PeerData* GetPeerData(string peer); // a lista de vizinhos é a única que tem os dados do peer

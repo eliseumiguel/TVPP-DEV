@@ -14,6 +14,7 @@ PeerData::PeerData(Peer* peer, int ttlIn, int ttlOut, int ttlChannel, int size) 
 	this->ttlOut = ttlOut;
 	this->ttlChannel = ttlChannel;
 	this->channelId_Sub = 0;
+	this->peerWaitListServer = false;
 
     this->peer = peer;
     uploadScore = 0;
@@ -153,9 +154,19 @@ int PeerData::GetUploadScore()
     return uploadScore;
 }
 
+bool PeerData::GetPeerWaitListServer()
+{
+	return peerWaitListServer;
+}
+
+void PeerData::SetPeerWaitListServer(bool InformListServer)
+{
+	this->peerWaitListServer = InformListServer;
+}
 std::ostream& operator<<(std::ostream& os, const PeerData& pd)
 {
     os << "PeerID: " << pd.peer << " Mode: " << (int)pd.mode << endl;
     os << pd.chunkMap; 
     return os;
 }
+

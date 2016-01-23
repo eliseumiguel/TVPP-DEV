@@ -124,26 +124,46 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
 			break;
 		}
 
+		// ECM não pode ser CHANGE_STATE porque apenas o externalmessage
+		// envia esse código e ele não é um peer válido
 		if (!messageReply && (channelFlag != CHANGE_STATE)) {
-			cout<<"em bootstrap mandando mensagem ao cliente "<<source->GetID()
-					<<" "<<channelList[channelId].GetServerSubWaitInform(source)<<endl;//teste
+
+			//cout<<"em bootstrap mandando mensagem ao cliente "<<source->GetID()
+			//		<<" "<<channelList[channelId].GetServerSubWaitInform(source)<<endl;//teste
+
 			if (channelList[channelId].GetServerSubWaitInform(source)) {
 				messageReply = new MessageServerSub(
 						channelList[channelId].GetServerSubNewMode(source));
 				channelList[channelId].SetServerSubWaitInform(source, false);
 			} else {
-				vector<PeerData*> selectedPeers =
-						channelList[channelId].SelectPeerList(
-								peerlistSelectorStrategy, source, 20, XPConfig::Instance()->GetBool("isolaVirtutalPeerSameIP"));
-
+				vector<PeerData*> selectedPeers;
 				time_t nowtime;
 				time(&nowtime);
-				messageReply = new MessagePeerlistShare(selectedPeers.size(),
-						source->GetIP(), externalPort,
-						channelList[channelId].GetServerNewestChunkID(),
-						channelList[channelId].GetServerEstimatedStreamRate(),
-						channelList[channelId].GetCreationTime(), nowtime,
-						clientTime);
+
+				// Mensagem de servidores auxiliares para participante da rede principal
+				if (channelList[channelId].GetWaitServerList(source))
+				{
+				     selectedPeers = channelList[channelId].MakeServerAuxList();
+
+				     messageReply = new MessagePeerlistShare(selectedPeers.size(),
+					    	source->GetIP(), externalPort,
+						    channelList[channelId].GetServerNewestChunkID(),
+						    channelList[channelId].GetServerEstimatedStreamRate(),
+						    channelList[channelId].GetCreationTime(), nowtime,
+						    clientTime, OPCODE_SERVERAUXLIST);
+
+				}
+				else // Mensagem de novos vizinhos
+				{
+				     selectedPeers = channelList[channelId].SelectPeerList( peerlistSelectorStrategy, source, 20, XPConfig::Instance()->GetBool("isolaVirtutalPeerSameIP"));
+
+				      messageReply = new MessagePeerlistShare(selectedPeers.size(),
+					    	source->GetIP(), externalPort,
+						    channelList[channelId].GetServerNewestChunkID(),
+						    channelList[channelId].GetServerEstimatedStreamRate(),
+						    channelList[channelId].GetCreationTime(), nowtime,
+						    clientTime);
+				}
 				/**
 				 * Varre a lista de peers canditados, separando cada campo por um caracter de separação
 				 * caso esse campo seja ultimo campo a ser enviado insere um caracter que sinaliza o fim da mensagem
@@ -152,7 +172,17 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
 				for (uint16_t i = 0; i < selectedPeers.size(); i++) {
 					((MessagePeerlist*) messageReply)->AddPeer(
 							selectedPeers[i]->GetPeer());
+
 				}
+				/* Se foi mensagem de lista de servidores, remover o vetor e
+				* configurar WaitServerList para false
+				*/
+				if (channelList[channelId].GetWaitServerList(source)){
+				     channelList[channelId].SetWaitServerList(source,false);
+				     for (uint16_t i = 0; i < selectedPeers.size(); i++)
+				    	 delete selectedPeers.at(i);
+				}
+
 			}
 		}
 

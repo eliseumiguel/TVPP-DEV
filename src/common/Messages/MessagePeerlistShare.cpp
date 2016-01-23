@@ -1,13 +1,13 @@
 #include "MessagePeerlistShare.hpp"
 
-MessagePeerlistShare::MessagePeerlistShare(uint16_t qtdPeers, string externalIp, uint16_t externalPort, ChunkUniqueID serverTipChunkUId, uint32_t serverStreamRate, uint32_t channelCreationTime, uint32_t nowTime, uint32_t clientTime)
+MessagePeerlistShare::MessagePeerlistShare(uint16_t qtdPeers, string externalIp, uint16_t externalPort, ChunkUniqueID serverTipChunkUId, uint32_t serverStreamRate, uint32_t channelCreationTime, uint32_t nowTime, uint32_t clientTime, Opcodes opcodeMessage)
 {
     vector<int> data = GetHeaderValuesDataVector(qtdPeers, externalIp, externalPort, serverTipChunkUId, serverStreamRate, channelCreationTime, nowTime, clientTime);
 
     firstByte = new uint8_t[MESSAGE_PEERLIST_SHARE_HEADER_SIZE + qtdPeers*6];
     this->peersAdded = 0;
     this->qtdPeers = qtdPeers;
-    Message::AssembleHeader(OPCODE_PEERLIST, MESSAGE_PEERLIST_SHARE_HEADER_SIZE, qtdPeers*6, data);
+    Message::AssembleHeader(opcodeMessage, MESSAGE_PEERLIST_SHARE_HEADER_SIZE, qtdPeers*6, data);
 }
 
 vector<int> MessagePeerlistShare::GetHeaderValuesDataVector(uint16_t qtdPeers, string externalIp, uint16_t externalPort, ChunkUniqueID serverTipChunkUId, uint32_t serverStreamRate, uint32_t channelCreationTime, uint32_t nowTime, uint32_t clientTime)

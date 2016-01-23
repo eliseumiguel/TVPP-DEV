@@ -92,6 +92,19 @@ Peer* Channel::GetServer()
     return serverPeer;
 }
 
+bool Channel::GetWaitServerList(Peer* peer)
+{
+    if (peerList.count(peer->GetID()) > 0)
+        return peerList[peer->GetID()].GetPeerWaitListServer();
+    return false;
+}
+
+void Channel::SetWaitServerList(Peer* peer, bool waitServerList)
+{
+    if (peerList.count(peer->GetID()) > 0)
+        return peerList[peer->GetID()].SetPeerWaitListServer(waitServerList);
+}
+
 Peer* Channel::GetPeer(Peer* peer)
 {
     if (peerList.count(peer->GetID()) > 0)
@@ -253,7 +266,7 @@ void Channel::analizePeerToBeServerAux(Peer* source)
 			//Assegura que um servidor em estado de mesclagem ou flash crowd
 			//passe para o estado normal sem ser reinserido na lista de candidatos
 			if(server_Sub_Candidates.count(source->GetID()) == 0)
-			    server_Sub_Candidates[source->GetID()] = SubChannelCandidateData();
+				server_Sub_Candidates[source->GetID()] = SubChannelCandidateData();
 		}
 		channelSubCandidatesLock.unlock();
 		//printPossibleServerAux();
@@ -393,6 +406,13 @@ void Channel::SetChannelMode(ChannelModes New_channelMode)
         			i->second.SetState(SERVER_AUX_ACTIVE);
         			i->second.SetPeerWaitInform(true);
         		}
+        		// ECM Configura o estado de cada participante da rede principal para esperar a lista de servidores auxiliares gerada
+            	// Com isso, o bootstrap informa a todos os clientes da rede principal quais são os servidores auxiliares. Assim eles podem ter
+        		// privilégios na rede principal, com não serem removidos da lista de ativos nas parcerias durante o flash cowd.
+        		for (map<string,PeerData>::iterator peerRedePrincipal = this->peerList.begin(); peerRedePrincipal != peerList.end(); peerRedePrincipal++)
+        			if (server_Sub_Candidates.find(peerRedePrincipal->first) == server_Sub_Candidates.end())
+        				peerList[peerRedePrincipal->first].SetPeerWaitListServer(true);
+
             this->channelMode = New_channelMode;
         	}
         	break;
@@ -454,6 +474,16 @@ void Channel::SetmaxPeer_ChannelSub(int unsigned maxpeerChannelSub)
 /* Método chamado no bootstrap.
  * Mutex do peerList já fechado.
  */
+
+//ECM Gera a lista de servidores auxiliares para enviar aos participantes da rede principal
+vector<PeerData*> Channel::MakeServerAuxList()
+{
+    vector<PeerData*> ServerAuxList;
+    for (map<string, SubChannelCandidateData>::iterator c = server_Sub_Candidates.begin(); c != server_Sub_Candidates.end(); c++)
+		ServerAuxList.push_back(new PeerData(new Peer(c->first)));
+    return ServerAuxList;
+}
+
 vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, unsigned int peerQuantity, bool virtualPeer)
 {
     vector<PeerData*> allPeers, selectedPeers;
@@ -561,6 +591,7 @@ unsigned int Channel::GetPeerListSize()
 
 //Mutex fechados em CheckActiveList
 //Entra neste método se o mesclarRedes == true
+/*
 void Channel::CheckAllSubChannel()  //ECM Função chamada apenas em CheckActivePeers
 {
 	for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
@@ -571,9 +602,9 @@ void Channel::CheckAllSubChannel()  //ECM Função chamada apenas em CheckActive
 			i->second.DecChannelLif();  //ECM aparece apenas aqui
 			i->second.DecReNewServerSub(); //ECM aparece apenas aqui
 
-			/*No tempo 1 o bootstrap é preparado
-			 * para informar ao servidor o novo estado
-			 */
+			//No tempo 1 o bootstrap é preparado
+			// para informar ao servidor o novo estado
+			//
 			if (i->second.GetReNewServerSub() == 1)
 			{
 				server_Sub_Candidates[i->first].SetState(NO_SERVER_AUX);
@@ -604,7 +635,7 @@ void Channel::CheckAllSubChannel()  //ECM Função chamada apenas em CheckActive
 		} //primeiro if...
 	}
 }
-
+*/
 //não é necessário saber em qual subcanal o peer está
 //considerar testar se um servidorAuxiliar entrou para remoção
 void Channel::CheckActivePeers() //ECM Chamada em bootstrap

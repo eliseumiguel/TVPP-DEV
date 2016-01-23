@@ -36,8 +36,8 @@ enum PeerModes
     MODE_FREERIDER_GOOD    = 0x02,          // Modo Freerider Good
     MODE_FULLCHUNKMAP      = 0x03,          // Modo Anunciando FULL ChunkMap
     MODE_SUPERNODE         = 0x04,          // Modo Supernode
-    //MODE_AUXILIAR_SERVER   = 0x05,          // não usado
-};
+    MODE_AUXILIAR_SERVER   = 0x05,          // Modo usado apenas para que um cliente saiba que seu vizinho em peerList é um servidor auxiliar.
+};                                          // ... com isso o cliente evita remover o servidor auxiliar no método Disconnect aleatório.
 
 //CHANNEL MESSAGES FLAGS
 enum ChannelFlags
@@ -66,7 +66,9 @@ enum Opcodes
     OPCODE_DATA         = 0x04,
     OPCODE_ERROR        = 0x05,
     OPCODE_SERVERAUX    = 0x06,
-};
+    OPCODE_SERVERAUXLIST= 0X07,                  // ECM	usado em MessagePeerlistShare para informar peers lista de servidores auxiliares
+};                                               // ... isso é usado para que os servidores auxiliares não sejam excluidos nas listas OUT
+                                                 // ... na rede principal quando em estado de servidor auxilar ativo.
 
 
 //PING MESSAGES FLAGS
