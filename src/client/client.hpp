@@ -116,6 +116,10 @@ class Client
         void HandleRequestMessage(MessageRequest* message, string sourceAddress = "", uint32_t socket = 0);
         void HandleDataMessage(MessageData* message, string sourceAddress = "", uint32_t socket = 0);
 
+        uint32_t GetAutentication();
+        void SetAutentication(uint32_t bootID);
+
+
         void CreateLogFiles();
 
         //PARAMETROS-------------
@@ -134,6 +138,9 @@ class Client
         int tipOffsetTime;      //Time from where to start requesting once reseting to tip
         uint32_t idChannel;
 		list<Temporizable*> temporizableList;
+		bool configurarBootID;   //controla a autenticação do bootstrapID no primeiro contato com o bootstrap
+		uint32_t bootStrapID_Autentic;
+
 
 		//ECM
 		Disconnector* disconnectorIn;

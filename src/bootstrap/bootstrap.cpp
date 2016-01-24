@@ -30,6 +30,10 @@ Bootstrap::Bootstrap(string udpPort, string peerlistSelectorStrategy,
 	this->maxPeerInSubChannel = maxPeerInSubChannel;
 	this->sizeCluster = sizeCluster;
 
+	time_t boot_ID;
+	time(&boot_ID);
+	bootStrap_ID = boot_ID;
+
 }
 
 Message *Bootstrap::HandleTCPMessage(Message* message, string sourceAddress,
@@ -109,7 +113,7 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
 				// o channel cuida de seu estado. Não é problema do bootstrap.
 				this->setChannelState(channelId, channelMode);
 
-				//mensagem devolvida ao informante de estado... não usada para nada, mas o método exige replay
+				//mensagem devolvida ao externalMessage de estado... não usada para nada, mas o método exige replay
 				messageReply = new MessageStateChannel(
 						(ChannelModes) channelMode);
 			} else {
@@ -150,7 +154,7 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
 						    channelList[channelId].GetServerNewestChunkID(),
 						    channelList[channelId].GetServerEstimatedStreamRate(),
 						    channelList[channelId].GetCreationTime(), nowtime,
-						    clientTime, OPCODE_SERVERAUXLIST);
+						    clientTime, this->bootStrap_ID, OPCODE_SERVERAUXLIST);
 
 				}
 				else // Mensagem de novos vizinhos
@@ -162,7 +166,7 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
 						    channelList[channelId].GetServerNewestChunkID(),
 						    channelList[channelId].GetServerEstimatedStreamRate(),
 						    channelList[channelId].GetCreationTime(), nowtime,
-						    clientTime);
+						    clientTime,this->bootStrap_ID);
 				}
 				/**
 				 * Varre a lista de peers canditados, separando cada campo por um caracter de separação

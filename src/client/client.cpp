@@ -42,6 +42,7 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
     TTL_MAX_Out = ttlOut;
     this->maxRequestAttempt = maxRequestAttempt;
     this->tipOffsetTime = tipOffsetTime;
+    this->configurarBootID = true;
 
     if (limitDownload >= 0)
         this->leakyBucketDownload = new LeakyBucket(limitDownload);
@@ -359,6 +360,20 @@ void Client::HandlePeerlistMessage(MessagePeerlist* message, string sourceAddres
         MessagePeerlistShare* messageWrapper = new MessagePeerlistShare(message);
         peerlistHeader = messageWrapper->GetHeaderValues();
 
+        uint32_t bootID = peerlistHeader[13];
+        if (configurarBootID){
+        	cout<<"IDBootConfig = "<<bootID<<endl;
+        	this->SetAutentication(bootID);
+        	configurarBootID = false;
+        }
+		else
+			cout<<"Valor Autenticado = "<<this->GetAutentication()<<endl;
+            cout<<"Valor recebido = "<<bootID<<endl;
+		    if (this->GetAutentication() != bootID){
+		    	cout<<"Bootstrap is not my. Shutting down ..."<<endl;
+		    	exit (1);
+		    }
+
         if (externalIp == "")
         {
             externalIp = boost::lexical_cast<string>((uint32_t)peerlistHeader[2]) + "." 
@@ -612,7 +627,8 @@ void Client::HandleRequestMessage(MessageRequest* message, string sourceAddress,
             && ((latestReceivedPosition - requestedChunk).GetCycle() == 0))    //1 cycle max diff
         {
             uploadPerSecDone += mediaBuffer->GetChunkSize(requestedChunk.GetPosition());
-            chunksSent++;
+            //ECM. Para acertar o controle de banda, a identação de chunksSent passou a ser realizada após o envio da mensagem, no método UDPSend()
+            //chunksSent++;
             messageReply = (Message*)(*mediaBuffer)[requestedChunk.GetPosition()];
         }
         else
@@ -833,7 +849,7 @@ void Client::Ping()
     boost::xtime xt;
     time_t nowtime;
     Peer* bootstrap = new Peer(Bootstrap_IP, UDP_server_PORT);
-    Peer peerNulo("10.0.0.0","0"); //ECM - Usado para cirar um separador entre Out e In no log do Overlay
+    Peer peerNulo("0.0.0.0","0"); //ECM - Usado para cirar um separador entre Out e In no log do Overlay
     /** 
      * Loop principal
      * Envia uma mensagem ao servidor de bootstrap dizendo que este cliente está vivo
@@ -1625,6 +1641,13 @@ void Client::UDPSend()
                         while (!leakyBucketUpload->DecToken(aMessage->GetMessage()->GetSize())); //while leaky bucket cannot provide
                 }
                 udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
+                /*ECM Correção no controle de banda.
+                 * Inicialmente, a variável chunksSent estava sendo identada quando era chegava um pedido por chunk, e não
+                 * quando efetivamente o chunck era enviado. Assim, movemos a identação para esse código, que configura realiza o controle.
+                 * Neste metodo, inserimos apenas as duas linhas que se seguem.
+                 */
+                if (aMessage->GetMessage()->GetOpcode() == OPCODE_DATA)
+                   chunksSent++;
                 //delete aMessage; ????
             }
         }
@@ -1652,4 +1675,12 @@ void Client::CreateLogFiles()
     string logFilenameChunkRcv = logFilename + "chunkRcv.txt";
     chunkMissFile = fopen(logFilenameChunkMiss.c_str(),"w");
     chunkRcvFile = fopen(logFilenameChunkRcv.c_str(),"w");
+}
+
+uint32_t Client::GetAutentication(){
+	return this->bootStrapID_Autentic;
+}
+void Client::SetAutentication(uint32_t bootID){
+	bootStrapID_Autentic = bootID;
+
 }

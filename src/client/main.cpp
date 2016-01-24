@@ -65,7 +65,7 @@ int main (int argc, char* argv[])
     int limitDownload = -1;
     int limitUpload = -1;
 	string disconnectorStrategyIn = "None";    //ECM separate In and Out to be possible disconnect only Out or In or both
-	string disconnectorStrategyOut = "Random"; //ECM ensures that make peerListOut new connections
+	string disconnectorStrategyOut = "None"; //ECM ensures that make peerListOut new connections
 	unsigned int quantityDisconnect = 1;       //ECM quantity of peer to be disconnected
 	string connectorStrategy = "Random";       //ECM for In and Out. But, in client, the connectorOut is unable
     string chunkSchedulerStrategy = "Random";

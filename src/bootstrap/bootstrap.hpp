@@ -87,6 +87,12 @@ class Bootstrap
 		unsigned int maxPeerInSubChannel;
 		unsigned int sizeCluster;
 
+		//usado por segurnaça para que os clientes autentiquem cada mensagem do bootstrap
+		//Caso mude, significa que o cliente estava comunicando com um bootstrap que já foi fechado
+		//automaticamente, o cliente deve finalizar sua execução
+		//isso evita clientes zumbi interfirindo em outros experimentos e consumindo banda no ambiente.
+		uint32_t bootStrap_ID;
+
         friend class BootstrapTCPServer;    
 };
 
