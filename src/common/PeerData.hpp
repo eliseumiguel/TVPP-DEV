@@ -39,6 +39,7 @@ class PeerData
         * @return A string with the
         */
         //ECM
+
         int GetTTLIn();
         void SetTTLIn(int v);
         void DecTTLIn();
@@ -53,7 +54,11 @@ class PeerData
         int GetChannelId_Sub();
         void SetChannelId_Sub( int channelId_Sub);
 
+        void SetSpecialPeer(bool special);
+        bool GetSpecialPeer();
+
         //ECM
+
 
         void SetMode(PeerModes mode);
         PeerModes GetMode();
@@ -82,9 +87,7 @@ class PeerData
     private:
         //PeerId
         Peer* peer;
-        PeerModes mode;  //ECM informa o modo do cliente. (...)Quando em peerManager os clientes estão na lista peerList, esse modo pode indicar algum
-                         // ... vizinho que é servidor auxiliar. Isso não interfere no modo do servidor auxliar (ServerAuxTypes) por que é
-                         // ... visto apenas pelo cliente que gerencia a lista de seus vizinhos. Essa informação é local ao cliente e não ao servidor
+        PeerModes mode;
 
         //PartnerChunkMap
         HeadedBitset chunkMap;
@@ -95,6 +98,7 @@ class PeerData
         // rede principal que, em suas listas internas peerList (em peerManage) que o modo do cliente informado é MODE_AUXILIAR_SERVER. Com isso, toda
         // ação enquanto o canal estiver em flash crowd pode ser cautelosa em relação aos servidores auxiliares.
         bool peerWaitListServer;
+        bool specialPeer; // Informa ao cliente que alguém de sua lista de parceiros é especial
 
         //TimeToLive of the partnership or request
         //ECM ****

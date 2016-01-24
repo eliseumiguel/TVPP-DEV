@@ -9,6 +9,7 @@ using namespace std;
  */
 PeerData::PeerData(Peer* peer, int ttlIn, int ttlOut, int ttlChannel, int size) : chunkMap(size)
 {
+
 	//ECM
 	this->ttlIn = ttlIn;
 	this->ttlOut = ttlOut;
@@ -21,6 +22,8 @@ PeerData::PeerData(Peer* peer, int ttlIn, int ttlOut, int ttlChannel, int size) 
     mode = MODE_CLIENT;
     pendingRequests = 0;
     delay = 0;
+
+    specialPeer = false; // usado para dar privilégios aos servidores especiais
 }
 
 /** Retorna o TTL*****************/
@@ -85,12 +88,22 @@ Peer* PeerData::GetPeer()
 void PeerData::SetMode(PeerModes mode)
 {
     this->mode = mode;
+
 }
 
 /** Retorna o Modo do Peer */
 PeerModes PeerData::GetMode()
 {
     return this->mode;
+}
+
+void PeerData::SetSpecialPeer(bool special)
+{
+	this->specialPeer = special;
+}
+bool PeerData::GetSpecialPeer()
+{
+	return this->specialPeer;
 }
 
 void PeerData::SetChunkMap(ChunkUniqueID chunkMapHead, boost::dynamic_bitset<> map)

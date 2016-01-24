@@ -261,7 +261,7 @@ void Channel::analizePeerToBeServerAux(Peer* source)
 	if (this->channelMode == MODE_NORMAL)
 	{
 		boost::mutex::scoped_lock channelSubCandidatesLock(*channel_Sub_Candidates_Mutex);
-		if (this->HasPeer(source) && server_Sub_Candidates.size() < this->maxServerAuxCandidate && source->GetID() != this->GetServer()->GetID())
+		if ((this->HasPeer(source)) && (server_Sub_Candidates.size() < this->maxServerAuxCandidate) && (source->GetID() != this->GetServer()->GetID()))
 		{
 			//Assegura que um servidor em estado de mesclagem ou flash crowd
 			//passe para o estado normal sem ser reinserido na lista de candidatos
@@ -355,7 +355,7 @@ void Channel::SetChannelMode(ChannelModes New_channelMode)
     	case MODE_FLASH_CROWD_MESCLAR:
     	{
     		//codigo antigo
-    		//this->mesclarRedes = true;
+    		this->mesclarRedes = true;
     	   	//New_channelMode = MODE_FLASH_CROWD;
     	   	/* NÃO TEM BREAK
     	   	 *  Continua o código do flash crowd no case seguinte
@@ -365,6 +365,7 @@ void Channel::SetChannelMode(ChannelModes New_channelMode)
                 server_Sub_Candidates[i->first].SetPeerWaitInform(true);
 				this->Remove_ChannelSub(&(i->first), true);
 				i->second.SetMesclando(true);
+				cout<<"esperando informação para "<<i->first<<" "<< server_Sub_Candidates[i->first].GetPeerWaitInform()<<endl; //teste
    			}
    			break;
     	}
@@ -384,21 +385,23 @@ void Channel::SetChannelMode(ChannelModes New_channelMode)
         		// aqui são selecionados aleatoriamente candidatos a servidor auxiliar para os subcanais. Contudo,
         		// para fazer cluster em subcanais, deve-se somar ao limite maxSubChannel + tamanho do cluster
         		// ECM Outra solução é aplicar a estratégia randômica na lista e remover o excesso.
-
-        		for (unsigned int i=0; i < (maxSubChannel * sizeCluster) ;i++)
+        		if (server_Sub_Candidates.size() > maxSubChannel * sizeCluster)
         		{
-        		   //sorteia número aleatório para seleção do servidor
-        		   srand (time (NULL)); // Gera uma 'random seed' baseada no retorno da funcao time()
-        		   int sorteado;
-        		   sorteado = rand () % server_Sub_Candidates.size(); // Retorna um numero aleatorio entre 0 e tamanho do mapa
-        		   map<string,SubChannelCandidateData>::iterator j = server_Sub_Candidates.begin();
-        		   for(int mapItIndex = 0; mapItIndex < sorteado; mapItIndex++) j++;
-        		   subCandidatosTempList.insert(subCandidatosTempList.end(), std::pair<string,SubChannelCandidateData>((*j).first, (*j).second));
-        		   server_Sub_Candidates.erase((*j).first);
-        		}
+        			for (unsigned int i=0; i < (maxSubChannel * sizeCluster) ;i++)
+        		    {
+        		       //sorteia número aleatório para seleção do servidor
+        		       srand (time (NULL)); // Gera uma 'random seed' baseada no retorno da funcao time()
+        		       int sorteado;
+        		       sorteado = rand () % server_Sub_Candidates.size(); // Retorna um numero aleatorio entre 0 e tamanho do mapa
+        		       map<string,SubChannelCandidateData>::iterator j = server_Sub_Candidates.begin();
+        		       for(int mapItIndex = 0; mapItIndex < sorteado; mapItIndex++) j++;
+        		       subCandidatosTempList.insert(subCandidatosTempList.end(), std::pair<string,SubChannelCandidateData>((*j).first, (*j).second));
+        		       server_Sub_Candidates.erase((*j).first);
+        		     }
 
-        		server_Sub_Candidates.clear();
-        		server_Sub_Candidates = subCandidatosTempList;
+        		     server_Sub_Candidates.clear();
+        		     server_Sub_Candidates = subCandidatosTempList;
+        		}
 
         		for (map<string,SubChannelCandidateData>::iterator i = server_Sub_Candidates.begin(); i != server_Sub_Candidates.end(); i++)
         		{

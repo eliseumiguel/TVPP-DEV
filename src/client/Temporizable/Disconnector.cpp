@@ -27,8 +27,13 @@ void Disconnector::Disconnect()
 	   if ((this->quantity <= peers.size()) && (this->quantity > 0))
 	   {
 	       for (unsigned int i = this->quantity; i > 0; i--){
-		      peerManager->DisconnectPeer(peers.at(i-1)->GetPeer()->GetID(),peerActive);
-		      cout <<"Disconnector removing "<<peers.at(i-1)->GetPeer()->GetID()<<" to flexibly relationships" <<endl;
+	    	  cout<<"o peer "<<peers.at(i-1)->GetPeer()->GetID() <<" tem estado especial "<<peerManager->GetPeerData(peers.at(i-1)->GetPeer()->GetID())->GetSpecialPeer()<<endl;
+		      if (!peerManager->GetPeerData(peers.at(i-1)->GetPeer()->GetID())->GetSpecialPeer()){
+			      peerManager->DisconnectPeer(peers.at(i-1)->GetPeer()->GetID(),peerActive);
+			      cout <<"Disconnector removing "<<peers.at(i-1)->GetPeer()->GetID()<<" to flexibly relationships" <<endl;
+		      }
+		      else
+		      	 cout <<"peer "<<peers.at(i-1)->GetPeer()->GetID()<<" not disconnected because it is a auxiliary server"<<endl;
 	       }
 	   }
 	   else {cout << "Disconnector able but not peer delected" <<std::endl;}

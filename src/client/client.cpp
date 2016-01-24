@@ -322,17 +322,26 @@ void Client::HandleServerAuxListMessage(MessagePeerlist* message, string sourceA
     vector<int> peerlistHeader = message->GetHeaderValues();
     uint16_t peersReceived = peerlistHeader[1];
 
+    //ECM Impressão de teste apenas
     cout<<"Recebi servidores auxiliares :::";
     for (uint16_t i = 0; i < peersReceived; i++)
-    {
+         if (Peer* newPeertemp = message->GetPeer(i))
+    	    cout<<newPeertemp->GetID()<<" ** ";
+    cout <<endl;
 
+    //fim do teste
+
+    for (uint16_t i = 0; i < peersReceived; i++)
+    {
         if (Peer* newPeer = message->GetPeer(i)){
-        	if (peerManager.IsPeerInPeerList(newPeer->GetID()))
-        		peerManager.GetPeerData(newPeer->GetID())->SetMode(MODE_AUXILIAR_SERVER);
-        cout<<newPeer->GetID()<<" ** ";
+            cout<<"procurando "<<message->GetPeer(i)->GetID()<<"na lista de pares"<<endl;
+        	if (peerManager.IsPeerInPeerList(newPeer->GetID())){
+        		cout<<"encontrou e está configurando "<<peerManager.GetPeerData(newPeer->GetID())->GetSpecialPeer() <<" para "<<true<<endl;
+        		peerManager.GetPeerData(newPeer->GetID())->SetSpecialPeer(true);
+        	}
         }
     }
-    cout <<endl;
+
 
 }
 
@@ -585,9 +594,9 @@ void Client::HandleMessageServerSub(MessageServerSub* message, string sourceAddr
 
 }
 
-
-/* REQUEST PACKET:    | OPCODE | HEADERSIZE | BODYSIZE | CHUNKGUID |  **************************************
-** Sizes(bytes):      |    1   |     1      |     2    |  4  |  2  |  TOTAL: 10 Bytes  **********************/ 
+/*FUNÇÃO ORIGINAL. SUBSTITUIDA PELA DO JOÃO PARA TESTE DE CONTROLE DE BANDA
+/ REQUEST PACKET:    | OPCODE | HEADERSIZE | BODYSIZE | CHUNKGUID |  **************************************
+** Sizes(bytes):      |    1   |     1      |     2    |  4  |  2  |  TOTAL: 10 Bytes  **********************/
 //ECM - função exclusiva para Out
 void Client::HandleRequestMessage(MessageRequest* message, string sourceAddress, uint32_t socket)
 {
@@ -1259,11 +1268,11 @@ Request* Client::CriaRequest()
     newRequest->SearchPeers(&peerActiveWithData);
     return newRequest;
 }
-
+// codigo original***
 void Client::FazPedidos(int stepInMs)
 {
     list<Request*>::iterator it;
-    
+
     //Clean up request list
     boost::mutex::scoped_lock requestListLock(requestListMutex);
     it = requestList.begin();
@@ -1280,7 +1289,7 @@ void Client::FazPedidos(int stepInMs)
             }
             (*it)->SetTTL(500);
         }
-        
+
         if (eraseIt)
         {
             triesPerRequest.push_back((*it)->GetAttempts().size());
@@ -1291,7 +1300,7 @@ void Client::FazPedidos(int stepInMs)
         } else it++;
     }
     requestListLock.unlock();
-    
+
     //Do requests
     requestListLock.lock();
     for (it = requestList.begin(); it != requestList.end(); it++)
@@ -1335,6 +1344,7 @@ void Client::FazPedidos(int stepInMs)
     }
     requestListLock.unlock();
 }
+
 
 void Client::GerarDados()
 {
