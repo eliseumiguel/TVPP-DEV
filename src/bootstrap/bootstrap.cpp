@@ -101,9 +101,9 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
 				 * com este teste incluído if(auxiliarServer) o peer será candidato apenas se informado ao bootstrap
 				 * Inplementação de 17-01-2016*/
 				if (auxiliarServerCandidate){
-				   cout<<"pode ser aqui que está mudando o cara..."<<endl;
+				   //cout<<"pode ser aqui que está mudando o cara..."<<endl;
 				   channelList[channelId].analizePeerToBeServerAux(source);
-				   cout<<"se deu pau eu achei"<<endl;
+				   //cout<<"se deu pau eu achei"<<endl;
 				}
 			}
 			break;
@@ -271,6 +271,7 @@ void Bootstrap::HandlePeerlistMessage(MessagePeerlist* message,
 					fwrite(overlayLog.c_str(), 1, overlayLog.size(), *f); //overlayFile);
 					fflush(*f);                                  //overlayFile);
 				}
+
 			} else {
 				channelListLock.unlock();
 				cout

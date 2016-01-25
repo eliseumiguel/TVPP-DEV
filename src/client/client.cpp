@@ -926,8 +926,6 @@ void Client::Ping()
                                     nowtime + bootstrapTimeShift,
                                     peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()),peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut()));
 
-            //peerlistMessage = new MessagePeerlistLog(peerManager.GetPeerActiveSizeTotal(), idChannel, nowtime + bootstrapTimeShift);
-            //o tamanho da mensagem é o número de pares out, mais um separador + o número de pares In
             peerlistMessage = new MessagePeerlistLog( 1 + peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut())
             		                                    + peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()),
             		                                  idChannel, nowtime + bootstrapTimeShift);
@@ -1008,8 +1006,6 @@ void Client::Ping()
                 for (set<string>::iterator i = peerManager.GetPeerActiveOut_Master()->begin(); i != peerManager.GetPeerActiveOut_Master()->end(); i++)
                 {
                     Peer* peer = peerManager.GetPeerData(*i)->GetPeer();
-                    //código retirado para não inserir os parceiros Out de Master no log de overlay dos servidores auxiliares
-                    //if (peerlistMessage){peerlistMessage->AddPeer(peer);}
                     if (pingMessage && peer)
                     {
                         //udp->Send(peer->GetID(), pingMessage->GetFirstByte(), pingMessage->GetSize());

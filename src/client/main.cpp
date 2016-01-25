@@ -65,7 +65,7 @@ int main (int argc, char* argv[])
     int limitDownload = -1;
     int limitUpload = -1;
 	string disconnectorStrategyIn = "None";    //ECM separate In and Out to be possible disconnect only Out or In or both
-	string disconnectorStrategyOut = "None"; //ECM ensures that make peerListOut new connections
+	string disconnectorStrategyOut = "Random";   //ECM ensures that make peerListOut new connections
 	unsigned int quantityDisconnect = 1;       //ECM quantity of peer to be disconnected
 	string connectorStrategy = "Random";       //ECM for In and Out. But, in client, the connectorOut is unable
     string chunkSchedulerStrategy = "Random";
@@ -84,7 +84,7 @@ int main (int argc, char* argv[])
             cout <<"  -bufferSize                   define the buffermap message size (default: "<<bufferSize<<")"<<endl;
             cout <<"  -channelId                    select a channel to transmit/receive (default: "<<idChannel<<")"<<endl;
 			cout <<"  -disconnectorStrategyIn       select a strategy for peer disconnection (default: "<<disconnectorStrategyIn<<")"<<endl;
-			cout <<"  -disconnectorStrategyOut      select a strategy for peer disconnection (default: "<<disconnectorStrategyOut<<")"<<endl;
+			cout <<"  -disconnectorStrategyOut      select a strategy for peer disconnection (None or Random default: "<<disconnectorStrategyOut<<")"<<endl;
             cout <<"                                (Options: None, Random)"<<endl;
             cout <<"  -quantityDisconnect           number of peer to be disconnected by disconnectorStrategy (default: "<<quantityDisconnect<<")"<<endl;
 			cout <<"  -connectorStrategy            select a strategy for peer connection (default: "<<connectorStrategy<<")"<<endl;

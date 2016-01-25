@@ -113,9 +113,6 @@ class PeerData
          */
         int channelId_Sub;
 
-        //**** ECM
-        //ECM
-
         //Peer classification technologies =D
         int uploadScore;
         int pendingRequests;

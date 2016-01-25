@@ -53,7 +53,8 @@ using namespace std;
 * ECM-mudanças para que o canal perimta subcanais.
 * Com isso, um par do canal poderá ser servidor auxiliar de um sub canal
 */
-class SubChannelData;
+class SubChannelServerAuxData;
+class SubChannelCandidateData;
 
 class Channel
 {
@@ -123,14 +124,15 @@ class Channel
         boost::mutex* channel_Sub_List_Mutex;
         boost::mutex* channel_Sub_Candidates_Mutex;
 
-        map<string, SubChannelData> channel_Sub_List; //ECM estrutura dos subcanais montado
-        map<string, SubChannelCandidateData> server_Sub_Candidates; //ECM estrutura para gerir os candidatos a subcanais
+        map<string, SubChannelServerAuxData> channel_Sub_List;      //ECM manage Server_Aux active in Sub_Channel
+        map<string, SubChannelCandidateData> server_Sub_Candidates; //ECM manage Server_Aux candidates to be Server_Aux active.
 
         ChannelModes channelMode;
         unsigned int maxPeerInSubChannel;
         unsigned int maxSubChannel;
         unsigned int maxServerAuxCandidate;
         bool mesclarRedes;
+        bool GenerateAllLogs;
 
         bool AddPeerChannel(Peer* peer);
         bool Create_New_ChannelSub();

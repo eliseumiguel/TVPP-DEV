@@ -23,6 +23,7 @@ Channel::Channel(unsigned int channelId, Peer* serverPeer,
         this->maxSubChannel            = maxSubChannel;
         this->maxServerAuxCandidate    = maxServerAuxCandidate;
         this->mesclarRedes             = mesclar;
+        this->GenerateAllLogs = false; //ECM Falso, gera apenas o log perf-all e overaly-all
         cout<<endl;
         cout<<" ---------------CRIANDO CANAL --------------------"<<endl;
         cout<< "maxPeerInSubChannel      = "<< maxPeerInSubChannel<<endl;
@@ -52,17 +53,20 @@ Channel::Channel(unsigned int channelId, Peer* serverPeer,
         logFilename += timestr;
         logFilename += "-";
 
-        string logFilenamePerf_Master = logFilename + "mas-perf.txt";
-        string logFilenameOverlay_Master = logFilename + "mas-overlay.txt";
-
         string logFilenamePerf_Total = logFilename + "all-perf.txt";
         string logFilenameOverlay_Total = logFilename + "all-overlay.txt";
 
-        performanceFile_Master = fopen(logFilenamePerf_Master.c_str(),"w");
-        poverlayFile_Master = fopen(logFilenameOverlay_Master.c_str(),"w");
-
         performanceFile_Total = fopen(logFilenamePerf_Total.c_str(),"w");
         poverlayFile_Total = fopen(logFilenameOverlay_Total.c_str(),"w");
+
+        if(GenerateAllLogs){
+
+        	string logFilenamePerf_Master = logFilename + "mas-perf.txt";
+        	string logFilenameOverlay_Master = logFilename + "mas-overlay.txt";
+
+        	performanceFile_Master = fopen(logFilenamePerf_Master.c_str(),"w");
+        	poverlayFile_Master = fopen(logFilenameOverlay_Master.c_str(),"w");
+        }
 
     } 
 }
@@ -152,6 +156,7 @@ ServerAuxTypes Channel::GetServerSubNewMode (Peer* peer)
  * Insere o peer no canal principal se MODE == NORMAL ou em um sub-canal se MODE == FLASH CROWD
  * Em MODE FLASH CROWD: caso todos sub-canais estejam cheios, tenta criar novo sub canal e inserir
  *                      caso não consiga criar novo canal, insere na rede principal.
+ * Este método é chamado no bootstrap. O mutex já fechado...
  */
 void Channel::AddPeer(Peer* peer)
 {
@@ -172,7 +177,7 @@ void Channel::AddPeer(Peer* peer)
         	}
 	}
 }
-
+//ECM - Mutex fechado ... pode-se pegar o idSubChannelServer in peerlist
 bool Channel::AddPeerChannel(Peer* peer)
 {
 	if (channelMode == MODE_NORMAL)
@@ -187,13 +192,13 @@ bool Channel::AddPeerChannel(Peer* peer)
 		//tenta inserir em sub canal
 		boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
 
-		for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
-			if (this->GetPeerListSizeChannel_Sub(i->second.GetchannelId_Sub()) < (this->maxPeerInSubChannel) && (!i->second.GetMesclando()))
+		for (map<string, SubChannelServerAuxData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
+			if (this->GetPeerListSizeChannel_Sub(i->second.Get_ServerAuxChannelId_Sub()) < (this->maxPeerInSubChannel) && (!i->second.GetMesclando()))
 			{
 				peerList[peer->GetID()] = PeerData(peer);
-				peerList[peer->GetID()].SetChannelId_Sub(i->second.GetchannelId_Sub());
+				peerList[peer->GetID()].SetChannelId_Sub(i->second.Get_ServerAuxChannelId_Sub());
 
-		       	cout<<"Inserindo ["<<peer->GetID()<<"] SUBCHANNEL ["<<i->second.GetchannelId_Sub()<<"]"<<endl;
+		       	cout<<"Inserindo ["<<peer->GetID()<<"] SUBCHANNEL ["<<i->second.Get_ServerAuxChannelId_Sub()<<"]"<<endl;
 				channelSubListLock.unlock();
 				return true;
 	        }
@@ -205,6 +210,7 @@ bool Channel::AddPeerChannel(Peer* peer)
 /*ECM 17-01-2015
  * Novo código de criação de canal com cluster de servidores auxiliares em redes paralelas
  * Agora, mais de um servidor auxiliar terá o mesmo subCannel_ID. Com isso, contribuirão na mesma rede paralela
+ * OBS: Mutex fechado no bootstrap
 */
 bool Channel::Create_New_ChannelSub()
 {
@@ -221,31 +227,33 @@ bool Channel::Create_New_ChannelSub()
 			peerServerAuxNew.push_back(new string(i->first));
 			if (size==0) break; //modified at 17-01-16
 		}
-    cout <<"finalizou o vetor de servidores deste canal"<<endl;
+    cout <<"All server ["<<size<<"] candidate are able to create new subchannel"<<endl;
 	channelSubCandidatesLock.unlock();
 
-	if (peerServerAuxNew.size()==sizeCluster && channel_Sub_List.size() < (maxSubChannel * sizeCluster))  //cria sub-channel
+	//create sizeCluster sub-channel with same ID_SubChannel
+	if (peerServerAuxNew.size()==sizeCluster && channel_Sub_List.size() < (maxSubChannel * sizeCluster))
 	{
+		//Get a new subChannel ID
 		unsigned int channelID_New = 0;
-        //ECM create a new subChannelID
-		for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
-			if (channelID_New < i->second.GetchannelId_Sub())
-				channelID_New = i->second.GetchannelId_Sub();
+		for (map<string, SubChannelServerAuxData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
+			if (channelID_New < i->second.Get_ServerAuxChannelId_Sub())
+				channelID_New = i->second.Get_ServerAuxChannelId_Sub();
 		channelID_New ++;
-        cout << "criou o novo ID "<<channelID_New<<endl;
+        cout << "Got the new subChannel ID "<<channelID_New<<endl;
 		for (unsigned int pos=0; pos < sizeCluster; pos++){
-		    channel_Sub_List[*peerServerAuxNew.at(pos)] = SubChannelData(channelId, channelID_New, peerList[*peerServerAuxNew.at(pos)].GetPeer() );//,0,0);
+		    channel_Sub_List[*peerServerAuxNew.at(pos)] = SubChannelServerAuxData(channelId, channelID_New, peerList[*peerServerAuxNew.at(pos)].GetPeer(),GenerateAllLogs);
 		}
-		cout<< "configurou os servidores auxiliares"<<endl;
-		channelSubListLock.unlock();
+
 		for (unsigned int pos=0; pos <peerServerAuxNew.size(); pos++)
-		   delete peerServerAuxNew.at(pos); //Atualizacao 18-11-15
-		cout<<"deletou o vetor temporário"<<endl;
+		   delete peerServerAuxNew.at(pos);
+
+		channelSubListLock.unlock();
 		return true;
 	}
+
 	channelSubListLock.unlock();
 	for (unsigned int pos=0; pos <peerServerAuxNew.size(); pos++)
-	   delete peerServerAuxNew.at(pos); //Atualizacao 18-11-15
+	   delete peerServerAuxNew.at(pos);
 	return false;
 }
 
@@ -287,14 +295,15 @@ void Channel::printChannelProfile()
 	cout<<"EnableSS: ["<<auxiliarServerDisponiveis<<"]"<<endl;
 
     cout<<"#"<<endl;
-	for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
+	for (map<string, SubChannelServerAuxData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
 	{
 		int totalPeerInSubChannel=0;
 		for (map<string, PeerData>::iterator j = peerList.begin(); j != peerList.end(); j++)
-	    	if (j->second.GetChannelId_Sub() == (int)i->second.GetchannelId_Sub())
+	    	if (j->second.GetChannelId_Sub() == (int)i->second.Get_ServerAuxChannelId_Sub())
 	    		totalPeerInSubChannel++;
-			cout<<"["<<i->first<<"] scID ["<< i->second.GetchannelId_Sub()<<"] TPeerSub ["<<totalPeerInSubChannel<<"] Life ["<<i->second.GetChannelLife()<<"] Mesc ["<<i->second.GetMesclando()<<"] ReNeW ["<<i->second.GetReNewServerSub()<<"]"<<endl;
-		    //cout<<"scID ["<< i->second.GetchannelId_Sub()<<"] TPeerSub ["<<totalPeerInSubChannel<<"] TLife ["<<i->second.GetChannelLife()<<"] Mesc ["<<i->second.GetMesclando()<<"] ReNeW ["<<i->second.GetReNewServerSub()<<"]"<<endl;
+			cout<<"["<<i->first<<"] scID ["<< i->second.Get_ServerAuxChannelId_Sub()<<"] TPeerSub ["<<totalPeerInSubChannel<<"] xxx [""] Mesc ["<<i->second.GetMesclando()<<"] xxx [""]"<<endl;
+			//cout<<"["<<i->first<<"] scID ["<< i->second.Get_ServerAuxChannelId_Sub()<<"] TPeerSub ["<<totalPeerInSubChannel<<"] Life ["<<i->second.GetChannelLife()<<"] Mesc ["<<i->second.GetMesclando()<<"] ReNeW ["<<i->second.GetReNewServerSub()<<"]"<<endl;
+		    //cout<<"scID ["<< i->second.Get_ServerAuxChannelId_Sub()<<"] TPeerSub ["<<totalPeerInSubChannel<<"] TLife ["<<i->second.GetChannelLife()<<"] Mesc ["<<i->second.GetMesclando()<<"] ReNeW ["<<i->second.GetReNewServerSub()<<"]"<<endl;
 	}
 	cout<<"###-------"<<endl;
 }
@@ -314,26 +323,29 @@ PeerData& Channel::GetPeerData(Peer* peer)
     return peerList[peer->GetID()];
 }
 
+
+/*ECM IMPORTANTE: não colocar sleep neste código. Isso faz com que todos que tentam abrir os mutex ficam esperando o mesmo sleep.
+ * O bootstrap tem de tratar outras mensagens e o mutex que prende a lista de canais (channelListLock) está fechado lá quando a execução
+ * passa nesta função.
+ */
 void Channel::SetChannelMode(ChannelModes New_channelMode)
 {
 	boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
 	boost::mutex::scoped_lock channelSubCandidatesLock(*channel_Sub_Candidates_Mutex);
 	map<string,SubChannelCandidateData> subCandidatosTempList;
 
-	cout<<"estado atual do channel "<<this->channelMode<<endl;
-    cout<<"tentando mudar o estado do channel para "<<New_channelMode<<endl;
+	cout<<"Channel current State "<<this->channelMode<<endl;
+    cout<<"Configuring channel new state "<<New_channelMode<<" ..."<<endl;
 
     switch (New_channelMode)
     {
-    	case MODE_NORMAL:
+    	case MODE_NORMAL: //*************************************************************************
         {
         	if (this->channelMode == MODE_FLASH_CROWD)
-            /* Esta mudança é radical e não considera se o flash crowd é com mesclagem ou não.
+            /* Esta mudança é radical e não considera se o flash crowd é espera ou não a mesclagem.
              * Simplesmente, muda-se o estado finalizando todos os subcanais.
              * Não é de se esperar que este estado seja realizado sem que os subcanais terminem a execução.
-             * Detalhe. Este modo foi implementado para finalizer um flash crowd que não é com tempo de vida.
-             * Assim, pode-se permitir que o ambiente fique em flash crowd por um tempo e finalize as subredes
-             * sem preocupar com a mesclagem.
+             * Detalhe. Este modo foi implementado para finalizer um flash crowd sem mesclagem.
              */
         	{
         		//faz com que todos os pares passem a pertencentes ao canal principal. Mutex de peerList fechado no bootstrap,
@@ -347,30 +359,30 @@ void Channel::SetChannelMode(ChannelModes New_channelMode)
        				}
        			this->Remove_AllChannelSub();
         	}
+        	// tem de tratar a possibilidade de mudar de mesclando -> normal aqui
 
         	this->channelMode = New_channelMode;
         	break;
         }
 
-    	case MODE_FLASH_CROWD_MESCLAR:
+    	case MODE_FLASH_CROWD_MESCLAR: //***********************************************************
     	{
-    		//codigo antigo
-    		this->mesclarRedes = true;
-    	   	//New_channelMode = MODE_FLASH_CROWD;
-    	   	/* NÃO TEM BREAK
-    	   	 *  Continua o código do flash crowd no case seguinte
-    	   	 */
-   			for (map<string,SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++){
-   				server_Sub_Candidates[i->first].SetState(SERVER_AUX_MESCLAR);
-                server_Sub_Candidates[i->first].SetPeerWaitInform(true);
-				this->Remove_ChannelSub(&(i->first), true);
-				i->second.SetMesclando(true);
-				cout<<"esperando informação para "<<i->first<<" "<< server_Sub_Candidates[i->first].GetPeerWaitInform()<<endl; //teste
-   			}
+    		if (this->channelMode == MODE_FLASH_CROWD){
+    			this->mesclarRedes = true;
+    			for (map<string,SubChannelServerAuxData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++){
+    				server_Sub_Candidates[i->first].SetState(SERVER_AUX_MESCLAR);
+    				server_Sub_Candidates[i->first].SetPeerWaitInform(true);
+    				this->Remove_ChannelSub(&(i->first), true);
+    				i->second.SetMesclando(true);
+    				cout<<"Server "<<i->first<<" waiting state change to ["<<New_channelMode<<"]"<<endl;
+    			}
+    		}
+    		else cout <<"Is not permitted change the state channel "<<this->channelMode<<" to "<<New_channelMode<<endl;
+
    			break;
     	}
 
-    	case MODE_FLASH_CROWD:
+    	case MODE_FLASH_CROWD: //*********************************************************************
         {
         	if (this->channelMode == MODE_NORMAL)
         	/*faz todos os cadidatos a servidor auxilar tornarem-se disponíveis para o flash crwod
@@ -422,7 +434,7 @@ void Channel::SetChannelMode(ChannelModes New_channelMode)
 
         }
         default:
-            cout <<"Não houve mudança no estado do Channel"<<endl;
+        	cout <<"Mode "<<New_channelMode<<" is not permitted or unknown"<<endl;
             break;
 
     	channelSubListLock.unlock();
@@ -452,13 +464,13 @@ void Channel::Remove_ChannelSub(const string* source, bool mesclar)
     if (mesclar)
     {
     	for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
-    		if (i->second.GetChannelId_Sub() == (int)channel_Sub_List[*source].GetchannelId_Sub())
+    		if (i->second.GetChannelId_Sub() == (int)channel_Sub_List[*source].Get_ServerAuxChannelId_Sub())
     			i->second.SetChannelId_Sub(CHANNEL_ID_MESCLANDO);
     }
     else
     {
         for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
-        	if (i->second.GetChannelId_Sub() == (int)channel_Sub_List[*source].GetchannelId_Sub())
+        	if (i->second.GetChannelId_Sub() == (int)channel_Sub_List[*source].Get_ServerAuxChannelId_Sub())
         		i->second.SetChannelId_Sub(this->channelId);
     	channel_Sub_List.erase(*source);
     }
@@ -487,6 +499,10 @@ vector<PeerData*> Channel::MakeServerAuxList()
     return ServerAuxList;
 }
 
+/*
+ * Método chamado pelo Bootstrap
+ * Mutex de peerList já fechado
+ */
 vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, unsigned int peerQuantity, bool virtualPeer)
 {
     vector<PeerData*> allPeers, selectedPeers;
@@ -496,12 +512,13 @@ vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, uns
      * Atende ao caso de só haver o canal principal
      */
     for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
-        if (srcPeer->GetID() != i->second.GetPeer()->GetID() &&                                         // (se não é ele mesmo) e
-        		(peerChannelId_Sub == i->second.GetChannelId_Sub() ||                                   // (se o sub = sub) ou
-        	     (peerChannelId_Sub == CHANNEL_ID_MESCLANDO &&  i->second.GetChannelId_Sub() == (int)this->channelId)))   // ((se esta em mesclagem) e
-        																								//  (outro rede principal))
+        if ((srcPeer->GetID() != i->second.GetPeer()->GetID()) &&                               // ((se não é ele mesmo) e
+        	((peerChannelId_Sub == i->second.GetChannelId_Sub()) ||                             //  (se o sub = sub) ou
+        	  ((peerChannelId_Sub == CHANNEL_ID_MESCLANDO)&&(i->second.GetChannelId_Sub() == (int)this->channelId))
+            )                                                                                   //((se esta em mesclagem) e(outro rede principal))
+           )
         {
-        	// teste para não permitir que clientes virtuais em uma mesma máquina sejam vizinhos e parceiros
+        	// permit relationship between same IP
         	if (!virtualPeer){
         	    	allPeers.push_back(&(i->second));
         	}
@@ -538,18 +555,16 @@ vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, uns
     channelSubCandidatesLock.unlock();
 
 
-	/* Se o par está em sub canal, incluir o servidor auxiliar na lista de parceiros dele
+	/* Se o par está em sub canal, incluir TODOS os servidores auxiliares na lista de parceiros dele
 	* isso é importante visto que o serverAux->idChannel_Sub é igual ao idChannel do canal principal
-	* Os servidores auxiliares têm o idChannel_sub na estrutura SubChannelData
+	* Os servidores auxiliares têm o idChannel_sub na estrutura SubChannelServerAuxData
 	* No caso de CHANNEL_ID_MESCLANDO -1, ele estará em fase de mesclagem e pertence à rede principal
 	*/
     if (peerChannelId_Sub != (int)this->channelId && peerChannelId_Sub != CHANNEL_ID_MESCLANDO)
     {
         boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
-    	for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
-    		if (peerChannelId_Sub == (int)i->second.GetchannelId_Sub())
-    			//ver isso
-    			//para cluster, informar todos os IDs dos servidores auxiliares
+    	for (map<string, SubChannelServerAuxData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
+    		if (peerChannelId_Sub == (int)i->second.Get_ServerAuxChannelId_Sub())
     			allPeers.push_back(&(peerList[i->second.GetServer_Sub()->GetID()]));
       	channelSubListLock.unlock();
     }
@@ -592,56 +607,11 @@ unsigned int Channel::GetPeerListSize()
     return peerList.size();
 }
 
-//Mutex fechados em CheckActiveList
-//Entra neste método se o mesclarRedes == true
 /*
-void Channel::CheckAllSubChannel()  //ECM Função chamada apenas em CheckActivePeers
-{
-	for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
-	{
-		//garente o processo após o servidor auxiliar ser informado pelo bootstrap
-		if (!server_Sub_Candidates[i->first].GetPeerWaitInform())
-		{
-			i->second.DecChannelLif();  //ECM aparece apenas aqui
-			i->second.DecReNewServerSub(); //ECM aparece apenas aqui
-
-			//No tempo 1 o bootstrap é preparado
-			// para informar ao servidor o novo estado
-			//
-			if (i->second.GetReNewServerSub() == 1)
-			{
-				server_Sub_Candidates[i->first].SetState(NO_SERVER_AUX);
-				server_Sub_Candidates[i->first].SetPeerWaitInform(true);
-			}
-			else
-				if (i->second.GetReNewServerSub() == 0) //no tempo 0 o canal é atualizado
-				{
-					this->Remove_ChannelSub(&(i->first), false);
-					i->second.SetMesclando(false);
-					cout<<"&&&&&& REMOVENDO &&&&& subChannel ["<<i->second.GetchannelId_Sub()<<"]"<<endl;
-				}
-
-			//servidor permanece em estado de mesclagem. Canal atua quando peer for informado (permite sincronizar)
-			if (i->second.GetChannelLife() == 1) //ECM aparece apenas aqui e abaixo (dois lugares)
-			{
-				server_Sub_Candidates[i->first].SetState(SERVER_AUX_MESCLAR);
-				server_Sub_Candidates[i->first].SetPeerWaitInform(true);
-			}
-			else
-				if (i->second.GetChannelLife() == 0)
-				{
-					this->Remove_ChannelSub(&(i->first), true);
-					i->second.SetMesclando(true);
-					cout<<"&&&&& MESCLANDO &&&&& subChannel ["<<i->second.GetchannelId_Sub()<<"]"<<endl;
-				}
-
-		} //primeiro if...
-	}
-}
-*/
-//não é necessário saber em qual subcanal o peer está
-//considerar testar se um servidorAuxiliar entrou para remoção
-void Channel::CheckActivePeers() //ECM Chamada em bootstrap
+ * Método chamado pelo Bootstrap
+ * Mutex de peerList já fechado
+ */
+ void Channel::CheckActivePeers()
 {
     vector<string> deletedPeer;
     for (map<string,PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++) 
@@ -690,28 +660,31 @@ vector<FILE*> Channel::GetPerformanceFile(Peer* srcPeer)
 	vPerformanceFile.clear();
 	vPerformanceFile.push_back(performanceFile_Total);
 
-	// se for o servidor, retorna todos os arquivos de log
-	if (srcPeer->GetID() == this->GetServer()->GetID())
+	if(GenerateAllLogs)
 	{
-		vPerformanceFile.push_back(performanceFile_Master);
-		for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
-			vPerformanceFile.push_back(i->second.GetPerformanceFile());
-		return vPerformanceFile;
-	}
-
-
-	if (channel_Sub_List.find(srcPeer->GetID()) != channel_Sub_List.end())
-		vPerformanceFile.push_back((channel_Sub_List.find(srcPeer->GetID()))->second.GetPerformanceFile());
-	for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
-
-	if (peerList[srcPeer->GetID()].GetChannelId_Sub() != (int)this->channelId)
-		for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
-			if (peerList[srcPeer->GetID()].GetChannelId_Sub() == (int)i->second.GetchannelId_Sub())
-			{
+		// se for o servidor, retorna todos os arquivos de log
+		if (srcPeer->GetID() == this->GetServer()->GetID())
+		{
+			vPerformanceFile.push_back(performanceFile_Master);
+			for (map<string, SubChannelServerAuxData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
 				vPerformanceFile.push_back(i->second.GetPerformanceFile());
-				return vPerformanceFile;
-			}
-	vPerformanceFile.push_back(performanceFile_Master);
+			return vPerformanceFile;
+		}
+
+
+		if (channel_Sub_List.find(srcPeer->GetID()) != channel_Sub_List.end())
+			vPerformanceFile.push_back((channel_Sub_List.find(srcPeer->GetID()))->second.GetPerformanceFile());
+		for (map<string, SubChannelServerAuxData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
+
+			if (peerList[srcPeer->GetID()].GetChannelId_Sub() != (int)this->channelId)
+				for (map<string, SubChannelServerAuxData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
+					if (peerList[srcPeer->GetID()].GetChannelId_Sub() == (int)i->second.Get_ServerAuxChannelId_Sub())
+					{
+						vPerformanceFile.push_back(i->second.GetPerformanceFile());
+						return vPerformanceFile;
+					}
+		vPerformanceFile.push_back(performanceFile_Master);
+	}
 	return vPerformanceFile;
 }
 
@@ -720,27 +693,31 @@ vector<FILE*> Channel::GetOverlayFile(Peer* srcPeer)
 	vPoverlayFile.clear();
 	vPoverlayFile.push_back(poverlayFile_Total);
 
-	// se for o servidor, retorna todos os arquivos de log
-	if (srcPeer->GetID() == this->GetServer()->GetID())
+	if(GenerateAllLogs)
 	{
-		vPoverlayFile.push_back(poverlayFile_Master);
-		for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
-			vPoverlayFile.push_back(i->second.GetOverlayFile());
-		return vPoverlayFile;
-	}
 
-
-	if (channel_Sub_List.find(srcPeer->GetID()) != channel_Sub_List.end())
-		vPoverlayFile.push_back((channel_Sub_List.find(srcPeer->GetID()))->second.GetOverlayFile());
-	for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
-
-	if (peerList[srcPeer->GetID()].GetChannelId_Sub() != (int)this->channelId)
-		for (map<string, SubChannelData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
-			if (peerList[srcPeer->GetID()].GetChannelId_Sub() == (int)i->second.GetchannelId_Sub())
-			{
+		// se for o servidor, retorna todos os arquivos de log
+		if (srcPeer->GetID() == this->GetServer()->GetID())
+		{
+			vPoverlayFile.push_back(poverlayFile_Master);
+			for (map<string, SubChannelServerAuxData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
 				vPoverlayFile.push_back(i->second.GetOverlayFile());
-				return vPoverlayFile;
-			}
-	vPoverlayFile.push_back(poverlayFile_Master);
+			return vPoverlayFile;
+		}
+
+
+		if (channel_Sub_List.find(srcPeer->GetID()) != channel_Sub_List.end())
+			vPoverlayFile.push_back((channel_Sub_List.find(srcPeer->GetID()))->second.GetOverlayFile());
+		for (map<string, SubChannelServerAuxData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
+
+			if (peerList[srcPeer->GetID()].GetChannelId_Sub() != (int)this->channelId)
+				for (map<string, SubChannelServerAuxData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
+					if (peerList[srcPeer->GetID()].GetChannelId_Sub() == (int)i->second.Get_ServerAuxChannelId_Sub())
+					{
+						vPoverlayFile.push_back(i->second.GetOverlayFile());
+						return vPoverlayFile;
+					}
+		vPoverlayFile.push_back(poverlayFile_Master);
+	}
 	return vPoverlayFile;
 }

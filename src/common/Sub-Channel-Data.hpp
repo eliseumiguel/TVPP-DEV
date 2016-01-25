@@ -1,3 +1,14 @@
+/* ECM 25-01-2015.
+ * As classes SubChannelServerAuxData e SubChannelCandidateData poderiam agregar todos os campos e métodos em apenas uma classe.
+ * A decisão por separá-las deu-se para organizar as listas de servidores auxiliares candidatos disponíveis e a lista de servidores auxliares ativos.
+ * Desta forma, o channel gerencia com mais facilidade o estado de cada servidor Auxiliar em listas distintas.
+ */
+
+
+
+
+
+
 #ifndef SUB_CHANNEL_DATA_H
 #define SUB_CHANNEL_DATA_H
 
@@ -11,31 +22,18 @@
 #include "PeerData.hpp"
 #include "Strategy/Strategy.hpp"
 
-#define CHANNEL_LIFE 50
-#define RENEW_SERVER 90
-
 using namespace std;
 
 /**
-* ECM- esta classe implementa o sub canal
-* 01-02-2015
+* Manage the Server_Aux active list
 */
-class SubChannelData
+class SubChannelServerAuxData
 {
     public:
- 	    SubChannelData(unsigned int channelId = 0, unsigned int channelIdSub = 0, Peer* serverPeer_Sub = NULL,
- 	    		       int clife = CHANNEL_LIFE, int rnew = RENEW_SERVER);
+ 	    SubChannelServerAuxData(unsigned int channelId = 0, unsigned int channelIdSub = 0, Peer* serverPeer_Sub = NULL, bool gSubLogs = false);
 
         Peer* GetServer_Sub();
         //void CheckActivePeers(); //ECM método não implementado!
-
-        int GetChannelLife();
-        void SetChannelLife(int v);
-        void DecChannelLif();
-
-        int GetReNewServerSub();
-        void SetReNewServerSub(int v);
-        void DecReNewServerSub();
 
         bool GetMesclando();
         void SetMesclando(bool mesclar);
@@ -43,30 +41,27 @@ class SubChannelData
         void PrintPeerList(map<string, PeerData>* peerList_Master);
 
 
-        unsigned int GetchannelId_Sub();
+        unsigned int Get_ServerAuxChannelId_Sub();
 
         FILE* GetPerformanceFile();
         FILE* GetOverlayFile();
 
     private:
 
-        unsigned int channelId_Master;
-        unsigned int channelId_Sub;
+        /* ECM All common peer in the master channel set their channelId_Sub in PeerData Class.
+         * However, each Server_Aux are in two networks master and a one sub_Channel. This way, becomes necessary
+         * that Server_Aux PeerData set the master's channelID on field channelId_Sub to permit the server_aux keeps
+         * its relationship in master network. That is why only for Server_Aux' ID_Sub_channel is configured in a
+         * separate structure. About the Server_Aux, PeerData channelId_Sub is equal here ServerAux_ChannelId_Master,
+         * that only locally used
+         */
+
+        unsigned int ServerAux_ChannelId_Master;
+        unsigned int ServerAux_ChannelId_Sub;
+
         Peer* serverPeer_Sub;
         bool mesclando;
-
-        /* controla o tempo de vida
-         * do sub canal até mesclar
-         */
-        int channelLife;
-
-        /* controla o tempo que o serverSub
-         * não poderá ser selecionando novamente
-         * como serverSub de outro canal
-         * Com isso, a rede pode se estabilizar
-         * ao remover um subcanal
-         */
-        int reNewServerSub;
+        bool GenerateSubLogs;
 
         time_t creationTime;
 
@@ -74,7 +69,9 @@ class SubChannelData
         FILE* overlayFile;
 };
 
-//ECM classe usada para pares que são candidatos a servidores
+/*
+ * Manage the Server_Aux candidates list
+ */
 class SubChannelCandidateData
 {
     public:
