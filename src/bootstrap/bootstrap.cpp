@@ -62,7 +62,7 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
 	uint16_t externalPort = channelHeader[3];
 	uint32_t channelId = channelHeader[4];
 	uint32_t clientTime = channelHeader[5];
-	bool auxiliarServerCandidate = channelHeader[6]; //ECM inform bootstrap if peer is or not auxilar server candidate
+	bool auxiliarServerCandidate = channelHeader[6]; //ECM inform bootstrap if peer is or not auxiliary server candidate
 	uint8_t channelMode = channelHeader[7]; //ECM used if channelFlag == CHANGE_STATE
 
 	cout << "Channel MSG: " << (uint32_t) channelFlag << ", " << performingPunch

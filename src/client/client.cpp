@@ -1014,10 +1014,38 @@ void Client::Ping()
                 }
                 peerActiveOutLock.unlock();
                 peerListLock.unlock();
-
-
              }
             //--------------- termina aqui esse recurso ------------------------------------------------------
+
+
+            /* ECM - código 100% incluído
+             * ping to Active Peer List In
+             * aqui, será enviada mensagem simples para informar aos peerActiveIn que this está vivo */
+            if(peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()) > 0)
+            {
+                pingMessage = new MessagePing(PING_LIVE_OUT, BUFFER_SIZE/8, peerMode, latestReceivedPosition);
+                pingMessage->SetIntegrity();
+
+                boost::mutex::scoped_lock peerListLock(*peerManager.GetPeerListMutex());
+                boost::mutex::scoped_lock peerActiveInLock(*peerManager.GetPeerActiveMutex(peerManager.GetPeerActiveIn()));
+                for (set<string>::iterator i = peerManager.GetPeerActiveIn()->begin(); i != peerManager.GetPeerActiveIn()->end(); i++)
+                {
+                    Peer* peer = peerManager.GetPeerData(*i)->GetPeer();
+                    if (peerlistMessage)
+                        peerlistMessage->AddPeer(peer); //ECM insere pares In no log de overlay do participante
+                    if (pingMessage && peer)
+                    {
+                        udp->EnqueueSend(peer->GetID(), pingMessage);
+                    }
+                }
+                peerActiveInLock.unlock();
+                peerListLock.unlock();
+
+            }
+
+            //ECM Insere separador da lista de Out e In no log de overlay
+            if (peerlistMessage)
+                peerlistMessage->AddPeer(&peerNulo); //ECM insere separador entre pares Out e In no log de Overlay
 
 
             /* ping to Active Peer List Out
@@ -1064,34 +1092,8 @@ void Client::Ping()
                 peerListLock.unlock();
             }
 
-            //ECM Insere separador da lista de Out e In no log de overlay
-            if (peerlistMessage)
-                peerlistMessage->AddPeer(&peerNulo); //ECM insere separador entre pares Out e In no log de Overlay
 
-            /* ECM - código 100% incluído
-             * ping to Active Peer List In
-             * aqui, será enviada mensagem simples para informar aos peerActiveIn que this está vivo */
-            if(peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()) > 0)
-            {
-                pingMessage = new MessagePing(PING_LIVE_OUT, BUFFER_SIZE/8, peerMode, latestReceivedPosition);
-                pingMessage->SetIntegrity();
-
-                boost::mutex::scoped_lock peerListLock(*peerManager.GetPeerListMutex());
-                boost::mutex::scoped_lock peerActiveInLock(*peerManager.GetPeerActiveMutex(peerManager.GetPeerActiveIn()));
-                for (set<string>::iterator i = peerManager.GetPeerActiveIn()->begin(); i != peerManager.GetPeerActiveIn()->end(); i++)
-                {
-                    Peer* peer = peerManager.GetPeerData(*i)->GetPeer();
-                    if (peerlistMessage)
-                        peerlistMessage->AddPeer(peer); //ECM insere pares In no log de overlay do participante
-                    if (pingMessage && peer)
-                    {
-                        udp->EnqueueSend(peer->GetID(), pingMessage);
-                    }
-                }
-                peerActiveInLock.unlock();
-                peerListLock.unlock();
-
-            }
+        //---------------------------------------------------------------------------------------------------------
             pingsSend++;
         }
 

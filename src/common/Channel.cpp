@@ -227,7 +227,7 @@ bool Channel::Create_New_ChannelSub()
 			peerServerAuxNew.push_back(new string(i->first));
 			if (size==0) break; //modified at 17-01-16
 		}
-    cout <<"All server ["<<size<<"] candidate are able to create new subchannel"<<endl;
+    cout <<"All server ["<<peerServerAuxNew.size()<<"] candidate are able to create new subchannel"<<endl;
 	channelSubCandidatesLock.unlock();
 
 	//create sizeCluster sub-channel with same ID_SubChannel
@@ -341,11 +341,10 @@ void Channel::SetChannelMode(ChannelModes New_channelMode)
     {
     	case MODE_NORMAL: //*************************************************************************
         {
-        	if (this->channelMode == MODE_FLASH_CROWD)
-            /* Esta mudança é radical e não considera se o flash crowd é espera ou não a mesclagem.
+        	if ((this->channelMode == MODE_FLASH_CROWD) || (this->channelMode == MODE_FLASH_CROWD_MESCLAR))
+            /* Mudança é radical se MODE_FLASH_CROWD ...
              * Simplesmente, muda-se o estado finalizando todos os subcanais.
-             * Não é de se esperar que este estado seja realizado sem que os subcanais terminem a execução.
-             * Detalhe. Este modo foi implementado para finalizer um flash crowd sem mesclagem.
+             * Não é de se esperar que este estado seja realizado sem que os subcanais passem pela mesclagem.
              */
         	{
         		//faz com que todos os pares passem a pertencentes ao canal principal. Mutex de peerList fechado no bootstrap,
@@ -359,23 +358,25 @@ void Channel::SetChannelMode(ChannelModes New_channelMode)
        				}
        			this->Remove_AllChannelSub();
         	}
-        	// tem de tratar a possibilidade de mudar de mesclando -> normal aqui
 
+        	this->mesclarRedes = false;
         	this->channelMode = New_channelMode;
         	break;
         }
 
     	case MODE_FLASH_CROWD_MESCLAR: //***********************************************************
     	{
-    		if (this->channelMode == MODE_FLASH_CROWD){
+    		if (this->channelMode == MODE_FLASH_CROWD)
+    		{
     			this->mesclarRedes = true;
     			for (map<string,SubChannelServerAuxData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++){
     				server_Sub_Candidates[i->first].SetState(SERVER_AUX_MESCLAR);
     				server_Sub_Candidates[i->first].SetPeerWaitInform(true);
-    				this->Remove_ChannelSub(&(i->first), true);
+    				this->Remove_ChannelSub(&(i->first), this->mesclarRedes);
     				i->second.SetMesclando(true);
     				cout<<"Server "<<i->first<<" waiting state change to ["<<New_channelMode<<"]"<<endl;
     			}
+    			this->channelMode = New_channelMode;
     		}
     		else cout <<"Is not permitted change the state channel "<<this->channelMode<<" to "<<New_channelMode<<endl;
 
@@ -428,6 +429,7 @@ void Channel::SetChannelMode(ChannelModes New_channelMode)
         			if (server_Sub_Candidates.find(peerRedePrincipal->first) == server_Sub_Candidates.end())
         				peerList[peerRedePrincipal->first].SetPeerWaitListServer(true);
 
+        	this->mesclarRedes = false;
             this->channelMode = New_channelMode;
         	}
         	break;
@@ -465,7 +467,7 @@ void Channel::Remove_ChannelSub(const string* source, bool mesclar)
     {
     	for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
     		if (i->second.GetChannelId_Sub() == (int)channel_Sub_List[*source].Get_ServerAuxChannelId_Sub())
-    			i->second.SetChannelId_Sub(CHANNEL_ID_MESCLANDO);
+    			i->second.SetChannelId_Sub( i->second.GetChannelId_Sub() * (-1));
     }
     else
     {
@@ -502,75 +504,59 @@ vector<PeerData*> Channel::MakeServerAuxList()
 /*
  * Método chamado pelo Bootstrap
  * Mutex de peerList já fechado
+ * É necessário filtrar parceiros neste método apenas quando o channel está em ChannelMode MODE_FLASH_CROWD.
+ * Isso porque em qualquer outro estado, os pares podem se conhecer mutuamente. O filtro no caso MODE_FLASH_CROWD
+ * garante que as redes (paralelas e principal) serão isoladas.
  */
 vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, unsigned int peerQuantity, bool virtualPeer)
 {
     vector<PeerData*> allPeers, selectedPeers;
     int peerChannelId_Sub = peerList[srcPeer->GetID()].GetChannelId_Sub();
 
-    /* Garante fazer a vizinhança apenas com os pares que estão no mesmo subcanal
-     * Atende ao caso de só haver o canal principal
-     */
-    for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
-        if ((srcPeer->GetID() != i->second.GetPeer()->GetID()) &&                               // ((se não é ele mesmo) e
-        	((peerChannelId_Sub == i->second.GetChannelId_Sub()) ||                             //  (se o sub = sub) ou
-        	  ((peerChannelId_Sub == CHANNEL_ID_MESCLANDO)&&(i->second.GetChannelId_Sub() == (int)this->channelId))
-            )                                                                                   //((se esta em mesclagem) e(outro rede principal))
-           )
-        {
-        	// permit relationship between same IP
-        	if (!virtualPeer){
-        	    	allPeers.push_back(&(i->second));
-        	}
-            else
-            	if  (srcPeer->GetIP() != i->second.GetPeer()->GetIP())
-            	    allPeers.push_back(&(i->second));
-        }
-    /* Se src é servidor Auxiliar
-     * Nao enviar um par em estado de mesclagem a um servidor auxiliar
-     * Isso evita que ele entre em um subCanal
-     */
-	boost::mutex::scoped_lock channelSubCandidatesLock(*channel_Sub_Candidates_Mutex);
-    if (server_Sub_Candidates.count(srcPeer->GetID())> 0)
-    {
-        for (vector<PeerData*>::iterator i = allPeers.begin(); i != allPeers.end(); i++)
-        	if((*i)->GetChannelId_Sub() == (CHANNEL_ID_MESCLANDO))
-        		allPeers.erase(i);
+    if (this->GetChannelMode() != MODE_FLASH_CROWD){
+        for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
+            if (srcPeer->GetID() != i->second.GetPeer()->GetID()){
+            	if (!virtualPeer)
+            		allPeers.push_back(&(i->second));
+                else
+                	if  (srcPeer->GetIP() != i->second.GetPeer()->GetIP())
+                		allPeers.push_back(&(i->second));
+            }
     }
     else
-		//como os servidores não são executados por demanda, todos da lista de candidatos
-		//são configurados como servidor. Por isso, para evitar mandar um par em mesclagem
-		// ao servidor, procuro pela lista de candidatos e não de servidores com subcanais.
-		// não deve mandar um servidor auxiliar para um peer que está em mesclagem
-		if (peerChannelId_Sub == CHANNEL_ID_MESCLANDO)
-			for (vector<PeerData*>::iterator i = allPeers.begin(); i != allPeers.end(); i++)
-			{
-				//como os servidores não são executados por demanda, todos da lista de candidatos
-				//são configurados como servidor. Por isso, para evitar mandar um par em mesclagem
-				// ao servidor, procuro pela lista de candidatos e não de servidores com subcanais.
-
-				if (server_Sub_Candidates.count((*i)->GetPeer()->GetID()) > 0)
-					allPeers.erase(i);
-			}
-    channelSubCandidatesLock.unlock();
-
-
-	/* Se o par está em sub canal, incluir TODOS os servidores auxiliares na lista de parceiros dele
-	* isso é importante visto que o serverAux->idChannel_Sub é igual ao idChannel do canal principal
-	* Os servidores auxiliares têm o idChannel_sub na estrutura SubChannelServerAuxData
-	* No caso de CHANNEL_ID_MESCLANDO -1, ele estará em fase de mesclagem e pertence à rede principal
-	*/
-    if (peerChannelId_Sub != (int)this->channelId && peerChannelId_Sub != CHANNEL_ID_MESCLANDO)
     {
-        boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
-    	for (map<string, SubChannelServerAuxData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
-    		if (peerChannelId_Sub == (int)i->second.Get_ServerAuxChannelId_Sub())
-    			allPeers.push_back(&(peerList[i->second.GetServer_Sub()->GetID()]));
-      	channelSubListLock.unlock();
-    }
+    	/* Garante fazer a vizinhança apenas com os pares que estão no mesmo subcanal
+    	 * Atende ao caso de só haver o canal principal
+    	 */
+    	for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
 
+    		if ((srcPeer->GetID() != i->second.GetPeer()->GetID()) &&      		// (se não é ele mesmo)  e
+    				(peerChannelId_Sub == i->second.GetChannelId_Sub()))        // (se o subChannel_ID = subChannel_ID)
+    		{
+    			if (!virtualPeer)                                              // permit relationship between same IP
+    				allPeers.push_back(&(i->second));
+    			else
+    				if  (srcPeer->GetIP() != i->second.GetPeer()->GetIP())
+    					allPeers.push_back(&(i->second));
+    		}
 
-    if (this->GetPeerListSizeChannel_Sub(peerChannelId_Sub) <= peerQuantity)
+    	/* Se o par está em sub canal, incluir TODOS os servidores auxiliares na lista de parceiros dele
+    	 * isso é importante visto que o serverAux->idChannel_Sub é igual ao idChannel do canal principal
+    	 * Os servidores auxiliares têm o idChannel_sub na estrutura SubChannelServerAuxData
+    	 * No caso de CHANNEL_ID_MESCLANDO -1, ele estará em fase de mesclagem e pertence à rede principal
+    	 */
+    	if (peerChannelId_Sub != (int)this->channelId)
+    	{
+    		boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
+    		for (map<string, SubChannelServerAuxData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
+    			if (peerChannelId_Sub == (int)i->second.Get_ServerAuxChannelId_Sub())
+    				allPeers.push_back(&(peerList[i->second.GetServer_Sub()->GetID()]));
+    		channelSubListLock.unlock();
+    	}
+
+	}
+    //cout <<"Lista de vizinhos a ser enviado para "<<srcPeer->GetID()<<" tem tamanho "<<allPeers.size()<<endl;
+    if (allPeers.size() <= peerQuantity)
         return allPeers;
     else
     {
