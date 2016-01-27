@@ -14,10 +14,9 @@ using namespace std;
 /**
 * This class implements the information about the peers
 * OBS. Quanto ao channelId_Sub, este pode ter os seguintes valores:
-*      channelId_Sub >= 0. O Peer está no canal principal ou em um subcanal quando flash crowd
-*      channelId_Sub = -1  O peer está em estado de mesclagem. isso é importante para ele não ser
-*                          enviado a um peer que é servidor de sub canal em execução. Um peer em mesclagem
-*                          deve obter parceiros na rede principal do canal. Caso contrário, ele entra em outro subcanal
+*      channelID_Sub = 0.       O Peer está no canal principal
+*      channelID_Sub = x e x>0  Peer está em subcanal e estado é Flash Crowd
+*      channelId_Sub = x e x<0  peer está na rede principal em estado de mesclagem.
 *
 */
 class PeerData

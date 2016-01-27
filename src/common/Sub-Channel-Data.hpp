@@ -33,13 +33,10 @@ class SubChannelServerAuxData
  	    SubChannelServerAuxData(unsigned int channelId = 0, unsigned int channelIdSub = 0, Peer* serverPeer_Sub = NULL, bool gSubLogs = false);
 
         Peer* GetServer_Sub();
-        //void CheckActivePeers(); //ECM método não implementado!
-
-        bool GetMesclando();
-        void SetMesclando(bool mesclar);
 
         void PrintPeerList(map<string, PeerData>* peerList_Master);
 
+        bool Finishing_Server (PeerData* server);
 
         unsigned int Get_ServerAuxChannelId_Sub();
 
@@ -60,7 +57,6 @@ class SubChannelServerAuxData
         unsigned int ServerAux_ChannelId_Sub;
 
         Peer* serverPeer_Sub;
-        bool mesclando;
         bool GenerateSubLogs;
 
         time_t creationTime;
@@ -82,6 +78,7 @@ class SubChannelCandidateData
 
 		bool GetPeerWaitInform();
         void SetPeerWaitInform(bool peerWaitInform);
+
 
     private:
 

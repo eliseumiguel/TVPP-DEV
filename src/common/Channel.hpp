@@ -137,6 +137,7 @@ class Channel
         bool AddPeerChannel(Peer* peer);
         bool Create_New_ChannelSub();
         void Remove_AllChannelSub();
+        bool Finishing_Server (string* server);
         void Remove_ChannelSub(const string* source, bool mesclar = false);
         //void CheckAllSubChannel();
 

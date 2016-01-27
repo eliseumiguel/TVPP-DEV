@@ -8,7 +8,6 @@ SubChannelServerAuxData::SubChannelServerAuxData(unsigned int channelId, unsigne
         this->ServerAux_ChannelId_Master     = channelId;
         this->ServerAux_ChannelId_Sub        = ServerAux_ChannelId_Sub;
         this->serverPeer_Sub                 = serverPeer_Sub;
-        this->mesclando                      = false;
         this->GenerateSubLogs                = gSubLogs;
 
         //Logging
@@ -53,9 +52,6 @@ SubChannelServerAuxData::SubChannelServerAuxData(unsigned int channelId, unsigne
 }
 
 Peer* SubChannelServerAuxData::GetServer_Sub()           {return serverPeer_Sub;}
-bool SubChannelServerAuxData::GetMesclando()               {return this->mesclando;}
-void SubChannelServerAuxData::SetMesclando(bool mesclar)   {this->mesclando = mesclar;}
-
 
 void SubChannelServerAuxData::PrintPeerList(map<string, PeerData>* peerList_Master)
 {
@@ -81,12 +77,10 @@ FILE* SubChannelServerAuxData::GetOverlayFile()
     return overlayFile;
 }
 
-
 //***********************************
 SubChannelCandidateData::SubChannelCandidateData(ServerAuxTypes serverState, bool peerWaitInform)
 {
 	this->serverState = serverState;
-	std::cout<<"configurando waiting information no construtor" <<endl;
 	this->peerWaitInform = peerWaitInform;
 
 }
