@@ -1,7 +1,6 @@
 #ifndef BOOTSTRAP_H_INCLUDED
 #define BOOTSTRAP_H_INCLUDED
 
-
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
@@ -54,7 +53,10 @@ class Bootstrap
         * @param string 
         * @param int Max TTLChannel value
         */
-        Bootstrap(string udpPort, string peerlistSelectorStrategy, unsigned int maxSubChannel, unsigned int maxServerAuxCandidate, unsigned int maxPeerInSubChannel, unsigned int sizeCluster);
+        Bootstrap(string udpPort, string peerlistSelectorStrategy, unsigned int maxSubChannel,
+        		   unsigned int maxServerAuxCandidate, unsigned int maxPeerInSubChannel, unsigned int sizeCluster,
+					MesclarModeServer MixType,	uint8_t QT_PeerMixType,	uint8_t TimeDescPeerMix);
+
         void TCPStart(const char *);
         void UDPStart();
         void UDPReceive();
@@ -65,6 +67,7 @@ class Bootstrap
         void InicializaDados();
 
     private:
+
         vector<bool> RandomlySelectPartners(int num_peer, int num_draft);
 
         Message *HandleTCPMessage(Message* message, string sourceAddress, uint32_t socket);
@@ -87,6 +90,11 @@ class Bootstrap
 		unsigned int maxServerAuxCandidate;
 		unsigned int maxPeerInSubChannel;
 		unsigned int sizeCluster;
+
+		//exclusivo para configurar os servidores auxiliares na mesclagem
+		MesclarModeServer MixType;  //tipo de mesclagem
+		uint8_t QT_PeerMixType;              //quantidade de pares a serem desconectados durante a mesclagem
+		uint8_t TimeDescPeerMix;         //intervalo de tempo para cada desconexão
 
 		//usado por segurnaça para que os clientes autentiquem cada mensagem do bootstrap
 		//Caso mude, significa que o cliente estava comunicando com um bootstrap que já foi fechado

@@ -5,20 +5,23 @@
 
 #include "PeerManager.hpp"
 
-PeerManager::PeerManager()
-{
-	//Garante que o peer não seja servidor auxiliar ao iniciar o experimento
-	this->peerManagerState = NO_SERVER_AUX;
-}
+PeerManager::PeerManager(){}
+
 
 ServerAuxTypes PeerManager::GetPeerManagerState()
 {
 	return this->peerManagerState;
 }
 
+//void PeerManager::SetPeerManagerState(ServerAuxTypes newPeerManagerState){
+//	this->peerManagerState = newPeerManagerState;
+//}
+
 /* Atenção... peerActiveListMutex travado na chamada desta função dentro de Client
  *
  */
+
+/*
 void PeerManager::SetPeerManagerState(ServerAuxTypes newPeerManagerState)
 {
 	boost::mutex::scoped_lock peerListLock(peerListMutex);
@@ -32,11 +35,11 @@ void PeerManager::SetPeerManagerState(ServerAuxTypes newPeerManagerState)
 			peerListMasterChannel = peerList;        //separa a lista dos pares do canal principal
 
 			peerActiveOut_Master.clear();
-			/* caso queira enviar chunkmap vazio aos parceiros antigos durante o flash crowd,
+			/ caso queira enviar chunkmap vazio aos parceiros antigos durante o flash crowd,
 			 * basta descomentar esta linha...
 			 * Isso mantém o TTLIn do servidor auxiliar a seus antigos parceiros durante o flash crowd.
 			 * Com isso, o servidor auxiliar pode voltar a ser parceiro dos antigos parceiros na rede principal
-			*/
+			/
 			//if(true) // implementar controle para esta opção. Isso deverá ser implementado na estratégia.
 			 	  peerActiveOut_Master = peerActiveOut;
 
@@ -48,32 +51,29 @@ void PeerManager::SetPeerManagerState(ServerAuxTypes newPeerManagerState)
 	case SERVER_AUX_MESCLAR:
 		if (this->peerManagerState == SERVER_AUX_ACTIVE) //entrando em processo de mesclagem
 		{
-            /*neste momento, lá no bootstrap, o Channel já colocou todos os pares deste servidor
+            /neste momento, lá no bootstrap, o Channel já colocou todos os pares deste servidor
              * auxiliar na rede principal. Isso faz com que esses vizinhos possam iniciar as parcerias
              * na rede principal e iniciar o processo de deixar o subCanal.
              * Assim, o servidor auxiliar mantém os pares do canalAuxiliar (de forma interna) neste subcanal
              * e começa a aceitar conecção Out apenas do canal principal. Desta forma, se a estratégia de mesclagem
-             * removeu algum par do canal auxiliar, este par não consegue voltar ao servidor auxiliar durante a mesclagem
-             */
+             * removeu algum par do canal auxiliar, este par não deve conseguir voltar ao servidor auxiliar durante a mesclagem
+             /
+
+			/ importante: implementar uma lista de pares removidos pelo servidor auxiliar durante a mesclagem e não permitir que esses
+			 * pares voltem a ser parceiros do servidor durante a mesclagem....
+			 *
+			 /
 			int size = (int) peerActiveOut.size()/2;
 		    while (size > 0)
 			{
 		    	size--;
-
-		    	/* faz primeiro ser do canal principal interno
-		    	 * remove primeiro da lista de out
-		    	 * código de mesclagem ChannelId == CHANNEL_ID_MESCLANDO
-		    	 * Isso já foi tratado dentro de channel. lá ele
-		    	 * testa se o peer está em mesclagem e não permite
-		    	 * que qualquer servidor auxiliar e qualquer peer
-		    	 * em mesclagem se conheçam. Mesmo assim, esta opção
-		    	 * pode ser usada para um tratamento interno ao servidor
-		    	 * auxiliar
-		    	*/
 		    	//peerList[*(peerActiveOut.begin())].SetChannelId_Sub(CHANNEL_ID_MESCLANDO);
+		    	//peerList.erase(*(peerActiveOut.begin()));
 
-		    	peerList.erase(*(peerActiveOut.begin()));
-	    		peerActiveOut.erase(peerActiveOut.begin());
+		    	//errado, deve usar um controle com lista de nós proibidos de retornar ao servidor.
+		    	//além disso, deve-se juntar a lista master com peerlist.
+
+		    	//peerActiveOut.erase(peerActiveOut.begin());
 		    }
 		    peerListMasterChannel.clear();
 			this->peerManagerState = newPeerManagerState;
@@ -84,6 +84,10 @@ void PeerManager::SetPeerManagerState(ServerAuxTypes newPeerManagerState)
 
 	    for (set<string>::iterator i = peerActiveOut.begin(); i != peerActiveOut.end(); i++)
 	    	peerList[*i].SetChannelId_Sub(0);
+
+	    //acho que peerListMaster deve voltar a ser peerlist para que o servidor encontre os parceiros in na principal antiga
+	    //seria assim...
+	    //peerList.clear() e peerList = peerListMasterChannel; (isso pode ser feito na mesclagem...
 
 	    peerListMasterChannel.clear();
 	    peerActiveOut_Master.clear();
@@ -99,6 +103,7 @@ void PeerManager::SetPeerManagerState(ServerAuxTypes newPeerManagerState)
 	peerListLock.unlock();
 }
 
+*/
 unsigned int PeerManager::GetMaxActivePeers(set<string>* peerActive)
 {
 	if (peerActive == &peerActiveIn) return maxActivePeersIn;
@@ -129,7 +134,7 @@ bool PeerManager::AddPeer(Peer* newPeer)
 	if (peerList.find(newPeer->GetID()) == peerList.end())
 	{
 		peerList[newPeer->GetID()] = PeerData(newPeer);
-		if (peerManagerState == SERVER_AUX_ACTIVE)
+		if (peerManagerState == SERVER_AUX_ACTIVE) //ECMERRO
 			peerList[newPeer->GetID()].SetChannelId_Sub(SERVER_AUX_SUB_CHANNEL_ID);
 		peerListLock.unlock();
 		cout<<"Peer "<<newPeer->GetID()<<" added to PeerList"<<endl;
@@ -147,12 +152,12 @@ set<string>* PeerManager::GetPeerActiveOut()
 {
 	return &peerActiveOut;
 }
-
+/* passar para peerManagerServerAux
 set<string>* PeerManager::GetPeerActiveOut_Master()
 {
 	return &peerActiveOut_Master;
 }
-
+*/
 map<string, unsigned int>* PeerManager::GetPeerActiveCooldown(set<string>* peerActive)
 {
 	if (peerActive == &peerActiveIn) return &peerActiveCooldownIn;
@@ -176,7 +181,7 @@ bool PeerManager::ConnectPeer(string peer, set<string>* peerActive)
 			 * aceita somente pares da rede paralela
 			 * Pode aceitar pares In da rede principal, não entra se peerActive == peerActiveIn
 			 */
-			if (peerManagerState == SERVER_AUX_ACTIVE && peerActive == &peerActiveOut)
+			if (peerManagerState == SERVER_AUX_ACTIVE && peerActive == &peerActiveOut) //ECMERRO
 				if (peerList[peer].GetChannelId_Sub() != SERVER_AUX_SUB_CHANNEL_ID)
 				{
 					cout<<"Tentando inserir "<<peer<<"mas ID channel Sub ="<<peerList[peer].GetChannelId_Sub()<<" e canal sub é "<<SERVER_AUX_SUB_CHANNEL_ID<<endl;
@@ -191,7 +196,7 @@ bool PeerManager::ConnectPeer(string peer, set<string>* peerActive)
 			* isso deve ser revisto nas estratégias de mesclagem
 			* * Pode aceitar pares In da rede principal, não entra se peerActive == peerActiveIn
 			*/
-			if (peerManagerState == SERVER_AUX_MESCLAR && peerActive == &peerActiveOut)
+			if (peerManagerState == SERVER_AUX_MESCLAR && peerActive == &peerActiveOut) //ECMERRO
 				if (peerList[peer].GetChannelId_Sub() != CHANNEL_ID_MESCLANDO && peerList[peer].GetChannelId_Sub() != 0)
 				{
 					cout<<"Tentando inserir "<<peer<<"mas ID channel Sub ="<<peerList[peer].GetChannelId_Sub()<<" e canal sub é "<<CHANNEL_ID_MESCLANDO<<endl;
@@ -234,7 +239,7 @@ void PeerManager::DisconnectPeer(string peer, set<string>* peerActive)
 void PeerManager::RemovePeer(string peer)
 {
 	boost::mutex::scoped_lock peerListLock(peerListMutex);
-	if (peerManagerState == SERVER_AUX_ACTIVE && peerList[peer].GetChannelId_Sub() == 0)
+	if (peerManagerState == SERVER_AUX_ACTIVE && peerList[peer].GetChannelId_Sub() == 0) //ECMERRO
 		return;
 	peerList.erase(peer);
 	peerListLock.unlock();
@@ -294,12 +299,17 @@ PeerData* PeerManager::GetPeerData(string peer)
 	return &peerList[peer];
 }
 
-//essa função só serve para o connectorIn
+/*ECM método chamando apenas em connectorIn
+ *Caso do peer ser servidor auxiliar, a busca por
+ *parceiros IN deve ser feita na lista da rede Master.
+ *Caso contrário, todos pedidos são feitos a pares da
+ *lista peerList
+ */
 map<string, PeerData>* PeerManager::GetPeerList()
 {
 
-	if (peerManagerState == SERVER_AUX_ACTIVE)
-	    return &peerListMasterChannel;
+//#	if (peerManagerState == SERVER_AUX_ACTIVE)
+//#	    return &peerListMasterChannel;
 	return &peerList;
 }
 
@@ -312,7 +322,7 @@ boost::mutex* PeerManager::GetPeerActiveMutex(set<string>* peerActive)
 {
 	if (peerActive == &peerActiveIn) return &peerActiveMutexIn;
 	if (peerActive == &peerActiveOut) return &peerActiveMutexOut;
-	if (peerActive == &peerActiveOut_Master) return &peerActiveMutexOut_Master;
+//#	if (peerActive == &peerActiveOut_Master) return &peerActiveMutexOut_Master;
 	return NULL;
 }
 

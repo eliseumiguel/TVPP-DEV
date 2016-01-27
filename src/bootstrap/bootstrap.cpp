@@ -9,7 +9,9 @@ using namespace std;
 /** Construtor **/
 Bootstrap::Bootstrap(string udpPort, string peerlistSelectorStrategy,
 		unsigned int maxSubChannel, unsigned int maxServerAuxCandidate,
-		unsigned int maxPeerInSubChannel, unsigned int sizeCluster) {
+		unsigned int maxPeerInSubChannel, unsigned int sizeCluster,
+		MesclarModeServer MixType,	uint8_t QT_PeerMixType,	uint8_t TimeDescPeerMix){
+
 	if (peerlistSelectorStrategy == "TournamentStrategy")
 		this->peerlistSelectorStrategy = new TournamentStrategy();
 	else if (peerlistSelectorStrategy == "NearestIPStrategy")
@@ -30,10 +32,19 @@ Bootstrap::Bootstrap(string udpPort, string peerlistSelectorStrategy,
 	this->maxPeerInSubChannel = maxPeerInSubChannel;
 	this->sizeCluster = sizeCluster;
 
+	// config Mix mode...
+	this->MixType             = MixType;
+	this->QT_PeerMixType      = QT_PeerMixType;
+	this->TimeDescPeerMix     = TimeDescPeerMix;
+
+
 	time_t boot_ID;
 	time(&boot_ID);
 	bootStrap_ID = boot_ID;
 
+	cout<<" tipo "<<MixType<<endl;
+	cout<<" quantidade "<<(int)QT_PeerMixType<<endl;
+	cout<<" tempo "<<(int)TimeDescPeerMix<<endl;
 }
 
 Message *Bootstrap::HandleTCPMessage(Message* message, string sourceAddress,
@@ -96,14 +107,10 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
 					channelList[channelId].AddPeer(source);
 
 				}
-				/* esse método pode ser mais elaborado e ser chamado para os pares que já estão no canal
-				 * isso seria feito abaixo de  SelectPeerList(...)
-				 * com este teste incluído if(auxiliarServer) o peer será candidato apenas se informado ao bootstrap
-				 * Inplementação de 17-01-2016*/
+
+				 /* o peer será candidato apenas se informado ao bootstrap*/
 				if (auxiliarServerCandidate){
-				   //cout<<"pode ser aqui que está mudando o cara..."<<endl;
-				   channelList[channelId].analizePeerToBeServerAux(source);
-				   //cout<<"se deu pau eu achei"<<endl;
+					channelList[channelId].analizePeerToBeServerAux(source);
 				}
 			}
 			break;
@@ -132,12 +139,10 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
 		// envia esse código e ele não é um peer válido
 		if (!messageReply && (channelFlag != CHANGE_STATE)) {
 
-			//cout<<"em bootstrap mandando mensagem ao cliente "<<source->GetID()
-			//		<<" "<<channelList[channelId].GetServerSubWaitInform(source)<<endl;//teste
-
 			if (channelList[channelId].GetServerSubWaitInform(source)) {
 				messageReply = new MessageServerSub(
-						channelList[channelId].GetServerSubNewMode(source));
+						channelList[channelId].GetServerSubNewMode(source),
+						this->MixType,	this->QT_PeerMixType, this->TimeDescPeerMix);
 				channelList[channelId].SetServerSubWaitInform(source, false);
 			} else {
 				vector<PeerData*> selectedPeers;

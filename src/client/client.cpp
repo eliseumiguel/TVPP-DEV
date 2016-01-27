@@ -112,7 +112,7 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
 
     receiveRequestPosition = true;
     perform_udp_punch = true;
-    serverActive = false;
+    serverActive = false;      //ECM usado apenas para o servidor principal
     quit = false;
 
     IMessageScheduler* aMessageSendScheduler = NULL; 
@@ -203,10 +203,13 @@ void Client::CyclicTimers()
     boost::xtime xt;
     uint16_t cycle = 0;
     uint32_t step = 100000000; //100mS++
+    uint8_t  MixCSA_Temp;
+    MixCSA_Temp = 0;  //ECM
+
     while (!quit)
     {
         boost::xtime_get(&xt, boost::TIME_UTC);
-        xt.nsec += step; 
+        xt.nsec += step;
         
         //Each 100mS
         for (list<Temporizable*>::iterator it = temporizableList.begin(); it != temporizableList.end(); it++)
@@ -224,6 +227,17 @@ void Client::CyclicTimers()
             downloadPerSecDone = 0;
             uploadPerSecDone = 0;
             peerManager.CheckPeerList();
+
+            //ECM time to Mix subnetworks
+            cout <<"estadoPeer é "<<this->peerManager.GetPeerManagerState()<<endl;
+            cout <<"o intervalo desejado é "<<(int)this->peerManager.Get_TimeDescPeerMix()<<endl;
+            if (this->peerManager.GetPeerManagerState() == SERVER_AUX_MESCLAR){
+            	cout << " o contador é "<<(int) MixCSA_Temp<<endl;
+            	if (MixCSA_Temp == 0)
+            		MixCSA_Temp = this->peerManager.Get_TimeDescPeerMix();
+            	MixCSA_Temp = this->peerManager.ExecMesc(MixCSA_Temp);
+            }
+
         }
 
         if (cycle % (10 * 30) == 0)     //Each 30s
@@ -323,14 +337,11 @@ void Client::HandleServerAuxListMessage(MessagePeerlist* message, string sourceA
     vector<int> peerlistHeader = message->GetHeaderValues();
     uint16_t peersReceived = peerlistHeader[1];
 
-    //ECM Impressão de teste apenas
     cout<<"Recebi servidores auxiliares :::";
     for (uint16_t i = 0; i < peersReceived; i++)
          if (Peer* newPeertemp = message->GetPeer(i))
     	    cout<<newPeertemp->GetID()<<" ** ";
     cout <<endl;
-
-    //fim do teste
 
     for (uint16_t i = 0; i < peersReceived; i++)
     {
@@ -579,6 +590,16 @@ void Client::HandleErrorMessage(MessageError* message, string sourceAddress, uin
 void Client::HandleMessageServerSub(MessageServerSub* message, string sourceAddress, uint32_t socket)
 {
     vector<int> serverHeader = message->GetHeaderValues();
+
+    peerManager.Set_MixType((MesclarModeServer)serverHeader[1]);
+    peerManager.Set_QT_PeerMixType(serverHeader[2]);
+    peerManager.Set_TimeDescPeerMix(serverHeader[3]);
+    cout<<"setando estado...."<<endl;
+    cout<<"MixType "<<(MesclarModeServer)serverHeader[1]<<" configurado "<<this->peerManager.Get_MixType()<< endl;
+    cout<<"QT_PeerMixType " <<(int)serverHeader[2]<<" configurado "<<(int)this->peerManager.Get_QT_PeerMixType() << endl;
+    cout<<"TimeDescPeerMix "<<(int)serverHeader[3]<<" configurado "<<(int)this->peerManager.Get_TimeDescPeerMix()<<endl;
+
+
     switch ((ServerAuxTypes) serverHeader[0])
     {
         case NO_SERVER_AUX:
@@ -605,14 +626,14 @@ void Client::HandleMessageServerSub(MessageServerSub* message, string sourceAddr
         	 	 cout<<"erro na mensagem de servidor auxiliar"<<endl;
             break;
     }
+    //linha comentada apenas para separar peerManager de peerManagerServerAux
     peerManager.SetPeerManagerState((ServerAuxTypes) serverHeader[0]);
-
 }
 
-/*FUNÇÃO ORIGINAL. SUBSTITUIDA PELA DO JOÃO PARA TESTE DE CONTROLE DE BANDA
+/*
 / REQUEST PACKET:    | OPCODE | HEADERSIZE | BODYSIZE | CHUNKGUID |  **************************************
 ** Sizes(bytes):      |    1   |     1      |     2    |  4  |  2  |  TOTAL: 10 Bytes  **********************/
-//ECM - função exclusiva para Out
+//ECM - Only for Out List
 void Client::HandleRequestMessage(MessageRequest* message, string sourceAddress, uint32_t socket)
 {
     requestsRecv++;
@@ -982,7 +1003,14 @@ void Client::Ping()
              * que SA seja free-rider bom ao par P por um tempo, enviando a uma lista OutTemp o buffer vazio.
              * Caso não queira usar, basta fazer a lista GetPeerActiveOut_Master vazia
              */
-
+            /*
+             * atenção!!! função comentada apenas para adaptar a criação da classe PeerManagerServerAux...
+             * o teste aqui feito             if (peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut_Master()) > 0)
+             * deve mudar para (o estado do peerManager é servidor???) se for instancia o peermanagerserveraux e manda ping para
+             * os pares da rede principal....
+             *
+             */
+            /*
             if (peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut_Master()) > 0)
             {
                 pingMessage = new MessagePing(PING_PART_CHUNKMAP, BUFFER_SIZE/8, peerMode, latestReceivedPosition);
@@ -1015,8 +1043,10 @@ void Client::Ping()
                 peerActiveOutLock.unlock();
                 peerListLock.unlock();
              }
-            //--------------- termina aqui esse recurso ------------------------------------------------------
 
+
+            //--------------- termina aqui esse recurso ------------------------------------------------------
+*/
 
             /* ECM - código 100% incluído
              * ping to Active Peer List In

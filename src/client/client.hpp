@@ -27,6 +27,7 @@
 #include "RequestAttempt.hpp"
 #include "MediaBuffer.hpp"
 #include "PeerManager.hpp"
+#include "PeerManagerServerAux.hpp"
 #include "Temporizable/LeakyBucket.hpp"
 #include "Temporizable/Disconnector.hpp"
 #include "Temporizable/Connector.hpp"
@@ -64,6 +65,7 @@ using namespace std;
 class ClientBootstrapSession;
 class ClientTCPServer;
 class PeerRequester;
+class PeerManagerServerAux;
 
 class Client
 {
@@ -159,9 +161,11 @@ class Client
         UDPServer* sourceVideoReceiver;
         //Media Buffer Data structure
         MediaBuffer* mediaBuffer;
-		//Peer Manager
-		PeerManager peerManager;
-        //Lists
+
+        //Peer Manager (alterado para classe derivada)
+		PeerManagerServerAux peerManager;
+
+		//Lists
         list<Request*> requestList;
         map<ChunkUniqueID,Request*> oldRequestList;
         //LeakyBucket related
@@ -172,7 +176,7 @@ class Client
         //Yes or No variables (1: YES 0: NO)
         bool receiveRequestPosition;
         bool perform_udp_punch;
-		bool serverActive;
+		bool serverActive;   //ECM usado apenas para o servidor principal
         bool quit;
         //External Address
         string externalIp;

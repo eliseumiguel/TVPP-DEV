@@ -19,7 +19,9 @@
 #define MESSAGE_REQUEST_HEADER_SIZE             18
 #define MESSAGE_ERROR_HEADER_SIZE                8
 #define MESSAGE_STATE_CHANNEL_SIZE               8
-#define MESSAGE_SERVERAUX_HEADER_SIZE            8
+
+#define MESSAGE_SERVERAUX_HEADER_SIZE           32  // atualizar tamanho da mensagem aqui....ECM
+
 #define MESSAGE_PEERLIST_HEADER_SIZE            10
 #define MESSAGE_PEERLIST_SHARE_HEADER_SIZE      42  //valor original 38
 #define MESSAGE_PEERLIST_LOG_HEADER_SIZE        18
@@ -95,6 +97,18 @@ enum ServerAuxTypes
 	NO_SERVER_AUX           = 0X00,    // PEERMANAGER NORMAL
 	SERVER_AUX_ACTIVE       = 0x01,    // PEERMANAGER SERVER AUX
 	SERVER_AUX_MESCLAR      = 0x02     // PEERMANAGER MESCLANDO REDE
+};
+
+/*Configuração dos servidores auxiliares para mesclagem
+ * ----------------------------------------------------
+ * MesclarModeServer | Tempo TM  | QuantidadePares QT |
+ * ----------------------------------------------------
+ */
+enum MesclarModeServer
+{
+	AUTO_KILL_SERVER                = 0X00,    // ServerAux elimina QT peers a cada TM. Quando QT = 0, ServerAux sofre churn
+	AUTO_LIVE_AVOID_CONNECTION      = 0x01,    // ServerAux elimina QT peers a cada TM. ServerAux não permite reconexão com peer desconectado
+	AUTO_LIVE_PERMIT_CONNECTION     = 0x02     // ServerAux elimina QT peers a cada TM. ServerAux permite reconexão definido pelo padrão da rede
 };
 
 //ERROR MESSAGES FLAGS

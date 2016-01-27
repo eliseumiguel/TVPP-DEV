@@ -31,6 +31,12 @@ int main(int argc, char* argv[]) {
     unsigned int maxPeerInSubChannel = 60;
     unsigned int sizeCluster = 1; //ECM auxiliary server total in each subChannel
 
+    // config Mix mode...
+	MesclarModeServer MixType          = (MesclarModeServer) 0x02;    //tipo de mesclagem
+	uint8_t           QT_PeerMixType   = 3;                             //quantidade de pares a serem desconectados durante a mesclagem
+	uint8_t           TimeDescPeerMix  = 7;                             //intervalo de tempo para cada desconexão
+
+
     string arg1 = "";
     if( argv[1] != NULL)
     	arg1 = argv[1];
@@ -50,6 +56,12 @@ int main(int argc, char* argv[]) {
         cout <<"  -maxServerAuxCandidate       define the server limit to create sub channel (default: "<<maxServerAuxCandidate<<")"<<endl;
         cout <<"  -maxPeerInSubChannel         define the peer number in new sub channel     (default: "<<maxPeerInSubChannel<<")"<<endl;
         cout <<"  -sizeCluster                 define the cluster size for each sub channel  (default: "<<sizeCluster<<")"<<endl;
+
+        cout <<"  -MixType                     define the server_aux mix mode                (default: "<<MixType<<")"<<endl;
+        cout <<"  -QT_PeerMixType              define the peer quantity to be disconnected   (default: "<<(int)QT_PeerMixType<<")"<<endl;
+        cout <<"  -TimeDescPeerMix             define the time interval to disconnect peers  (default: "<<(int)TimeDescPeerMix<<")"<<endl;
+
+
         cout <<"  --isolaVirtutalPeerSameIP    permit only different IP partner "<<endl;
 
         exit(1);
@@ -98,7 +110,18 @@ int main(int argc, char* argv[]) {
         {
             XPConfig::Instance()->SetBool("isolaVirtutalPeerSameIP", true);
         }
-
+        else if (swtc=="-MixType") {
+            optind++;
+            MixType = (MesclarModeServer) atoi(argv[optind]);
+        }
+        else if (swtc=="-QT_PeerMixType") {
+            optind++;
+            QT_PeerMixType = (unsigned int) atoi(argv[optind]);
+        }
+        else if (swtc=="-TimeDescPeerMix") {
+            optind++;
+            TimeDescPeerMix = (unsigned int) atoi(argv[optind]);
+        }
         else {
             cout << "Invalid Arguments"<<endl; 
             exit(1);
@@ -108,7 +131,8 @@ int main(int argc, char* argv[]) {
 
 
 
-    Bootstrap bootstrapInstance(myUDPPort, peerlistSelectorStrategy, maxSubChannel, maxServerAuxCandidate, maxPeerInSubChannel, sizeCluster);
+    Bootstrap bootstrapInstance(myUDPPort, peerlistSelectorStrategy, maxSubChannel, maxServerAuxCandidate,
+    		                    maxPeerInSubChannel, sizeCluster, MixType , QT_PeerMixType, TimeDescPeerMix);
     
     boost::thread TTCPSERVER(boost::bind(&Bootstrap::TCPStart, &bootstrapInstance, myTCPPort.c_str()));
     boost::thread TUDPSERVER(boost::bind(&Bootstrap::UDPStart, &bootstrapInstance));
