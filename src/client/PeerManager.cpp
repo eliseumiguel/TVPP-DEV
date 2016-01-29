@@ -25,17 +25,6 @@ bool PeerManager::AddPeer(Peer* newPeer)
 	boost::mutex::scoped_lock peerListLock(peerListMutex);
 	if (peerList.find(newPeer->GetID()) == peerList.end())
 	{
-		//ECM If peer in rejected list peer
-		boost::mutex::scoped_lock peerListRejectedLock(peerListRejectedMutexOut);
-
-		if (peerList_Rejected.find(newPeer->GetID()) != peerList_Rejected.end()){
-			cout<<"Peer "<<newPeer->GetID()<<" is in peerList_Rejected. Could not be add... "<<endl;
-
-			peerListRejectedLock.unlock();
-			return false;
-		}
-		peerListRejectedLock.unlock();
-
 		//ECM Inserting peer....
 		peerList[newPeer->GetID()] = PeerData(newPeer);
 		if (peerManagerState == SERVER_AUX_ACTIVE)
@@ -69,6 +58,14 @@ bool PeerManager::ConnectPeer(string peer, set<string>* peerActive)
 		boost::mutex::scoped_lock peerActiveLock(*peerActiveMutex);
 		if (peerActive->size() < this->GetMaxActivePeers(peerActive))
 		{
+
+			boost::mutex::scoped_lock peerListRejectedLock(peerListRejectedMutexOut);
+			if ((peerList_Rejected.find(peer) != peerList_Rejected.end()) && (peerActive == &peerActiveOut)){
+				cout<<"Peer "<<peer<<" is in peerList_Rejected. Could not be connected... "<<endl;
+				peerListRejectedLock.unlock();
+				return false;
+			}
+
 			/* controle de SERVER AUX ACTIVE.
 			 * Para OUT, aceita somente pares da rede paralela
 			 */
@@ -80,19 +77,10 @@ bool PeerManager::ConnectPeer(string peer, set<string>* peerActive)
 				}
 			}
 
-			boost::mutex::scoped_lock peerListRejectedLock(peerListRejectedMutexOut);
-			if ((peerList_Rejected.find(peer) != peerList_Rejected.end()) && (peerActive == &peerActiveOut)){
-				cout<<"Peer "<<peer<<" is in peerList_Rejected. Could not be connected... "<<endl;
-				peerListRejectedLock.unlock();
-				return false;
-			}
 			peerListRejectedLock.unlock();
 
 			if (peerActive->insert(peer).second)
 			{
-				if (peerManagerState == SERVER_AUX_ACTIVE)
-					peerList[peer].SetChannelId_Sub(SERVER_AUX_SUB_CHANNEL_ID);
-
 				string list;
 				if (*(peerActive) == peerActiveIn)	list = "In";
 				else list = "Out";

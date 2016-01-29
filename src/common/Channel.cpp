@@ -488,7 +488,7 @@ vector<PeerData*> Channel::MakeServerAuxList()
 vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, unsigned int peerQuantity, bool virtualPeer)
 {
     vector<PeerData*> allPeers, selectedPeers;
-    int peerChannelId_Sub = peerList[srcPeer->GetID()].GetChannelId_Sub();
+    int srcPeerChannelId_Sub = peerList[srcPeer->GetID()].GetChannelId_Sub();
 
     if (this->GetChannelMode() != MODE_FLASH_CROWD){
         for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
@@ -505,26 +505,32 @@ vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, uns
     	/* Garante fazer a vizinhança apenas com os pares que estão no mesmo subcanal
     	 * Atende ao caso de só haver o canal principal
     	 */
-    	for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
 
-    		if ((srcPeer->GetID() != i->second.GetPeer()->GetID()) &&      		// (se não é ele mesmo)  e
-    				(peerChannelId_Sub == i->second.GetChannelId_Sub()))        // (se o subChannel_ID = subChannel_ID)
-    		{
-    			if (!virtualPeer)                                              // permit relationship between same IP
-    				allPeers.push_back(&(i->second));
-    			else
-    				if  (srcPeer->GetIP() != i->second.GetPeer()->GetIP())
+		boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
+    	for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
+    	{
+    		if (  (srcPeer->GetID() != i->second.GetPeer()->GetID()) &&      	   // (se não é ele mesmo)  e
+    			  (srcPeerChannelId_Sub == i->second.GetChannelId_Sub()) &&        // (se o subChannel_ID = subChannel_ID)
+       	          (channel_Sub_List.find(i->first) == channel_Sub_List.end())      // (não fornece server aux para par da rede principal)
+			   )
+    			{
+    				if (!virtualPeer)                                              // permit relationship between same IP
     					allPeers.push_back(&(i->second));
-    		}
+    				else
+    					if  (srcPeer->GetIP() != i->second.GetPeer()->GetIP())
+    						allPeers.push_back(&(i->second));
+    			}
+    	}
+		channelSubListLock.unlock();
 
     	/* Se peer está em sub canal em estado Flash Crowd,
     	 * inserir todos os servidores auxiliares na lista do peer
     	 */
-    	if ((peerChannelId_Sub != (int)this->channelId) && (peerChannelId_Sub >0))
+    	if ((srcPeerChannelId_Sub != (int)this->channelId) && (srcPeerChannelId_Sub >0))
     	{
     		boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
     		for (map<string, SubChannelServerAuxData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
-    			if (peerChannelId_Sub == (int)i->second.Get_ServerAuxChannelId_Sub())
+    			if (srcPeerChannelId_Sub == (int)i->second.Get_ServerAuxChannelId_Sub())
     				allPeers.push_back(&(peerList[i->second.GetServer_Sub()->GetID()]));
     		channelSubListLock.unlock();
     	}

@@ -74,7 +74,6 @@ uint8_t PeerManagerServerAux::ExecMesc (uint8_t timeMix){
 			set<string> deletedPeer = this->Get_Random_Mix_Peers( &(this->peerActiveOut), (unsigned int)this->Get_QT_PeerMixType());
 
 			cout<<"Foram selecionados "<<deletedPeer.size()<<" para remoção na mesclagem"<<endl;
-
 			boost::mutex::scoped_lock peerListRejectedLock(peerListRejectedMutexOut);
 			for (set<string>::iterator it = deletedPeer.begin(); it != deletedPeer.end(); it++){
 			     this->peerList_Rejected.insert(*it);
@@ -142,8 +141,8 @@ void PeerManagerServerAux::SetPeerManagerState(ServerAuxTypes newPeerManagerStat
 			 * Quando entrar na fase Mesclar, a lista deve voltar a vazia, permitindo conexão
 			 * entre o servidor auxliar e os peers da rede principal.
 			 */
-//		    for (map<string,PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
-//				peerList_Rejected.insert(i->first);
+		    for (map<string,PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
+				peerList_Rejected.insert(i->first);
 		    this->peerManagerState = newPeerManagerState;
 		}
 		break;
