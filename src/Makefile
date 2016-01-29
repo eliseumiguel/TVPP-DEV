@@ -44,6 +44,7 @@ sexternalMessage: $(EM_OBJECTS)
 clean:
 	find . -name "*.o" | xargs rm
 	rm -f $(BIN_DIR)/client $(BIN_DIR)/bootstrap $(BIN_DIR)/sclient $(BIN_DIR)/sbootstrap $(BIN_DIR)/externalMessage $(BIN_DIR)/sexternalMessage
+	clear
 
 .cpp.o:
 	$(CC) $(CFLAGS) $< -o $@

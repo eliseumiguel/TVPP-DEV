@@ -79,6 +79,7 @@ class Channel
         Peer* GetPeer(Peer* peer);
 		bool HasPeer(Peer* peer);
 		void AddPeer(Peer* peer);
+		void AddPeerMasterChannel(Peer* peer);
 
         void RemovePeer(Peer* peer);
 		void RemovePeer(string peerID);

@@ -13,7 +13,7 @@ class Connector : public Temporizable
 		set<string>* peerActive;
 
     public:
-		Connector(Strategy *disconnectorStrategy, PeerManager* peerManager, uint64_t timerPeriod, set<string>* peerActive);
+		Connector(Strategy *connectorStrategy, PeerManager* peerManager, uint64_t timerPeriod, set<string>* peerActive);
 		void Connect();
 		void TimerAlarm(uint64_t timerPeriod, string timerName);
 };

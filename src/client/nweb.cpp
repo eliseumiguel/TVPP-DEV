@@ -167,7 +167,7 @@ int Client::web(int fd, int hit)
 
                 if(pos_media % 500 == 0)
                 {
-					cout<<"Lido -> Player["<< playerDeliveryPosition <<"] LastReceived["<< latestReceivedPosition <<"]"<<endl;
+					cout<<"Read -> Player["<< playerDeliveryPosition <<"] LastReceived["<< latestReceivedPosition <<"]"<<endl;
 					time(&lastMediaTime);
 					lastMediaID = new ChunkUniqueID(playerDeliveryPosition);
 				}

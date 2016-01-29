@@ -79,7 +79,6 @@ class Client
             string messageSendScheduler, string messageReceptionScheduler);
         virtual void Ping();
         void CyclicTimers();
-		void DisconnectPeer(string peerID);
         void PeerCtoPeerA();
         bool ColocarNaListaDePedidos();
         bool isServerCandidate(); //ECM

@@ -229,15 +229,12 @@ void Client::CyclicTimers()
             peerManager.CheckPeerList();
 
             //ECM time to Mix subnetworks
-            cout <<"estadoPeer é "<<this->peerManager.GetPeerManagerState()<<endl;
-            cout <<"o intervalo desejado é "<<(int)this->peerManager.Get_TimeDescPeerMix()<<endl;
             if (this->peerManager.GetPeerManagerState() == SERVER_AUX_MESCLAR){
-            	cout << " o contador é "<<(int) MixCSA_Temp<<endl;
+            	cout << "Intervalo de mesclagem... "<<(int) MixCSA_Temp<<endl;
             	if (MixCSA_Temp == 0)
             		MixCSA_Temp = this->peerManager.Get_TimeDescPeerMix();
             	MixCSA_Temp = this->peerManager.ExecMesc(MixCSA_Temp);
             }
-
         }
 
         if (cycle % (10 * 30) == 0)     //Each 30s
@@ -992,61 +989,6 @@ void Client::Ping()
             //udp->Send(bootstrap->GetID(), pingMessage->GetFirstByte(), pingMessage->GetSize());
             udp->EnqueueSend(bootstrap->GetID(), pingMessage);
 
-
-
-            /*--------------------------------------------------------------------------------------------------
-             * Parte totalmente incluída para sanar um problema no caso de FLASH CROWD
-             * O problema é: Quando o servidor auxiliar SA remove seus parceiros Out para atender ao subCanal, os parceiros
-             * da rede principal decrementam o ttl de SA (servidor auxiliar) até 0. Assim, a um parceiro P que SA é In,
-             * SA não será removido da lista de parceiros de P. Em consequência, quando SA deixa de ser servidor auxiliar, como
-             * seu ttlOIn continuará sem ser atualizado e P não mais tentará ser parceiro dele. Assim, essa tentativa faz com
-             * que SA seja free-rider bom ao par P por um tempo, enviando a uma lista OutTemp o buffer vazio.
-             * Caso não queira usar, basta fazer a lista GetPeerActiveOut_Master vazia
-             */
-            /*
-             * atenção!!! função comentada apenas para adaptar a criação da classe PeerManagerServerAux...
-             * o teste aqui feito             if (peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut_Master()) > 0)
-             * deve mudar para (o estado do peerManager é servidor???) se for instancia o peermanagerserveraux e manda ping para
-             * os pares da rede principal....
-             *
-             */
-            /*
-            if (peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut_Master()) > 0)
-            {
-                pingMessage = new MessagePing(PING_PART_CHUNKMAP, BUFFER_SIZE/8, peerMode, latestReceivedPosition);
-                pingMessage->SetIntegrity();
-                uint8_t headerSize = pingMessage->GetHeaderSize();
-                uint8_t *chunkMap = new uint8_t[BUFFER_SIZE/8];
-
-                // monta mensagem vazia ao parceiro da rede principal
-                for (uint32_t i = 0; i < BUFFER_SIZE/8; i++)
-                {
-                    chunkMap[i] = 0;
-
-                }
-                for (uint32_t i = 0; i < BUFFER_SIZE/8; i++)
-                {
-                    pingMessage->GetFirstByte()[headerSize + i] = chunkMap[i];
-                }
-
-                boost::mutex::scoped_lock peerListLock(*peerManager.GetPeerListMutex());
-                boost::mutex::scoped_lock peerActiveOutLock(*peerManager.GetPeerActiveMutex(peerManager.GetPeerActiveOut_Master()));
-                for (set<string>::iterator i = peerManager.GetPeerActiveOut_Master()->begin(); i != peerManager.GetPeerActiveOut_Master()->end(); i++)
-                {
-                    Peer* peer = peerManager.GetPeerData(*i)->GetPeer();
-                    if (pingMessage && peer)
-                    {
-                        //udp->Send(peer->GetID(), pingMessage->GetFirstByte(), pingMessage->GetSize());
-                        udp->EnqueueSend(peer->GetID(), pingMessage);
-                    }
-                }
-                peerActiveOutLock.unlock();
-                peerListLock.unlock();
-             }
-
-
-            //--------------- termina aqui esse recurso ------------------------------------------------------
-*/
 
             /* ECM - código 100% incluído
              * ping to Active Peer List In
