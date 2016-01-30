@@ -1,7 +1,7 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
-#define VERSION 0x010B
+#define VERSION 0x010C
 
 #define MTU 1500
 #define STD_BUFFERSIZE 1600
@@ -9,7 +9,6 @@
 #define TTLIn 10
 #define TTLOut 10
 #define TTLChannel 10
-#define CHANNEL_ID_MESCLANDO -1
 
 #define SECONDS 1000000000
 
@@ -106,9 +105,11 @@ enum ServerAuxTypes
  */
 enum MesclarModeServer
 {
-	AUTO_KILL_SERVER                = 0X00,    // ServerAux elimina QT peers a cada TM. Quando QT = 0, ServerAux sofre churn
-	AUTO_LIVE_AVOID_CONNECTION      = 0x01,    // ServerAux elimina QT peers a cada TM. ServerAux não permite reconexão com peer desconectado
-	AUTO_LIVE_PERMIT_CONNECTION     = 0x02     // ServerAux elimina QT peers a cada TM. ServerAux permite reconexão definido pelo padrão da rede
+	AUTO_KILL_SERVER                        = 0X00,    // ServerAux elimina QT peers a cada TM. Quando QT = 0, ServerAux sofre churn
+	AUTO_LIVE_AVOID_CONNECTION              = 0x01,    // ServerAux elimina QT peers a cada TM. ServerAux não permite reconexão com peer desconectado
+	AUTO_LIVE_PERMIT_CONNECTION             = 0x02,    // ServerAux elimina QT peers a cada TM. ServerAux permite reconexão definido pelo padrão da rede
+	AUTO_LIVE_AVOID_CONNECTION_KillEND      = 0x03,    // AUTO_LIVE_AVOID_CONNECTION + AUTO_KILL_SERVER whem peerListOut = 0
+	AUTO_LIVE_PERMIT_CONNECTION_KillEND     = 0x04     // AUTO_LIVE_PERMIT_CONNECTION + AUTO_KILL_SERVER whem peerListOut = 0
 };
 
 //ERROR MESSAGES FLAGS

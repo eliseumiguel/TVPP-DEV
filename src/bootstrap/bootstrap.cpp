@@ -7,7 +7,7 @@
 using namespace std;
 
 /** Construtor **/
-Bootstrap::Bootstrap(string udpPort, string peerlistSelectorStrategy,
+Bootstrap::Bootstrap(string udpPort, string peerlistSelectorStrategy, unsigned int peerListSharedSize,
 		unsigned int maxSubChannel, unsigned int maxServerAuxCandidate,
 		unsigned int maxPeerInSubChannel, unsigned int sizeCluster,
 		MesclarModeServer MixType,	uint8_t QT_PeerMixType,	uint8_t TimeDescPeerMix){
@@ -18,6 +18,7 @@ Bootstrap::Bootstrap(string udpPort, string peerlistSelectorStrategy,
 		this->peerlistSelectorStrategy = new NearestIPStrategy();
 	else
 		this->peerlistSelectorStrategy = new RandomStrategy();
+	this->peerListSharedSize=peerListSharedSize;
 
 	srand(time(NULL));
 
@@ -164,7 +165,7 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
 				}
 				else // Mensagem de novos vizinhos
 				{
-				     selectedPeers = channelList[channelId].SelectPeerList( peerlistSelectorStrategy, source, 20, XPConfig::Instance()->GetBool("isolaVirtutalPeerSameIP"));
+				     selectedPeers = channelList[channelId].SelectPeerList( peerlistSelectorStrategy, source, peerListSharedSize, XPConfig::Instance()->GetBool("isolaVirtutalPeerSameIP"));
 
 				      messageReply = new MessagePeerlistShare(selectedPeers.size(),
 					    	source->GetIP(), externalPort,

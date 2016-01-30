@@ -76,12 +76,14 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
 
     uint64_t updatePeerListPeriod = 30; 
     updatePeerListPeriod = updatePeerListPeriod*SECONDS;
-    //ECM 2016-01-16
+
     if (disconnectorStrategyIn == "None")
         this->disconnectorIn = NULL;
-    else
-        this->disconnectorIn = new Disconnector(new RandomStrategy(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveIn(), quantityDisconnect);
-
+    else {
+    	bool disableServerAuxActive = (disconnectorStrategyIn == "RandomOnlyNoServerActive");
+   		this->disconnectorIn = new Disconnector(new RandomStrategy(), &peerManager, updatePeerListPeriod,
+    				peerManager.GetPeerActiveIn(), quantityDisconnect, disableServerAuxActive );
+    }
     if (disconnectorStrategyOut == "None")
         this->disconnectorOut = NULL;
     else

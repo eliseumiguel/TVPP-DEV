@@ -52,6 +52,7 @@ private:
 	MesclarModeServer MixType;   //tipo de mesclagem
 	uint8_t QT_PeerMixType;      //quantidade de pares a serem desconectados durante a mesclagem
 	uint8_t TimeDescPeerMix;     //intervalo de tempo para cada desconexão
+	bool mixAux_KillEnd;
 
 };
 

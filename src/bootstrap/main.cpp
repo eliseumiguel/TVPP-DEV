@@ -30,6 +30,7 @@ int main(int argc, char* argv[]) {
     unsigned int maxServerAuxCandidate = 200; //ECM quando ocorre o flash crowd, são selecionados o total de pares necessários para os subcanais
     unsigned int maxPeerInSubChannel = 60;
     unsigned int sizeCluster = 1; //ECM auxiliary server total in each subChannel
+    unsigned int peerListSharedSize = 20;
 
     // config Mix mode...
 	MesclarModeServer MixType          = (MesclarModeServer) 0x02;    //tipo de mesclagem
@@ -49,6 +50,7 @@ int main(int argc, char* argv[]) {
         cout <<"  -tcpPort                     define the tcp bootstrap port (default: "<<myTCPPort<<")"<<endl;
         cout <<"  -udpPort                     define the tcp bootstrap port (default: "<<myUDPPort<<")"<<endl;
         cout <<"  -peerlistSelectorStrategy    define the tcp bootstrap port (default: RandomStrategy)"<<endl;
+        cout <<"  -peerListSharedSize          define the peer quantity to be shared each time between bootstrap and peer ()(default: "<<peerListSharedSize<<")"<<endl;
         cout <<endl;
         cout <<"                           FLASH CROWD"<<endl;
 
@@ -89,6 +91,12 @@ int main(int argc, char* argv[]) {
             optind++;
             peerlistSelectorStrategy = argv[optind];
         }
+        else if (swtc=="-peerListSharedSize")
+        {
+            optind++;
+            peerListSharedSize = atoi(argv[optind]);
+        }
+
         //flash crowd
         else if (swtc=="-maxSubChannel") {
             optind++;
@@ -131,7 +139,7 @@ int main(int argc, char* argv[]) {
 
 
 
-    Bootstrap bootstrapInstance(myUDPPort, peerlistSelectorStrategy, maxSubChannel, maxServerAuxCandidate,
+    Bootstrap bootstrapInstance(myUDPPort, peerlistSelectorStrategy, peerListSharedSize, maxSubChannel, maxServerAuxCandidate,
     		                    maxPeerInSubChannel, sizeCluster, MixType , QT_PeerMixType, TimeDescPeerMix);
     
     boost::thread TTCPSERVER(boost::bind(&Bootstrap::TCPStart, &bootstrapInstance, myTCPPort.c_str()));

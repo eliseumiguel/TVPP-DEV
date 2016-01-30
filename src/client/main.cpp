@@ -64,10 +64,10 @@ int main (int argc, char* argv[])
     int tipOffsetTime = 3;
     int limitDownload = -1;
     int limitUpload = -1;
-	string disconnectorStrategyIn = "None";    //ECM separate In and Out to be possible disconnect only Out or In or both
-	string disconnectorStrategyOut = "None";   //ECM ensures that make peerListOut new connections
-	unsigned int quantityDisconnect = 1;       //ECM quantity of peer to be disconnected
-	string connectorStrategy = "Random";       //ECM for In and Out. But, in client, the connectorOut is unable
+	string disconnectorStrategyIn = "None";                      //ECM separate In and Out to be possible disconnect only Out or In or both
+	string disconnectorStrategyOut = "disconnectorStrategyOut";  //ECM ensures that make peerListOut new connections
+	unsigned int quantityDisconnect = 1;                         //ECM quantity of peer to be disconnected
+	string connectorStrategy = "Random";                         //ECM for In and Out. But, in client, the connectorOut is unable
     string chunkSchedulerStrategy = "Random";
     string messageSendScheduler = "FIFO";
     string messageReceiveScheduler = "FIFO";
@@ -84,23 +84,23 @@ int main (int argc, char* argv[])
             cout <<"  -bufferSize                   define the buffermap message size (default: "<<bufferSize<<")"<<endl;
             cout <<"  -channelId                    select a channel to transmit/receive (default: "<<idChannel<<")"<<endl;
 			cout <<"  -disconnectorStrategyIn       select a strategy for peer disconnection (default: "<<disconnectorStrategyIn<<")"<<endl;
-			cout <<"  -disconnectorStrategyOut      select a strategy for peer disconnection (None or Random default: "<<disconnectorStrategyOut<<")"<<endl;
-            cout <<"                                (Options: None, Random)"<<endl;
+			cout <<"  -disconnectorStrategyOut      select a strategy for peer disconnection (None, Random or RandomOnlyNoServerActive default: "<<disconnectorStrategyOut<<")"<<endl;
+            cout <<"                                *(Options: None, Random, or RandomOnlyNoServerActive that peer disable disconnector Out when server_aux_active or mixing)"<<endl;
             cout <<"  -quantityDisconnect           number of peer to be disconnected by disconnectorStrategy (default: "<<quantityDisconnect<<")"<<endl;
 			cout <<"  -connectorStrategy            select a strategy for peer connection (default: "<<connectorStrategy<<")"<<endl;
-            cout <<"                                (Options: Random)"<<endl;
+            cout <<"                                *(Options: Random)"<<endl;
             cout <<"  -chunkSchedulerStrategy       select a strategy for chunk scheduling (default: "<<chunkSchedulerStrategy<<")"<<endl;
-            cout <<"                                (Options: MinimumFaultStrategy, NullStrategy, RandomStrategy)"<<endl;
+            cout <<"                                *(Options: MinimumFaultStrategy, NullStrategy, RandomStrategy)"<<endl;
             cout <<"  -messageSendScheduler         select a strategy for message reception (default: "<<messageSendScheduler<<")"<<endl;
-            cout <<"                                (Options: FIFO, RR - RoundRobin, Random, CDF - Closest Deadline First)"<<endl;
+            cout <<"                                *(Options: FIFO, RR - RoundRobin, Random, CDF - Closest Deadline First)"<<endl;
             cout <<"  -messageReceiveScheduler      select a strategy for message reception (default: "<<messageReceiveScheduler<<")"<<endl;
-            cout <<"                                (Options: FIFO, RR - RoundRobin, Random, CDF - Closest Deadline First)"<<endl;
+            cout <<"                                *(Options: FIFO, RR - RoundRobin, Random, CDF - Closest Deadline First)"<<endl;
             cout <<"  -limitDownload                limits the download bandwidht usage in b/s (default: "<<limitDownload<<")"<<endl;
             cout <<"  -limitUpload                  limits the upload bandwidht usage in b/s (default: "<<limitUpload<<")"<<endl;
             cout <<"  -maxPartnersIn                maximum number of neighbors-In(default: "<<maxPartnersIn<<")"<<endl;
             cout <<"  -maxPartnersOut               maximum number of neighbors-Out(default: "<<maxPartnersOut<<")"<<endl;
             cout <<"  -mode                         define the type of client. (default: "<<mode<<")"<<endl;
-            cout <<"                                (Options: client (0); server (1); free-rider-good (2))"<<endl;
+            cout <<"                                *(Options: client (0); server (1); free-rider-good (2))"<<endl;
             cout <<"  -peerPort                     port for inter peer comunication (default: "<<peerPort<<")"<<endl;
             cout <<"  -maxRequestAttempt            maximum number of attempts to perform a request(default: "<<maxRequestAttempt<<")"<<endl;;
             cout <<"  -tipOffsetTime                amount of seconds from where to start requesting chunks prior to stream tip (default: "<<tipOffsetTime<<" )"<<endl;;

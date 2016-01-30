@@ -1,17 +1,18 @@
 #include "Disconnector.hpp"
 
-Disconnector::Disconnector(Strategy *disconnectorStrategy, PeerManager* peerManager, uint64_t timerPeriod, set<string>* peerActive, unsigned int quantity) : Temporizable(timerPeriod)
+Disconnector::Disconnector(Strategy *disconnectorStrategy, PeerManager* peerManager, uint64_t timerPeriod, set<string>* peerActive, unsigned int quantity, bool disabled_ServerAuxActive) : Temporizable(timerPeriod)
 {
 	this->strategy = disconnectorStrategy;
 	this->peerManager = peerManager;
 	this->peerActive = peerActive;
 	this->quantity = quantity;
+	this->disabled_ServerAuxActive = disabled_ServerAuxActive;  //disable disconnector whem peer is auxiliar server active or mixing server
 }
 
 void Disconnector::Disconnect()
 {
-	// ECM Evitar que um servidor auxiliar remova parceiros Out na rede paralela
-	if (peerManager->GetPeerManagerState() == NO_SERVER_AUX)
+	//If disconnector = RandomOnlyNoServerActive do not disconnect peer Out during active server or mixing server
+	if (!(this->disabled_ServerAuxActive) || peerManager->GetPeerManagerState() == NO_SERVER_AUX)
 	{
 	   vector<PeerData*> peers;
 	   boost::mutex::scoped_lock peerListLock(*peerManager->GetPeerListMutex());
@@ -40,7 +41,7 @@ void Disconnector::Disconnect()
 	   peerListLock.unlock();
 	}
 	else
-		cout<<"Disconnector unable because client's state is "<<peerManager->GetPeerManagerState()<<endl;
+		cout<<"Disconnector disabled because client state is "<<peerManager->GetPeerManagerState()<<endl;
 }
 
 void Disconnector::TimerAlarm(uint64_t timerPeriod, string timerName)

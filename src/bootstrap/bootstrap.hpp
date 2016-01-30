@@ -53,7 +53,7 @@ class Bootstrap
         * @param string 
         * @param int Max TTLChannel value
         */
-        Bootstrap(string udpPort, string peerlistSelectorStrategy, unsigned int maxSubChannel,
+        Bootstrap(string udpPort, string peerlistSelectorStrategy, unsigned int peerListSharedSize, unsigned int maxSubChannel,
         		   unsigned int maxServerAuxCandidate, unsigned int maxPeerInSubChannel, unsigned int sizeCluster,
 					MesclarModeServer MixType,	uint8_t QT_PeerMixType,	uint8_t TimeDescPeerMix);
 
@@ -84,6 +84,7 @@ class Bootstrap
         boost::mutex channelListMutex;
         FILE *pfile;
         Strategy* peerlistSelectorStrategy;
+        unsigned int peerListSharedSize;
 
         //para o canal em flash crowd
 		unsigned int maxSubChannel;
