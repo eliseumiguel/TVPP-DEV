@@ -11,7 +11,7 @@ Disconnector::Disconnector(Strategy *disconnectorStrategy, PeerManager* peerMana
 
 void Disconnector::Disconnect()
 {
-	//If disconnector = RandomOnlyNoServerActive do not disconnect peer Out during active server or mixing server
+
 	if (!(this->disabled_ServerAuxActive) || peerManager->GetPeerManagerState() == NO_SERVER_AUX)
 	{
 	   vector<PeerData*> peers;
@@ -28,20 +28,19 @@ void Disconnector::Disconnect()
 	   if ((this->quantity <= peers.size()) && (this->quantity > 0))
 	   {
 	       for (unsigned int i = this->quantity; i > 0; i--){
-	    	  cout<<"o peer "<<peers.at(i-1)->GetPeer()->GetID() <<" tem estado especial "<<peerManager->GetPeerData(peers.at(i-1)->GetPeer()->GetID())->GetSpecialPeer()<<endl;
 		      if (!peerManager->GetPeerData(peers.at(i-1)->GetPeer()->GetID())->GetSpecialPeer()){
 			      peerManager->DisconnectPeer(peers.at(i-1)->GetPeer()->GetID(),peerActive);
 			      cout <<"Disconnector removing "<<peers.at(i-1)->GetPeer()->GetID()<<" to flexibly relationships" <<endl;
 		      }
 		      else
-		      	 cout <<"peer "<<peers.at(i-1)->GetPeer()->GetID()<<" not disconnected because it is a auxiliary server"<<endl;
+		      	 cout <<"peer "<<peers.at(i-1)->GetPeer()->GetID()<<" not disconnected because it is a Auxiliary Server"<<endl;
 	       }
 	   }
 	   else {cout << "Disconnector able but not peer delected" <<std::endl;}
 	   peerListLock.unlock();
 	}
 	else
-		cout<<"Disconnector disabled because client state is "<<peerManager->GetPeerManagerState()<<endl;
+		cout<<"Auto disconnector disabled because client state is "<<peerManager->GetPeerManagerState()<<endl;
 }
 
 void Disconnector::TimerAlarm(uint64_t timerPeriod, string timerName)

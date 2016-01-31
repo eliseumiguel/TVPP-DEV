@@ -32,10 +32,10 @@ int main(int argc, char* argv[]) {
     unsigned int sizeCluster = 1; //ECM auxiliary server total in each subChannel
     unsigned int peerListSharedSize = 20;
 
-    // config Mix mode...
-	MesclarModeServer MixType          = (MesclarModeServer) 0x02;    //tipo de mesclagem
-	uint8_t           QT_PeerMixType   = 3;                             //quantidade de pares a serem desconectados durante a mesclagem
-	uint8_t           TimeDescPeerMix  = 7;                             //intervalo de tempo para cada desconexão
+    // config merge mode...
+	MesclarModeServer mergeType          = (MesclarModeServer) 0x02;       //tipo de mesclagem
+	uint8_t           qt_PeerMergeType   =  2;                             //quantidade de pares a serem desconectados durante a mesclagem
+	uint8_t           timeDescPeerMerge  = 10;                             //intervalo de tempo para cada desconexão
 
 
     string arg1 = "";
@@ -59,9 +59,11 @@ int main(int argc, char* argv[]) {
         cout <<"  -maxPeerInSubChannel         define the peer number in new sub channel     (default: "<<maxPeerInSubChannel<<")"<<endl;
         cout <<"  -sizeCluster                 define the cluster size for each sub channel  (default: "<<sizeCluster<<")"<<endl;
 
-        cout <<"  -MixType                     define the server_aux mix mode                (default: "<<MixType<<")"<<endl;
-        cout <<"  -QT_PeerMixType              define the peer quantity to be disconnected   (default: "<<(int)QT_PeerMixType<<")"<<endl;
-        cout <<"  -TimeDescPeerMix             define the time interval to disconnect peers  (default: "<<(int)TimeDescPeerMix<<")"<<endl;
+        cout <<"  -mergeType                   define the server_aux merge mode              (default: "<<mergeType<<")"<<endl;
+        cout <<"                               *(s-kill 0, s-avoid-p 1, s-permit-p 2, s-avoid-kill 3, s-permit-kill 4, s-noting 5)"<<endl;
+        cout <<"  -qt_PeerMergeType            define the peer quantity to be disconnected   (default: "<<(int)qt_PeerMergeType<<")"<<endl;
+        cout <<"  -timeDescPeerMerge           define the time interval to disconnect peers  (default: "<<(int)timeDescPeerMerge<<")"<<endl;
+        cout <<"                               *(should be timeDescPeerMerge > 0)"<<endl;
 
 
         cout <<"  --isolaVirtutalPeerSameIP    permit only different IP partner "<<endl;
@@ -118,17 +120,34 @@ int main(int argc, char* argv[]) {
         {
             XPConfig::Instance()->SetBool("isolaVirtutalPeerSameIP", true);
         }
-        else if (swtc=="-MixType") {
+        else if (swtc=="-mergeType") {
             optind++;
-            MixType = (MesclarModeServer) atoi(argv[optind]);
+            mergeType = (MesclarModeServer) atoi(argv[optind]);
+            if (mergeType < 0 || mergeType > 5){
+            	cout<<"-mergeType = "<<mergeType<<endl;
+            	cout<<"Make sure that -mergeType in [0 .. 5]"<<endl;
+            	exit (1);
+            }
         }
-        else if (swtc=="-QT_PeerMixType") {
+        else if (swtc=="-qt_PeerMergeType") {
             optind++;
-            QT_PeerMixType = (unsigned int) atoi(argv[optind]);
+            int value = atoi(argv[optind]);
+            if (value < 0) {
+            	cout<<"-qt_PeerMergeType = "<<value<<endl;
+            	cout<<"Make sure that -qt_PeerMergeType in [0 .. ]"<<endl;
+            	exit (1);
+            }
+            qt_PeerMergeType = (unsigned int) value;
         }
-        else if (swtc=="-TimeDescPeerMix") {
+        else if (swtc=="-timeDescPeerMerge") {
             optind++;
-            TimeDescPeerMix = (unsigned int) atoi(argv[optind]);
+            int value = atoi(argv[optind]);
+            if (value < 1) {
+            	cout<<"-timeDescPeerMerge = "<<value<<endl;
+            	cout<<"Make sure that -timeDescPeerMerge in [1 .. ]"<<endl;
+            	exit (1);
+            }
+            timeDescPeerMerge = (unsigned int) value;
         }
         else {
             cout << "Invalid Arguments"<<endl; 
@@ -140,7 +159,7 @@ int main(int argc, char* argv[]) {
 
 
     Bootstrap bootstrapInstance(myUDPPort, peerlistSelectorStrategy, peerListSharedSize, maxSubChannel, maxServerAuxCandidate,
-    		                    maxPeerInSubChannel, sizeCluster, MixType , QT_PeerMixType, TimeDescPeerMix);
+    		                    maxPeerInSubChannel, sizeCluster, mergeType , qt_PeerMergeType, timeDescPeerMerge);
     
     boost::thread TTCPSERVER(boost::bind(&Bootstrap::TCPStart, &bootstrapInstance, myTCPPort.c_str()));
     boost::thread TUDPSERVER(boost::bind(&Bootstrap::UDPStart, &bootstrapInstance));

@@ -207,8 +207,8 @@ void Client::CyclicTimers()
     boost::xtime xt;
     uint16_t cycle = 0;
     uint32_t step = 100000000; //100mS++
-    uint8_t  MixCSA_Temp;
-    MixCSA_Temp = 0;  //ECM
+    uint8_t  mergeCSA_Temp;
+    mergeCSA_Temp = 0;  //ECM
 
     while (!quit)
     {
@@ -232,12 +232,12 @@ void Client::CyclicTimers()
             uploadPerSecDone = 0;
             peerManager.CheckPeerList();
 
-            //ECM time to Mix subnetworks
+            //ECM time to Merge subnetworks
             if (this->peerManager.GetPeerManagerState() == SERVER_AUX_MESCLAR){
-            	cout << "Intervalo de mesclagem... "<<(int) MixCSA_Temp<<endl;
-            	if (MixCSA_Temp == 0)
-            		MixCSA_Temp = this->peerManager.Get_TimeDescPeerMix();
-            	MixCSA_Temp = this->peerManager.ExecMesc(MixCSA_Temp);
+            	cout << "Merge Interval... "<<(int) mergeCSA_Temp<<endl;
+            	if (mergeCSA_Temp == 0)
+            		mergeCSA_Temp = this->peerManager.Get_TimeDescPeerMerge();
+            	mergeCSA_Temp = this->peerManager.ExecMesc(mergeCSA_Temp);
             }
         }
 
@@ -593,14 +593,9 @@ void Client::HandleMessageServerSub(MessageServerSub* message, string sourceAddr
 {
     vector<int> serverHeader = message->GetHeaderValues();
 
-    peerManager.Set_MixType((MesclarModeServer)serverHeader[1]);
-    peerManager.Set_QT_PeerMixType(serverHeader[2]);
-    peerManager.Set_TimeDescPeerMix(serverHeader[3]);
-    cout<<"setando estado...."<<endl;
-    cout<<"MixType "<<(MesclarModeServer)serverHeader[1]<<" configurado "<<this->peerManager.Get_MixType()<< endl;
-    cout<<"QT_PeerMixType " <<(int)serverHeader[2]<<" configurado "<<(int)this->peerManager.Get_QT_PeerMixType() << endl;
-    cout<<"TimeDescPeerMix "<<(int)serverHeader[3]<<" configurado "<<(int)this->peerManager.Get_TimeDescPeerMix()<<endl;
-
+    peerManager.Set_MergeType((MesclarModeServer)serverHeader[1]);
+    peerManager.Set_QT_PeerMergeType(serverHeader[2]);
+    peerManager.Set_TimeDescPeerMerge(serverHeader[3]);
 
     switch ((ServerAuxTypes) serverHeader[0])
     {
@@ -625,16 +620,16 @@ void Client::HandleMessageServerSub(MessageServerSub* message, string sourceAddr
         	break;
 
         default:
-        	 	 cout<<"erro na mensagem de servidor auxiliar"<<endl;
+        	 	 cout<<"Trying change server mode but invalid option for server type ["<<(ServerAuxTypes) serverHeader[0]<<"]"<<endl;
             break;
     }
-    //linha comentada apenas para separar peerManager de peerManagerServerAux
+
     peerManager.SetPeerManagerState((ServerAuxTypes) serverHeader[0]);
 }
 
 /*
 / REQUEST PACKET:    | OPCODE | HEADERSIZE | BODYSIZE | CHUNKGUID |  **************************************
-** Sizes(bytes):      |    1   |     1      |     2    |  4  |  2  |  TOTAL: 10 Bytes  **********************/
+** Sizes(bytes):     |    1   |     1      |     2    |  4  |  2  |  TOTAL: 10 Bytes  **********************/
 //ECM - Only for Out List
 void Client::HandleRequestMessage(MessageRequest* message, string sourceAddress, uint32_t socket)
 {
@@ -1255,7 +1250,6 @@ Request* Client::CriaRequest()
     }
     peerActiveInLock.unlock();
     peerListLock.unlock();
-    //cout<< "Client::CriaRequest peerActiveWithData.size()" <<peerActiveWithData.size() <<endl;
     newRequest->SearchPeers(&peerActiveWithData);
     return newRequest;
 }

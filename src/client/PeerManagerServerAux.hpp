@@ -28,31 +28,29 @@ class PeerManagerServerAux : public PeerManager
 public:
 
 	void SetPeerManagerState(ServerAuxTypes peerManagerState);
-	uint8_t ExecMesc (uint8_t timeMix);
+	uint8_t ExecMesc (uint8_t timeMerge);
 
 	PeerManagerServerAux();
 	virtual ~PeerManagerServerAux();
 
-	MesclarModeServer Get_MixType();
-	uint8_t Get_QT_PeerMixType();
-	uint8_t Get_TimeDescPeerMix();
+	MesclarModeServer Get_MergeType();
+	uint8_t Get_QT_PeerMergeType();
+	uint8_t Get_TimeDescPeerMerge();
 
-	void Set_MixType(MesclarModeServer MixType);
-	void Set_QT_PeerMixType(uint8_t QT_PeerMixType);
-	void Set_TimeDescPeerMix(uint8_t TimeDescPeerMix);
+	void Set_MergeType(MesclarModeServer MergeType);
+	void Set_QT_PeerMergeType(uint8_t QT_PeerMergeType);
+	void Set_TimeDescPeerMerge(uint8_t TimeDescPeerMerge);
 
-	set<string> Get_Random_Mix_Peers(set<string>* peerList, uint8_t QT);
+	set<string> Get_Random_Merge_Peers(set<string>* peerList, uint8_t QT);
 
 
 private:
 
-    //set<string> peerListMixRejected;
-
-    //ECM Mix configuration
-	MesclarModeServer MixType;   //tipo de mesclagem
-	uint8_t QT_PeerMixType;      //quantidade de pares a serem desconectados durante a mesclagem
-	uint8_t TimeDescPeerMix;     //intervalo de tempo para cada desconexão
-	bool mixAux_KillEnd;
+    //ECM Merge configuration
+	MesclarModeServer MergeType;
+	uint8_t QT_PeerMergeType;
+	uint8_t TimeDescPeerMerge;
+	bool mergeAux_KillEnd;         //auxiliar to mix two merge types
 
 };
 

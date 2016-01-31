@@ -43,9 +43,10 @@ Bootstrap::Bootstrap(string udpPort, string peerlistSelectorStrategy, unsigned i
 	time(&boot_ID);
 	bootStrap_ID = boot_ID;
 
-	cout<<" tipo "<<MixType<<endl;
-	cout<<" quantidade "<<(int)QT_PeerMixType<<endl;
-	cout<<" tempo "<<(int)TimeDescPeerMix<<endl;
+	cout<<"--Merge Settings --"<<endl;
+	cout<<"Merge Type: "<<MixType<<endl;
+	cout<<"Quantity of Peers: "<<(int)QT_PeerMixType<<endl;
+	cout<<"Time Interval: "<<(int)TimeDescPeerMix<<endl;
 }
 
 Message *Bootstrap::HandleTCPMessage(Message* message, string sourceAddress,
@@ -109,7 +110,6 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
 
 				}
 
-				 /* o peer será candidato apenas se informado ao bootstrap*/
 				if (auxiliarServerCandidate){
 					channelList[channelId].analizePeerToBeServerAux(source);
 				}
@@ -118,7 +118,6 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
 
 		case CHANGE_STATE:
 			if (channelMode != NULL_MODE) {
-				// o channel cuida de seu estado. Não é problema do bootstrap.
 				this->setChannelState(channelId, channelMode);
 
 				//mensagem devolvida ao externalMessage de estado... não usada para nada, mas o método exige replay

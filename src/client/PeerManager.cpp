@@ -56,7 +56,7 @@ bool PeerManager::ConnectPeer(string peer, set<string>* peerActive)
 	map<string, unsigned int>* peerActiveCooldown = this->GetPeerActiveCooldown(peerActive);
 
 	for (map<string, unsigned int>::iterator i = peerActiveCooldown->begin(); i != peerActiveCooldown->end(); i++)
-		if (i->first == peer)
+		if ((i->first == peer) && (i != peerActiveCooldown->end()))
 			cout<<"Peer"<<peer<<" must wait "<<i->second<<" secunds to the next connection "<<endl;
 
 	if (peerActiveCooldown->find(peer) == (*peerActiveCooldown).end())
@@ -96,7 +96,7 @@ bool PeerManager::ConnectPeer(string peer, set<string>* peerActive)
 					this->peerList[peer].SetTTLOut(TTLOut);
 					list = "Out";
 				}
-				cout<<"Peer "<<peer<<" connected to PeerActive_"<<list<<endl;
+				cout<<"Peer "<<peer<<" connected to PeerActive_"<<list<<" TTLIn ["<<this->peerList[peer].GetTTLIn()<<"] TTLOut ["<<this->peerList[peer].GetTTLOut()<<"]"<<endl;
 				peerActiveLock.unlock();
 				return true;
 			}
