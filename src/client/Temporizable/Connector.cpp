@@ -17,9 +17,12 @@ Connector::Connector(Strategy *connectorStrategy, PeerManager* peerManager, uint
 	this->peerActive = peerActive;
 }
 
+
 void Connector::Connect()
 {
 	vector<PeerData*> peers;
+	vector<PeerData> peerCopy;
+
 	boost::mutex::scoped_lock peerListLock(*peerManager->GetPeerListMutex());
 	for (map<string, PeerData>::iterator i = peerManager->GetPeerList()->begin(); i != peerManager->GetPeerList()->end(); i++)
 	{
@@ -31,6 +34,8 @@ void Connector::Connect()
 	unsigned int vacancies = peerManager->GetMaxActivePeers(peerActive) - peerManager->GetPeerActiveSize(peerActive);
 	if (vacancies > peers.size()) vacancies = peers.size();
 
+
+
 	if (!peers.empty())
 	{
 		for (unsigned int i = 0; i < vacancies; i++)
@@ -40,6 +45,7 @@ void Connector::Connect()
 	}
 	peerListLock.unlock();
 }
+
 
 void Connector::TimerAlarm(uint64_t timerPeriod, string timerName)
 {

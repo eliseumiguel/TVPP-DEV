@@ -235,8 +235,9 @@ bool Channel::Create_New_ChannelSub()
 	//create sizeCluster sub-channel with same ID_SubChannel
 	if (peerServerAuxNew.size()==sizeCluster && channel_Sub_List.size() < (maxSubChannel * sizeCluster))
 	{
+
 		//Get a new subChannel ID
-		unsigned int channelID_New = 0;
+		unsigned int channelID_New = this->channelId; // MODTESTE = 0
 		for (map<string, SubChannelServerAuxData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
 			if (channelID_New < i->second.Get_ServerAuxChannelId_Sub())
 				channelID_New = i->second.Get_ServerAuxChannelId_Sub();

@@ -109,7 +109,8 @@ enum MesclarModeServer
 	AUTO_LIVE_AVOID_CONNECTION              = 0x01,    // ServerAux elimina QT peers a cada TM. ServerAux não permite reconexão com peer desconectado
 	AUTO_LIVE_PERMIT_CONNECTION             = 0x02,    // ServerAux elimina QT peers a cada TM. ServerAux permite reconexão definido pelo padrão da rede
 	AUTO_LIVE_AVOID_CONNECTION_KillEND      = 0x03,    // AUTO_LIVE_AVOID_CONNECTION + AUTO_KILL_SERVER whem peerListOut = 0
-	AUTO_LIVE_PERMIT_CONNECTION_KillEND     = 0x04     // AUTO_LIVE_PERMIT_CONNECTION + AUTO_KILL_SERVER whem peerListOut = 0
+	AUTO_LIVE_PERMIT_CONNECTION_KillEND     = 0x04,     // AUTO_LIVE_PERMIT_CONNECTION + AUTO_KILL_SERVER whem peerListOut = 0
+	NONE_MIX								= 0x05
 };
 
 //ERROR MESSAGES FLAGS

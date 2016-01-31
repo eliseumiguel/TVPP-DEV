@@ -79,15 +79,17 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
 
     if (disconnectorStrategyIn == "None")
         this->disconnectorIn = NULL;
-    else {
-    	bool disableServerAuxActive = (disconnectorStrategyIn == "RandomOnlyNoServerActive");
-   		this->disconnectorIn = new Disconnector(new RandomStrategy(), &peerManager, updatePeerListPeriod,
-    				peerManager.GetPeerActiveIn(), quantityDisconnect, disableServerAuxActive );
-    }
+    else
+        this->disconnectorIn = new Disconnector(new RandomStrategy(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveIn(), quantityDisconnect);
+
+
     if (disconnectorStrategyOut == "None")
         this->disconnectorOut = NULL;
-    else
-        this->disconnectorOut = new Disconnector(new RandomStrategy(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveOut(), quantityDisconnect);
+    else {
+    	bool disableServerAuxActive = (disconnectorStrategyOut == "RandomOnlyNoServerActive");
+   		this->disconnectorOut = new Disconnector(new RandomStrategy(), &peerManager, updatePeerListPeriod,
+    				peerManager.GetPeerActiveOut(), quantityDisconnect, disableServerAuxActive);
+    }
 
     if (disconnectorIn) temporizableList.push_back(disconnectorIn);
     if (disconnectorOut) temporizableList.push_back(disconnectorOut);
@@ -474,6 +476,7 @@ void Client::HandlePingMessageIn(vector<int>* pingHeader, MessagePing* message, 
     if (!peerManager.AddPeer(newPeer))
         delete newPeer;
 
+    boost::mutex::scoped_lock peerListLock(*peerManager.GetPeerListMutex());
     if (!peerManager.IsPeerActive(sourceAddress, peerManager.GetPeerActiveIn())) //I received a ping from someone that is not on my active peer list
     {
         if (!peerManager.ConnectPeer(sourceAddress, peerManager.GetPeerActiveIn()))
@@ -482,7 +485,6 @@ void Client::HandlePingMessageIn(vector<int>* pingHeader, MessagePing* message, 
             return;
         }
     }
-    boost::mutex::scoped_lock peerListLock(*peerManager.GetPeerListMutex());
     peerManager.GetPeerData(sourceAddress)->SetTTLIn(TTL_MAX_In);
 
     peerManager.GetPeerData(sourceAddress)->SetMode(otherPeerMode);
@@ -520,6 +522,7 @@ void Client::HandlePingMessageOut(vector<int>* pingHeader, MessagePing* message,
     if (!peerManager.AddPeer(newPeer))
         delete newPeer;
 
+    boost::mutex::scoped_lock peerListLock(*peerManager.GetPeerListMutex());
     if (!peerManager.IsPeerActive(sourceAddress, peerManager.GetPeerActiveOut())) //I received a ping from someone that is not on my active peer list
     {
         if (!peerManager.ConnectPeer(sourceAddress, peerManager.GetPeerActiveOut()))
@@ -528,7 +531,7 @@ void Client::HandlePingMessageOut(vector<int>* pingHeader, MessagePing* message,
             return;
         }
     }
-    boost::mutex::scoped_lock peerListLock(*peerManager.GetPeerListMutex());
+
     peerManager.GetPeerData(sourceAddress)->SetTTLOut(TTL_MAX_Out);
     peerManager.GetPeerData(sourceAddress)->SetMode(otherPeerMode);
     peerListLock.unlock();

@@ -49,10 +49,16 @@ map<string, unsigned int>* PeerManager::GetPeerActiveCooldown(set<string>* peerA
 
 //ECM - efetivamente, insere o par em uma das lista In ou Out
 //neste método, é certo que o par pertence a peerList...
+//Deve ser chamado com o peerListMutex fechado....
 bool PeerManager::ConnectPeer(string peer, set<string>* peerActive)
 {
 	boost::mutex* peerActiveMutex = this->GetPeerActiveMutex(peerActive);
 	map<string, unsigned int>* peerActiveCooldown = this->GetPeerActiveCooldown(peerActive);
+
+	for (map<string, unsigned int>::iterator i = peerActiveCooldown->begin(); i != peerActiveCooldown->end(); i++)
+		if (i->first == peer)
+			cout<<"Peer"<<peer<<" must wait "<<i->second<<" secunds to the next connection "<<endl;
+
 	if (peerActiveCooldown->find(peer) == (*peerActiveCooldown).end())
 	{
 		boost::mutex::scoped_lock peerActiveLock(*peerActiveMutex);
@@ -82,10 +88,15 @@ bool PeerManager::ConnectPeer(string peer, set<string>* peerActive)
 			if (peerActive->insert(peer).second)
 			{
 				string list;
-				if (*(peerActive) == peerActiveIn)	list = "In";
-				else list = "Out";
+				if (*(peerActive) == peerActiveIn){
+					this->peerList[peer].SetTTLIn(TTLIn);
+					list = "In";
+				}
+				else {
+					this->peerList[peer].SetTTLOut(TTLOut);
+					list = "Out";
+				}
 				cout<<"Peer "<<peer<<" connected to PeerActive_"<<list<<endl;
-
 				peerActiveLock.unlock();
 				return true;
 			}
@@ -113,9 +124,9 @@ void PeerManager::DisconnectPeer(string peer, set<string>* peerActive)
 void PeerManager::RemovePeer(string peer)
 {
 	boost::mutex::scoped_lock peerListLock(peerListMutex);
+	cout<<"Peer "<<peer<<" removed from PeerList: TTLIn["<<peerList[peer].GetTTLIn()<<"] TTLOut["<<peerList[peer].GetTTLOut()<<"]"<<endl;
 	peerList.erase(peer);
 	peerListLock.unlock();
-	cout<<"Peer "<<peer<<" removed from PeerList"<<endl;
 }
 
 unsigned int PeerManager::GetPeerActiveSize(set<string>* peerActive)

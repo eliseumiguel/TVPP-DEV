@@ -92,6 +92,11 @@ uint8_t PeerManagerServerAux::ExecMesc (uint8_t timeMix){
 				return timeMix;
 			}
 
+			if ((deletedPeer.size() == 0)) {
+				this->Set_MixType(NONE_MIX);
+				return timeMix;
+			}
+
 			boost::mutex::scoped_lock peerListRejectedLock(peerListRejectedMutexOut);
 			for (set<string>::iterator it = deletedPeer.begin(); it != deletedPeer.end(); it++){
 			     this->peerList_Rejected.insert(*it);
@@ -115,13 +120,24 @@ uint8_t PeerManagerServerAux::ExecMesc (uint8_t timeMix){
 				this->Set_MixType(AUTO_KILL_SERVER);
 				return timeMix;
 			}
-
+			if ((deletedPeer.size() == 0)) {
+				this->Set_MixType(NONE_MIX);
+				return timeMix;
+			}
+			boost::mutex::scoped_lock peerListLock(peerListMutex);
 			for (set<string>::iterator it = deletedPeer.begin(); it != deletedPeer.end(); it++){
+				this->peerList[*it].SetChannelId_Sub(0);
 				this->DisconnectPeer(*it, &peerActiveOut);
 			}
+			peerListLock.unlock();
 		}
 			break;
 
+		case (NONE_MIX): //++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		{
+			cout<<"Noting to do in merge stage"<<endl;
+		}
+			break;
 	    default:
 	        cout<<"Invalid Mix Server option ["<<this->Get_MixType()<<"]"<<endl;
 	        break;
@@ -181,7 +197,7 @@ void PeerManagerServerAux::SetPeerManagerState(ServerAuxTypes newPeerManagerStat
 		break;
 
     default:
-        cout<<"Invalid peer state option ["<<newPeerManagerState<<"]"<<endl;
+        cout<<"Invalid peer state option changing ["<<this->peerManagerState<<"] to ["<<newPeerManagerState<<"]"<<endl;
         break;
 	}
 	peerActiveLock.unlock();
