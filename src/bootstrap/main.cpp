@@ -26,9 +26,9 @@ int main(int argc, char* argv[]) {
     string myUDPPort = UDPPORT;
     string peerlistSelectorStrategy = "";
 
-    unsigned int maxSubChannel = 6;
+    unsigned int maxSubChannel = 10;
     unsigned int maxServerAuxCandidate = 200; //ECM quando ocorre o flash crowd, são selecionados o total de pares necessários para os subcanais
-    unsigned int maxPeerInSubChannel = 60;
+    unsigned int maxPeerInSubChannel = 2000;
     unsigned int sizeCluster = 1; //ECM auxiliary server total in each subChannel
     unsigned int peerListSharedSize = 20;
 

@@ -24,6 +24,7 @@ Channel::Channel(unsigned int channelId, Peer* serverPeer,
         this->maxServerAuxCandidate    = maxServerAuxCandidate;
         this->mesclarRedes             = mesclar;
         this->GenerateAllLogs          = false; //ECM Falso, gera apenas o log perf-all e overaly-all
+
         cout<<endl;
         cout<<" ---------------CRIANDO CANAL --------------------"<<endl;
         cout<< "maxPeerInSubChannel      = "<< maxPeerInSubChannel<<endl;
@@ -152,112 +153,128 @@ ServerAuxTypes Channel::GetServerSubNewMode (Peer* peer)
 	return serverAuxMode;
 }
 
+bool Channel::allsubChannelFull(){
+	boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
+	unsigned int channelsubID_temp = 0;
+	for (map<string, SubChannelServerAuxData>::iterator i = channel_Sub_List.begin() ; i != channel_Sub_List.end(); i++){
+		unsigned int countPeer = 0;
+		if (i->second.Get_ServerAuxChannelId_Sub() != channelsubID_temp){
+			for (map<string, PeerData>::iterator master = peerList.begin(); master != peerList.end(); master++){
+				if(unsigned(master->second.GetChannelId_Sub()) == i->second.Get_ServerAuxChannelId_Sub())
+					countPeer++;
+
+			}
+			if (countPeer < this->maxPeerInSubChannel){
+				posInsertSubChannel = i;
+				channelSubListLock.unlock();
+				return false;
+			}
+		}
+		channelsubID_temp = i->second.Get_ServerAuxChannelId_Sub();
+	}
+	channelSubListLock.unlock();
+	return true;
+}
+
+
 void Channel::AddPeerMasterChannel(Peer* peer){
-   	peerList[peer->GetID()] = PeerData(peer);
+	cout<<"Adding ["<<peer->GetID()<<"] on master channel"<<endl;
+	peerList[peer->GetID()] = PeerData(peer);
    	peerList[peer->GetID()].SetChannelId_Sub(this->channelId);
 }
 
-/* ECM ****
- * Insere o peer no canal principal se MODE == NORMAL ou MODE_MESCLAR
- * Insere o peer em um sub-canal se MODE == FLASH CROWD
- * Em MODE FLASH CROWD: caso todos sub-canais estejam cheios, tenta criar novo sub canal e inserir
- *                      caso não consiga criar novo canal, insere na rede principal.
- * Este método é chamado no bootstrap. O mutex já fechado...
- */
-void Channel::AddPeer(Peer* peer)
-{
-	if (!this->AddPeerChannel(peer))                                      // tenta inserir enquanto sub canais permitire
+void Channel::AddPeer(Peer* peer){
+	if (!this->AddPeerChannel(peer))
 	{
-        if(!Create_New_ChannelSub())                                      // tenta criar subchannel se anteriores já completos
-        {
-           	cout<<"All subChannel full. "<<endl;
-           	cout<<"Adding ["<<peer->GetID()<<"] on master channel"<<endl;
-           	this->AddPeerMasterChannel(peer);
-        }
-        else	       	                                                  // tenta criar novo sub canal
-        	if (!this->AddPeerChannel(peer))
-        	{
-        		this->AddPeerMasterChannel(peer);
-        	}
-	}
+		if (!this->allsubChannelFull()){                // se não cheio, seleciona subchannell com vaga...
+			if (!this->AddPeerChannel(peer)){           // tenta inserir novamente...
+				cout<<"All subChannel full. "<<endl;
+				this->AddPeerMasterChannel(peer);
+		     }
+		}
+    	else
+		{
+			cout<<"All subChannel full. "<<endl;
+			this->AddPeerMasterChannel(peer);
+		}
+     }
 }
-//ECM - Mutex fechado ... pode-se pegar o idSubChannelServer in peerlist
-bool Channel::AddPeerChannel(Peer* peer)
-{
+
+bool Channel::AddPeerChannel(Peer* peer){
 	if (channelMode != MODE_FLASH_CROWD)
 	{
 		this->AddPeerMasterChannel(peer);
-       	cout<<"Adding ["<<peer->GetID()<<"] on master channel"<<endl;
 		return true;
 	}
 	else //FLASH CROWD
 	{
-		//tenta inserir em sub canal
 		boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
+		if (posInsertSubChannel == channel_Sub_List.end())
+			posInsertSubChannel == channel_Sub_List.begin();
 
-		for (map<string, SubChannelServerAuxData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
-			if (this->GetPeerListSizeChannel_Sub(i->second.Get_ServerAuxChannelId_Sub()) < (this->maxPeerInSubChannel))
+		if (this->GetPeerListSizeChannel_Sub(this->posInsertSubChannel->second.Get_ServerAuxChannelId_Sub()) < (this->maxPeerInSubChannel))
+		{
+			peerList[peer->GetID()] = PeerData(peer);
+			peerList[peer->GetID()].SetChannelId_Sub(posInsertSubChannel->second.Get_ServerAuxChannelId_Sub());
+
+	       	//new position for adding next peer
+			for (map<string, SubChannelServerAuxData>::iterator i = posInsertSubChannel ; i != channel_Sub_List.end(); i++)
 			{
-				peerList[peer->GetID()] = PeerData(peer);
-				peerList[peer->GetID()].SetChannelId_Sub(i->second.Get_ServerAuxChannelId_Sub());
+				if (i->second.Get_ServerAuxChannelId_Sub() != posInsertSubChannel->second.Get_ServerAuxChannelId_Sub())
+				{
 
-		       	cout<<"Inserindo ["<<peer->GetID()<<"] SUBCHANNEL ["<<i->second.Get_ServerAuxChannelId_Sub()<<"]"<<endl;
-				channelSubListLock.unlock();
-				return true;
-	        }
-		channelSubListLock.unlock();
+					posInsertSubChannel = i;
+					channelSubListLock.unlock();
+					return true;
+				}
+			}
+			posInsertSubChannel = channel_Sub_List.begin();
+			channelSubListLock.unlock();
+     		return true;
+		}
+
 	}
 	return false;
 }
 
-/*ECM 17-01-2015
- * Novo código de criação de canal com cluster de servidores auxiliares em redes paralelas
- * Agora, mais de um servidor auxiliar terá o mesmo subCannel_ID. Com isso, contribuirão na mesma rede paralela
- * OBS: Mutex fechado no bootstrap
-*/
-bool Channel::Create_New_ChannelSub()
-{
-	vector<string*> peerServerAuxNew;
-	unsigned int size = sizeCluster;
+/* ECM Considera que nenhum subchannel foi criado e que a
+ * lista de candidatos tem a quantidade necessária para
+ * criar os subchannel com os servidores em cluster.
+ */
+void Channel::Create_All_ChannelSub(){
 
-	boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
-	boost::mutex::scoped_lock channelSubCandidatesLock(*channel_Sub_Candidates_Mutex);
+	vector<string> peerServerAuxNew;
+	unsigned int size = sizeCluster;
+	unsigned int channelID_New = this->channelId;
 
 	for (map<string,SubChannelCandidateData>::iterator i = server_Sub_Candidates.begin(); i != server_Sub_Candidates.end(); i++)
+
 		if (channel_Sub_List.count(i->first) == 0 )
 		{
 			size--;
-			peerServerAuxNew.push_back(new string(i->first));
-			if (size==0) break;
-		}
-	channelSubCandidatesLock.unlock();
+			peerServerAuxNew.push_back(i->first);
+			if (size==0)
+			{
+				channelID_New++;
+				size = sizeCluster;
+				if ((peerServerAuxNew.size()==sizeCluster) && (channel_Sub_List.size() < (maxSubChannel * sizeCluster)))
+				{
+					for (unsigned int pos=0; pos < sizeCluster; pos++){
+					    channel_Sub_List[peerServerAuxNew.at(pos)] = SubChannelServerAuxData(channelId, channelID_New, peerList[peerServerAuxNew.at(pos)].GetPeer(),GenerateAllLogs);
+					}
+                    while (peerServerAuxNew.size() > 0){
+					    peerServerAuxNew.erase(peerServerAuxNew.end());
+					}
+			    }
+		    }
 
-	//create sizeCluster sub-channel with same ID_SubChannel
-	if (peerServerAuxNew.size()==sizeCluster && channel_Sub_List.size() < (maxSubChannel * sizeCluster))
-	{
-
-		//Get a new subChannel ID
-		unsigned int channelID_New = this->channelId; // MODTESTE = 0
-		for (map<string, SubChannelServerAuxData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
-			if (channelID_New < i->second.Get_ServerAuxChannelId_Sub())
-				channelID_New = i->second.Get_ServerAuxChannelId_Sub();
-		channelID_New ++;
-		for (unsigned int pos=0; pos < sizeCluster; pos++){
-		    channel_Sub_List[*peerServerAuxNew.at(pos)] = SubChannelServerAuxData(channelId, channelID_New, peerList[*peerServerAuxNew.at(pos)].GetPeer(),GenerateAllLogs);
-		}
-
-		for (unsigned int pos=0; pos <peerServerAuxNew.size(); pos++)
-		   delete peerServerAuxNew.at(pos);
-
-		channelSubListLock.unlock();
-		return true;
+        }
+    while (peerServerAuxNew.size() > 0){
+	    peerServerAuxNew.erase(peerServerAuxNew.end());
 	}
-
-	channelSubListLock.unlock();
-	for (unsigned int pos=0; pos <peerServerAuxNew.size(); pos++)
-	   delete peerServerAuxNew.at(pos);
-	return false;
+	this->posInsertSubChannel= this->channel_Sub_List.begin();
 }
+
 
 /* Choose a random auxiliar server peer */
 void Channel::analizePeerToBeServerAux(Peer* source)
@@ -396,6 +413,8 @@ void Channel::SetChannelMode(ChannelModes New_channelMode)
         			i->second.SetState(SERVER_AUX_ACTIVE);
         			i->second.SetPeerWaitInform(true);
         		}
+        		//ECM Codigo inserido para preencher subchannel por demanda///////
+        		this->Create_All_ChannelSub();
 
         		/* ECM prepara estado dos participantes da rede principal para receber a lista de servidores auxiliares selecionados.
             	 * Ao receber a lista, os participantes da rede principal não irão desconectar um servidor auxliar durante o flash crowd
@@ -423,7 +442,6 @@ void Channel::SetChannelMode(ChannelModes New_channelMode)
     	channelSubCandidatesLock.unlock();
     }
 }
-
 /*
  * Testa se existe outro servidor auxiliar para um determinado sub_channel
  */
@@ -591,6 +609,10 @@ unsigned int Channel::GetPeerListSize()
     	 * Caso o peer seja servidor auxiliar e único no sub canal, Remove_ChannelSub.
     	 * Caso haja outro servidor em cluster, remove o peer e mantém o canal.
     	*/
+
+		if (posInsertSubChannel == channel_Sub_List.find(*peerId))
+			posInsertSubChannel ++;
+
     	if (channel_Sub_List.find(*peerId) != channel_Sub_List.end()){
     		if (this->Finishing_Server(&(*peerId))){
     			this->Remove_ChannelSub(&(*peerId));}

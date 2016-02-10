@@ -128,6 +128,8 @@ class Channel
         map<string, SubChannelServerAuxData> channel_Sub_List;      //ECM manage Server_Aux active in Sub_Channel
         map<string, SubChannelCandidateData> server_Sub_Candidates; //ECM manage Server_Aux candidates to be Server_Aux active.
 
+        map<string, SubChannelServerAuxData>::iterator posInsertSubChannel; //ECM interator auxiliar para inserir peer em subChannel
+
         ChannelModes channelMode;
         unsigned int maxPeerInSubChannel;
         unsigned int maxSubChannel;
@@ -135,12 +137,15 @@ class Channel
         bool mesclarRedes;
         bool GenerateAllLogs;
 
+
         bool AddPeerChannel(Peer* peer);
-        bool Create_New_ChannelSub();
+        //bool Create_New_ChannelSub();     //ECM antigo usado para manusear preenchimento de subChannel por demanda.
+        void Create_All_ChannelSub();       //ECM Usado para manusear preenchimento de subChannel em paralelos
+
+        bool allsubChannelFull();
         void Remove_AllChannelSub();
         bool Finishing_Server (string* server);
         void Remove_ChannelSub(const string* source, bool mesclar = false);
-        //void CheckAllSubChannel();
 
         void CheckServerSubState();
 
