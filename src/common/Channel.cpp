@@ -5,6 +5,8 @@ Channel::Channel(unsigned int channelId, Peer* serverPeer,
 				 unsigned int maxServerAuxCandidate,
 				 unsigned int maxPeerInSubChannel,
 				 unsigned int sizeCluster,
+				 unsigned int avoidMasterPatner,
+				 bool modeFlasCrowdSemSubChannel,
 				 bool mesclar)
 
 : channel_Sub_List_Mutex (new boost::mutex()),
@@ -22,6 +24,8 @@ Channel::Channel(unsigned int channelId, Peer* serverPeer,
         this->maxPeerInSubChannel      = maxPeerInSubChannel;
         this->maxSubChannel            = maxSubChannel;
         this->maxServerAuxCandidate    = maxServerAuxCandidate;
+        this->modeFlasCrowdSemSubChannel = modeFlasCrowdSemSubChannel;
+        this->avoidMasterPatner         = avoidMasterPatner;
         this->mesclarRedes             = mesclar;
         this->GenerateAllLogs          = false; //ECM Falso, gera apenas o log perf-all e overaly-all
 
@@ -509,17 +513,17 @@ vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, uns
     vector<PeerData*> allPeers, selectedPeers;
     int srcPeerChannelId_Sub = peerList[srcPeer->GetID()].GetChannelId_Sub();
 
-    if (this->GetChannelMode() != MODE_FLASH_CROWD){
+    if ((this->GetChannelMode() != MODE_FLASH_CROWD) || (modeFlasCrowdSemSubChannel)){
         for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
             if (srcPeer->GetID() != i->second.GetPeer()->GetID()){
             	if (!virtualPeer)
             		allPeers.push_back(&(i->second));
                 else
-                	if  (srcPeer->GetIP() != i->second.GetPeer()->GetIP())
+                	if (srcPeer->GetIP() != i->second.GetPeer()->GetIP())
                 		allPeers.push_back(&(i->second));
             }
     }
-    else
+    else  //Modo flash crowd com subcanais isolados
     {
     	/* Garante fazer a vizinhança apenas com os pares que estão no mesmo subcanal
     	 * Atende ao caso de só haver o canal principal
@@ -554,14 +558,35 @@ vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, uns
     		channelSubListLock.unlock();
     	}
 	}
+
     if (allPeers.size() <= peerQuantity)
         return allPeers;
     else
     {
         strategy->Execute(&allPeers, srcPeer, peerQuantity);
         selectedPeers.insert(selectedPeers.begin(),allPeers.begin(),allPeers.begin()+peerQuantity);
-        return selectedPeers;
-    }
+        /*ECM Tratar a tecnica que mistura os modelos: Sem subcanais e Subcanais isolados.
+         * nesta técnica, tratamos o FC sem subcanais totalmente isolados, contudo selecionamos servidores
+         * para expor recursos aos novos participantes.
+         * Assim, caso o peer estaja em subcanal, enviar a ele possíveis servidores auxiliares.
+         */
+    	if ((modeFlasCrowdSemSubChannel) && (this->GetChannelMode() == MODE_FLASH_CROWD)){
+
+        	/* Se peer está em sub canal em estado Flash Crowd,
+        	 * inserir todos os servidores auxiliares na lista do peer
+        	 */
+        	if ((srcPeerChannelId_Sub != (int)this->channelId) && (srcPeerChannelId_Sub >0))
+        	{
+        		boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
+        		for (map<string, SubChannelServerAuxData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++)
+        			if (srcPeerChannelId_Sub == (int)i->second.Get_ServerAuxChannelId_Sub())
+        				allPeers.push_back(&(peerList[i->second.GetServer_Sub()->GetID()]));
+        		channelSubListLock.unlock();
+        	}
+
+        }
+      }
+     return selectedPeers;
 }
 
 unsigned int Channel::GetPeerListSizeChannel_Sub(int channelId_Sub)

@@ -10,7 +10,7 @@ using namespace std;
 Bootstrap::Bootstrap(string udpPort, string peerlistSelectorStrategy, unsigned int peerListSharedSize,
 		unsigned int maxSubChannel, unsigned int maxServerAuxCandidate,
 		unsigned int maxPeerInSubChannel, unsigned int sizeCluster,
-		MesclarModeServer MixType,	uint8_t QT_PeerMixType,	uint8_t TimeDescPeerMix){
+		MesclarModeServer MixType,	uint8_t QT_PeerMixType,	uint8_t TimeDescPeerMix, unsigned int avoidMasterPatner){
 
 	if (peerlistSelectorStrategy == "TournamentStrategy")
 		this->peerlistSelectorStrategy = new TournamentStrategy();
@@ -37,6 +37,7 @@ Bootstrap::Bootstrap(string udpPort, string peerlistSelectorStrategy, unsigned i
 	this->MixType             = MixType;
 	this->QT_PeerMixType      = QT_PeerMixType;
 	this->TimeDescPeerMix     = TimeDescPeerMix;
+	this->avoidMasterPatner   = avoidMasterPatner;
 
 
 	time_t boot_ID;
@@ -94,7 +95,9 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
 			if (channelList.find(channelId) == channelList.end()) {
 				channelList[channelId] = Channel(channelId, source,
 						maxSubChannel, maxServerAuxCandidate,
-						maxPeerInSubChannel, this->sizeCluster, false);
+						maxPeerInSubChannel, this->sizeCluster, this->avoidMasterPatner,
+						XPConfig::Instance()->GetBool("subChannelMixed"),
+						false);
 			} else {
 				messageReply = new MessageError(ERROR_CHANNEL_CANT_BE_CREATED);
 			}

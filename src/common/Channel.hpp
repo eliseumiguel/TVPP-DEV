@@ -68,6 +68,8 @@ class Channel
         		unsigned int maxServerAuxCandidate = 0,
         		unsigned int maxPeerInSubChannel = 0,
         		unsigned int sizeCluster = 1,
+				unsigned int avoidMasterPatner = 100,
+				bool modeFlasCrowdSemSubChannel = false,
         		bool mesclar = false);
 
         ChunkUniqueID GetServerNewestChunkID();
@@ -129,11 +131,13 @@ class Channel
         map<string, SubChannelCandidateData> server_Sub_Candidates; //ECM manage Server_Aux candidates to be Server_Aux active.
 
         map<string, SubChannelServerAuxData>::iterator posInsertSubChannel; //ECM interator auxiliar para inserir peer em subChannel
+        bool modeFlasCrowdSemSubChannel;                             //ECM usado para flash crowd com subnais não isolados.
 
         ChannelModes channelMode;
         unsigned int maxPeerInSubChannel;
         unsigned int maxSubChannel;
         unsigned int maxServerAuxCandidate;
+        unsigned int avoidMasterPatner;
         bool mesclarRedes;
         bool GenerateAllLogs;
 
