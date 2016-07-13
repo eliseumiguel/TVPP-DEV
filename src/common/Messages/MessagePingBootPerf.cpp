@@ -1,12 +1,12 @@
 #include "MessagePingBootPerf.hpp"
 
-MessagePingBootPerf::MessagePingBootPerf(PeerModes mode, ChunkUniqueID chunkuid, uint32_t estimatedStreamRate, uint32_t channelId,
+MessagePingBootPerf::MessagePingBootPerf(PeerModes mode, ChunkUniqueID chunkuid, uint16_t sizePeerListOu, uint32_t estimatedStreamRate, uint32_t channelId,
                                     uint32_t chunksGeneratedPerSecond, uint32_t chunksSentPerSecond, uint32_t chunksReceivedPerSecond, uint32_t chunksOverloadPerSecond,
                                     uint32_t requestsSentPerSecond, uint32_t requestsRecvPerSecond, uint32_t requestsRetriesPerSecond, uint32_t chunksMissed, uint32_t chunksExpected, float meanHop, float meanTries,  float meanTriesPerRequest,
                                     uint16_t neighborhoodSize, ChunkUniqueID* lastMediaID, int lastMediaHopCount, int lastMediaTriesCount, uint32_t lastMediaTime, uint32_t nowtime,
                                     uint16_t neighborhoodSizeIn, uint16_t neighborhoodSizeOut)
 {
-    vector<int> data = GetHeaderValuesDataVector(mode, chunkuid, estimatedStreamRate, channelId,
+    vector<int> data = GetHeaderValuesDataVector(mode, chunkuid, sizePeerListOu, estimatedStreamRate, channelId,
                     chunksGeneratedPerSecond, chunksSentPerSecond, chunksReceivedPerSecond, chunksOverloadPerSecond,
                     requestsSentPerSecond, requestsRecvPerSecond, requestsRetriesPerSecond, chunksMissed, chunksExpected, meanHop, meanTries, meanTriesPerRequest, neighborhoodSize, 
                     lastMediaID, lastMediaHopCount, lastMediaTriesCount, lastMediaTime, nowtime,
@@ -16,26 +16,26 @@ MessagePingBootPerf::MessagePingBootPerf(PeerModes mode, ChunkUniqueID chunkuid,
     Message::AssembleHeader(OPCODE_PING, MESSAGE_PING_BOOT_PERF_HEADER_SIZE, 0, data);
 }
 
-vector<int> MessagePingBootPerf::GetHeaderValuesDataVector(PeerModes mode, ChunkUniqueID chunkuid, uint32_t estimatedStreamRate, uint32_t channelId,
+vector<int> MessagePingBootPerf::GetHeaderValuesDataVector(PeerModes mode, ChunkUniqueID chunkuid, uint16_t sizePeerListOu, uint32_t estimatedStreamRate, uint32_t channelId,
                                     uint32_t chunksGeneratedPerSecond, uint32_t chunksSentPerSecond, uint32_t chunksReceivedPerSecond, uint32_t chunksOverloadPerSecond,
                                     uint32_t requestsSentPerSecond, uint32_t requestsRecvPerSecond, uint32_t requestsRetriesPerSecond, uint32_t chunksMissed, uint32_t chunksExpected, float meanHop, float meanTries, float meanTriesPerRequest,
                                     uint16_t neighborhoodSize, ChunkUniqueID* lastMediaID, int lastMediaHopCount, int lastMediaTriesCount, uint32_t lastMediaTime, uint32_t nowtime,
                                     uint16_t neighborhoodSizeIn, uint16_t neighborhoodSizeOut)
 {
-    return GetHeaderValuesDataVector(PING_BOOT_PERF, mode, chunkuid, estimatedStreamRate, channelId,
+    return GetHeaderValuesDataVector(PING_BOOT_PERF, mode, chunkuid, sizePeerListOu, estimatedStreamRate, channelId,
                     chunksGeneratedPerSecond, chunksSentPerSecond, chunksReceivedPerSecond, chunksOverloadPerSecond,
                     requestsSentPerSecond, requestsRecvPerSecond, requestsRetriesPerSecond, chunksMissed, chunksExpected, meanHop, meanTries, meanTriesPerRequest, neighborhoodSize, 
                     lastMediaID, lastMediaHopCount, lastMediaTriesCount, lastMediaTime, nowtime,
                     neighborhoodSizeIn, neighborhoodSizeOut);
 }
 
-vector<int> MessagePingBootPerf::GetHeaderValuesDataVector(PingTypes pingType, PeerModes mode, ChunkUniqueID chunkuid, uint32_t estimatedStreamRate, uint32_t channelId,
+vector<int> MessagePingBootPerf::GetHeaderValuesDataVector(PingTypes pingType, PeerModes mode, ChunkUniqueID chunkuid, uint16_t sizePeerListOu, uint32_t estimatedStreamRate, uint32_t channelId,
                                     uint32_t chunksGeneratedPerSecond, uint32_t chunksSentPerSecond, uint32_t chunksReceivedPerSecond, uint32_t chunksOverloadPerSecond,
                                     uint32_t requestsSentPerSecond, uint32_t requestsRecvPerSecond, uint32_t requestsRetriesPerSecond, uint32_t chunksMissed, uint32_t chunksExpected, float meanHop, float meanTries, float meanTriesPerRequest,
                                     uint16_t neighborhoodSize, ChunkUniqueID* lastMediaID, int lastMediaHopCount, int lastMediaTriesCount, uint32_t lastMediaTime, uint32_t nowtime,
                                     uint16_t neighborhoodSizeIn, uint16_t neighborhoodSizeOut)
 {
-    vector<int> data = MessagePingBoot::GetHeaderValuesDataVector(pingType, mode, chunkuid, estimatedStreamRate, channelId);
+    vector<int> data = MessagePingBoot::GetHeaderValuesDataVector(pingType, mode, chunkuid, sizePeerListOu, estimatedStreamRate, channelId);
     int prevSize = data.size();
     //ECM //data.resize(prevSize + 19);
     data.resize(prevSize + 21);
@@ -82,7 +82,6 @@ vector<uint8_t> MessagePingBootPerf::GetHeaderValuesSizeVector()
 {
     vector<uint8_t> sizes = MessagePingBoot::GetHeaderValuesSizeVector();
     int prevSize = sizes.size();
-    //ECM //sizes.resize(prevSize + 19);
     sizes.resize(prevSize + 21);
 
     sizes[prevSize + 0] = 32;                                                    //STAT.ChunksGenerated

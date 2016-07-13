@@ -62,7 +62,8 @@ bool PeerManager::ConnectPeer(string peer, set<string>* peerActive)
 	if (peerActiveCooldown->find(peer) == (*peerActiveCooldown).end())
 	{
 		boost::mutex::scoped_lock peerActiveLock(*peerActiveMutex);
-		if (peerActive->size() < this->GetMaxActivePeers(peerActive))
+		//ECM Inserir aqui condição para inserir caso escolhida a estratégia de desconectar o com menor banda ...
+		if (peerActive->size() < this->GetMaxActivePeers(peerActive))// || (desconectarMenorBanda)
 		{
 
 			boost::mutex::scoped_lock peerListRejectedLock(peerListRejectedMutexOut);

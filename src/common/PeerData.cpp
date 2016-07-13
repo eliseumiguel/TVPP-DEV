@@ -17,6 +17,7 @@ PeerData::PeerData(Peer* peer, int ttlIn, int ttlOut, int ttlChannel, int size) 
 	this->channelId_Sub = 0;
 	this->peerWaitListServer = false;
 
+
     this->peer = peer;
     uploadScore = 0;
     mode = MODE_CLIENT;
@@ -26,11 +27,22 @@ PeerData::PeerData(Peer* peer, int ttlIn, int ttlOut, int ttlChannel, int size) 
     specialPeer = false; // usado para dar privilégios aos servidores especiais
 }
 
+int PeerData::GetSizePeerListOutInformed ()
+{
+   return this->GetPeer()->GetSizePeerListOutInformed();
+}
+void PeerData::SetSizePeerListOutInformed(int sizePeerListOutInformed)
+{
+	this->GetPeer()->SetSizePeerListOutInformed(sizePeerListOutInformed);
+}
+
+
 /** Retorna o TTL*****************/
 int PeerData::GetTTLIn()
 {
     return ttlIn;
 }
+
 int PeerData::GetTTLOut()
 {
     return ttlOut;

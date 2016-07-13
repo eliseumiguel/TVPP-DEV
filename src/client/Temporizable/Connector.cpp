@@ -21,7 +21,7 @@ Connector::Connector(Strategy *connectorStrategy, PeerManager* peerManager, uint
 void Connector::Connect()
 {
 	vector<PeerData*> peers;
-	vector<PeerData> peerCopy;
+	//vector<PeerData> peerCopy;
 
 	boost::mutex::scoped_lock peerListLock(*peerManager->GetPeerListMutex());
 	for (map<string, PeerData>::iterator i = peerManager->GetPeerList()->begin(); i != peerManager->GetPeerList()->end(); i++)
@@ -29,6 +29,7 @@ void Connector::Connect()
 		if (!peerManager->IsPeerActive(i->first,peerActive))
 			peers.push_back(&i->second);
 	}
+    // gera vetor aleatório de vizinhos e tenta conectar em ordem
 	strategy->Execute(&peers, NULL, peerManager->GetMaxActivePeers(peerActive));
 
 	unsigned int vacancies = peerManager->GetMaxActivePeers(peerActive) - peerManager->GetPeerActiveSize(peerActive);

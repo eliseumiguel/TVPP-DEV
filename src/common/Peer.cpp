@@ -2,9 +2,10 @@
 
 using namespace std;
 
-Peer::Peer(string IP, string port)
+Peer::Peer(string IP, string port, int sizePeerListOutInformed)
 {
     ConstructorAux(IP,port);
+    this->sizePeerListOutInformed = sizePeerListOutInformed;
 }
 
 Peer::Peer(string IP_port)
@@ -57,4 +58,14 @@ string Peer::GetIP()
 string Peer::GetPort()
 {
     return port;
+}
+
+int Peer::GetSizePeerListOutInformed()
+{
+	return sizePeerListOutInformed;
+}
+
+void Peer::SetSizePeerListOutInformed(int sizePeerListOutInformed)
+{
+	this->sizePeerListOutInformed = sizePeerListOutInformed;
 }

@@ -30,7 +30,8 @@ void XPConfig::LoadDefaults()
     boolMap["playerEnabled"] = true;
     boolMap["clientLogsEnabled"] = false;
     boolMap["leakyBucketDataFilter"] = false;
-    boolMap["serverCandidate"] = false; //ECM
+    boolMap["serverCandidate"] = false;     //ECM
+    boolMap["removeWorsePartner"] = false;  // ECM
 }
 
 void XPConfig::SetBool(string param, bool option)

@@ -304,8 +304,9 @@ void Bootstrap::HandlePingMessage(MessagePingBoot* message,
 	PeerModes peerMode = (PeerModes) pingHeader[1];
 	ChunkUniqueID peerTipChunk = ChunkUniqueID(pingHeader[2],
 			(uint16_t) pingHeader[3]);
-	int serverStreamRate = pingHeader[4];
-	uint32_t channelId = pingHeader[5];
+	int sizePeerOut = pingHeader[4];
+	int serverStreamRate = pingHeader[5];
+	uint32_t channelId = pingHeader[6];
 
 	boost::mutex::scoped_lock channelListLock(channelListMutex);
 	if (channelList.count(channelId) != 0) //Channel exists
@@ -328,7 +329,10 @@ void Bootstrap::HandlePingMessage(MessagePingBoot* message,
 
 			//If it has performance measures
 			if (pingType == PING_BOOT_PERF) {
-				uint8_t indexPerfStart = 6;
+				uint8_t indexPerfStart = 7;
+				// vai passar para 7.... era 6
+
+
 				MessagePingBootPerf* messageWrapper = new MessagePingBootPerf(
 						message);
 				pingHeader = messageWrapper->GetHeaderValues();
@@ -387,6 +391,8 @@ void Bootstrap::HandlePingMessage(MessagePingBoot* message,
 						pingHeader[indexPerfStart + 19]) + " "; //ECM NeighborhoodSizeIn
 				performanceLog += boost::lexical_cast<string>(
 						pingHeader[indexPerfStart + 20]) + " "; //ECM NeighborhoodSizeOut
+				performanceLog += boost::lexical_cast<string>(
+						pingHeader[4]) + " ";                   //ECM sizePeerListOut
 				performanceLog +=
 						boost::lexical_cast<string>(
 								channelList[channelId].GetPeerData(srcPeer).GetChannelId_Sub())

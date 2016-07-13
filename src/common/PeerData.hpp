@@ -56,6 +56,8 @@ class PeerData
         void SetSpecialPeer(bool special);
         bool GetSpecialPeer();
 
+
+
         //ECM
 
 
@@ -74,6 +76,9 @@ class PeerData
         
 		bool GetPeerWaitListServer();
         void SetPeerWaitListServer(bool peerWaitListServer);
+
+        int GetSizePeerListOutInformed ();
+        void SetSizePeerListOutInformed(int sizePeerListOutInformed);
 
 
         ChunkUniqueID GetChunkMapHead();

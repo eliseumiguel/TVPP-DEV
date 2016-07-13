@@ -18,7 +18,9 @@ Client::Client(){}
 void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, uint32_t idChannel, 
             string peers_udp_port, string streamingPort, PeerModes mode, uint32_t buffer, 
             int maxPeersIn, int maxPeersOut, int janela, int num, int ttlIn, int ttlOut, int maxRequestAttempt, int tipOffsetTime, int limitDownload, int limitUpload,
-            string disconnectorStrategyIn, string disconnectorStrategyOut, int quantityDisconnect, string connectorStrategy, string chunkSchedulerStrategy,
+            string disconnectorStrategyIn, string disconnectorStrategyOut, int quantityDisconnect,
+			string connectorStrategy, int timeToRemovePeerOutWorseBand,
+			string chunkSchedulerStrategy,
             string messageSendScheduler, string messageReceiveScheduler)
 {
     cout <<"Starting Client Version["<<VERSION<<"]" <<endl;
@@ -43,6 +45,7 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
     this->maxRequestAttempt = maxRequestAttempt;
     this->tipOffsetTime = tipOffsetTime;
     this->configurarBootID = true;
+    this->timeToRemovePeerOutWorseBand = timeToRemovePeerOutWorseBand;
 
     if (limitDownload >= 0)
         this->leakyBucketDownload = new LeakyBucket(limitDownload);
@@ -884,7 +887,8 @@ void Client::Ping()
 
         if (pingsSend % step != 0)    //Each 10s
         {
-            pingMessage = new MessagePingBoot(peerMode, latestReceivedPosition, Statistics::Instance()->GetEstimatedChunkRate(), idChannel);
+            pingMessage = new MessagePingBoot(peerMode, latestReceivedPosition, peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut()),
+            		                          Statistics::Instance()->GetEstimatedChunkRate(), idChannel);
         }
         else
         {
@@ -935,7 +939,8 @@ void Client::Ping()
 
             int chunksExpected = chunksMissed + chunksPlayed;
 
-            pingMessage = new MessagePingBootPerf(peerMode, latestReceivedPosition, Statistics::Instance()->GetEstimatedChunkRate(), idChannel,
+            pingMessage = new MessagePingBootPerf(peerMode, latestReceivedPosition, peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut()),
+            		                Statistics::Instance()->GetEstimatedChunkRate(), idChannel,
                                     chunksGeneratedPerSecond, chunksSentPerSecond, chunksReceivedPerSecond, chunksOverloadPerSecond,
                                     requestsSentPerSecond, requestsRecvPerSecond, requestRetriesPerSecond,
                                     chunksMissed, chunksExpected,
@@ -995,7 +1000,7 @@ void Client::Ping()
              * aqui, será enviada mensagem simples para informar aos peerActiveIn que this está vivo */
             if(peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()) > 0)
             {
-                pingMessage = new MessagePing(PING_LIVE_OUT, BUFFER_SIZE/8, peerMode, latestReceivedPosition);
+                pingMessage = new MessagePing(PING_LIVE_OUT, BUFFER_SIZE/8, peerMode, latestReceivedPosition, peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut()));
                 pingMessage->SetIntegrity();
 
                 boost::mutex::scoped_lock peerListLock(*peerManager.GetPeerListMutex());
@@ -1024,7 +1029,7 @@ void Client::Ping()
              * ECM. Aqui, será enviada mensagem com buffermap para os peerActiveOut */
             if (peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut()) > 0)
             {
-                pingMessage = new MessagePing(PING_PART_CHUNKMAP, BUFFER_SIZE/8, peerMode, latestReceivedPosition);
+                pingMessage = new MessagePing(PING_PART_CHUNKMAP, BUFFER_SIZE/8, peerMode, latestReceivedPosition, peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut()));
                 pingMessage->SetIntegrity();
                 uint8_t headerSize = pingMessage->GetHeaderSize();
                 uint8_t *chunkMap = new uint8_t[BUFFER_SIZE/8];
