@@ -37,7 +37,6 @@ vector<int> MessagePingBootPerf::GetHeaderValuesDataVector(PingTypes pingType, P
 {
     vector<int> data = MessagePingBoot::GetHeaderValuesDataVector(pingType, mode, chunkuid, sizePeerListOu, estimatedStreamRate, channelId);
     int prevSize = data.size();
-    //ECM //data.resize(prevSize + 19);
     data.resize(prevSize + 21);
     //Performance
     data[prevSize + 0]  = chunksGeneratedPerSecond;

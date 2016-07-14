@@ -20,19 +20,21 @@ unsigned int PeerManager::GetMaxActivePeers(set<string>* peerActive)
 void PeerManager::SetMaxActivePeersIn(unsigned int maxActivePeers){this->maxActivePeersIn = maxActivePeers;}
 void PeerManager::SetMaxActivePeersOut(unsigned int maxActivePeers){this->maxActivePeersOut = maxActivePeers;}
 
-bool PeerManager::AddPeer(Peer* newPeer)
+bool PeerManager::AddPeer(Peer* newPeer, int sizePeerListOut)
 {
 	boost::mutex::scoped_lock peerListLock(peerListMutex);
 	if (peerList.find(newPeer->GetID()) == peerList.end())
 	{
 		//ECM Inserting peer....
 		peerList[newPeer->GetID()] = PeerData(newPeer);
+		peerList[newPeer->GetID()].SetSizePeerListOutInformed(sizePeerListOut);
 		if (peerManagerState == SERVER_AUX_ACTIVE)
 			peerList[newPeer->GetID()].SetChannelId_Sub(SERVER_AUX_SUB_CHANNEL_ID);
 		peerListLock.unlock();
 		cout<<"Peer "<<newPeer->GetID()<<" added to PeerList"<<endl;
 		return true;
 	}
+	peerList[newPeer->GetID()].SetSizePeerListOutInformed(sizePeerListOut);
 	peerListLock.unlock();
 	return false;
 }
@@ -52,18 +54,32 @@ map<string, unsigned int>* PeerManager::GetPeerActiveCooldown(set<string>* peerA
 //Deve ser chamado com o peerListMutex fechado....
 bool PeerManager::ConnectPeer(string peer, set<string>* peerActive)
 {
+
+	/*
 	boost::mutex* peerActiveMutex = this->GetPeerActiveMutex(peerActive);
 	map<string, unsigned int>* peerActiveCooldown = this->GetPeerActiveCooldown(peerActive);
 
+ esse código está correto, mas estou trocando por um que parece equivaliente. Isso deve ser testado...
+ * esse código foi substituído pelo if ... else
 	for (map<string, unsigned int>::iterator i = peerActiveCooldown->begin(); i != peerActiveCooldown->end(); i++)
 		if ((i->first == peer) && (i != peerActiveCooldown->end()))
 			cout<<"Peer"<<peer<<" must wait "<<i->second<<" secunds to the next connection "<<endl;
 
+    //peer is not in PeerActiveCooldown
 	if (peerActiveCooldown->find(peer) == (*peerActiveCooldown).end())
 	{
+*/
+
+	boost::mutex* peerActiveMutex = this->GetPeerActiveMutex(peerActive);
+	map<string, unsigned int>* peerActiveCooldown = this->GetPeerActiveCooldown(peerActive);
+	map<string, unsigned int>::iterator i = peerActiveCooldown->find(peer);
+
+	if (i != (*peerActiveCooldown).end())
+		cout<<"Peer "<<peer<<" must wait "<<i->second<<" secunds to the next connection "<<endl;
+	else
+	{
 		boost::mutex::scoped_lock peerActiveLock(*peerActiveMutex);
-		//ECM Inserir aqui condição para inserir caso escolhida a estratégia de desconectar o com menor banda ...
-		if (peerActive->size() < this->GetMaxActivePeers(peerActive))// || (desconectarMenorBanda)
+		if (peerActive->size() < this->GetMaxActivePeers(peerActive) || (this->removeWorsePartner))
 		{
 
 			boost::mutex::scoped_lock peerListRejectedLock(peerListRejectedMutexOut);
@@ -72,40 +88,68 @@ bool PeerManager::ConnectPeer(string peer, set<string>* peerActive)
 				peerListRejectedLock.unlock();
 				return false;
 			}
+			peerListRejectedLock.unlock();
 
 			/* controle de SERVER AUX ACTIVE.
 			 * Para OUT, aceita somente pares da rede paralela
 			 */
-			if (peerManagerState == SERVER_AUX_ACTIVE && peerActive == &peerActiveOut){
+			if (peerManagerState == SERVER_AUX_ACTIVE && peerActive == &peerActiveOut)
+			{
 				if (peerList[peer].GetChannelId_Sub() != SERVER_AUX_SUB_CHANNEL_ID)
 				{
 					cout<<"Peer "<<peer<<" request to be OUT, but its ID channel is "<<peerList[peer].GetChannelId_Sub()<<" and channel sub is "<<SERVER_AUX_SUB_CHANNEL_ID<<endl;
 					return false;
 				}
 			}
+			bool inserted = false;
 
-			peerListRejectedLock.unlock();
+			if (peerActive->size() < this->GetMaxActivePeers(peerActive))
+			   inserted = peerActive->insert(peer).second;
+			else
+               inserted = this->ConnectSpecial(peer,peerActive);
 
-			if (peerActive->insert(peer).second)
-			{
-				string list;
-				if (*(peerActive) == peerActiveIn){
-					this->peerList[peer].SetTTLIn(TTLIn);
-					list = "In";
-				}
-				else {
-					this->peerList[peer].SetTTLOut(TTLOut);
-					list = "Out";
-				}
-				cout<<"Peer "<<peer<<" connected to PeerActive_"<<list<<" TTLIn ["<<this->peerList[peer].GetTTLIn()<<"] TTLOut ["<<this->peerList[peer].GetTTLOut()<<"]"<<endl;
-				peerActiveLock.unlock();
-				return true;
-			}
+			if (inserted)
+	    	{
+		    	string list;
+			    if (*(peerActive) == peerActiveIn){
+				   this->peerList[peer].SetTTLIn(TTLIn);
+				   list = "In";
+			    }
+			    else {
+				   this->peerList[peer].SetTTLOut(TTLOut);
+				   list = "Out";
+			    }
+			    cout<<"Peer "<<peer<<" connected to PeerActive_"<<list<<" TTLIn ["<<this->peerList[peer].GetTTLIn()<<"] TTLOut ["<<this->peerList[peer].GetTTLOut()<<"]"<<endl;
+			    peerActiveLock.unlock();
+			    return true;
+	    	}
+
 		}
 		peerActiveLock.unlock();
 	}
 	return false;
 }
+
+bool PeerManager::ConnectSpecial(string peer, set<string>* peerActive){
+
+	if (peerActive->size() == 0 ) return false;
+
+    set<string>::iterator smaller;
+    smaller = peerActive->begin();
+	for (set<string>::iterator count = peerActive->begin(); count != peerActive->end(); count++)
+		if (peerList[*count].GetSizePeerListOutInformed() < peerList[*smaller].GetSizePeerListOutInformed())
+			smaller = count;
+	if (peerList[*smaller].GetSizePeerListOutInformed() < peerList[peer].GetSizePeerListOutInformed())
+	{
+		cout <<"removing "<<*smaller<<" out list["<<peerList[*smaller].GetSizePeerListOutInformed()<<"] to insert "<<peer<<" out list["<<peerList[peer].GetSizePeerListOutInformed()<<"]"<<endl;
+		peerActive->erase(smaller);
+		peerActive->insert(peer);
+		return true;
+	}
+	return false;
+}
+
+
 
 void PeerManager::DisconnectPeer(string peer, set<string>* peerActive)
 {
@@ -334,5 +378,10 @@ void PeerManager::ShowPeerList()
 	peerListLock.unlock();
 	cout<<"Total PeerList: "<<j<<endl<<endl;
 
+}
+
+void PeerManager::SetRemoveWorsePartner (bool removeWorsePartner)
+{
+	this->removeWorsePartner = removeWorsePartner;
 }
 

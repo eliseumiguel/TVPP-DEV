@@ -38,6 +38,7 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
     BUFFER_SIZE = buffer;
     peerManager.SetMaxActivePeersIn(maxPeersIn);
     peerManager.SetMaxActivePeersOut(maxPeersOut);
+    peerManager.SetRemoveWorsePartner (XPConfig::Instance()->GetBool("removeWorsePartner"));
     JANELA = janela;
     NUM_PEDIDOS = num;
     TTL_MAX_In = ttlIn;
@@ -473,10 +474,11 @@ void Client::HandlePingMessageIn(vector<int>* pingHeader, MessagePing* message, 
     uint8_t pingType = (*pingHeader)[0];
     PeerModes otherPeerMode = (PeerModes)(*pingHeader)[1];
     ChunkUniqueID otherPeerTipChunk = ChunkUniqueID((*pingHeader)[2],(uint16_t)(*pingHeader)[3]);
+    uint16_t sizePeerListOut = (*pingHeader)[4];
 
     //I get to know that peer now if i didn't
     Peer* newPeer = new Peer(sourceAddress);
-    if (!peerManager.AddPeer(newPeer))
+    if (!peerManager.AddPeer(newPeer, sizePeerListOut))
         delete newPeer;
 
     boost::mutex::scoped_lock peerListLock(*peerManager.GetPeerListMutex());
@@ -519,10 +521,11 @@ void Client::HandlePingMessageIn(vector<int>* pingHeader, MessagePing* message, 
 void Client::HandlePingMessageOut(vector<int>* pingHeader, MessagePing* message, string sourceAddress, uint32_t socket)
 {
     PeerModes otherPeerMode = (PeerModes)(*pingHeader)[1];
+    uint16_t sizePeerListOut = (*pingHeader)[4];
     
     //I get to know that peer now if i didnt
     Peer* newPeer = new Peer(sourceAddress);
-    if (!peerManager.AddPeer(newPeer))
+    if (!peerManager.AddPeer(newPeer, sizePeerListOut))
         delete newPeer;
 
     boost::mutex::scoped_lock peerListLock(*peerManager.GetPeerListMutex());

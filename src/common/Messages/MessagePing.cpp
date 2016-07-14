@@ -26,6 +26,6 @@ vector<uint8_t> MessagePing::GetHeaderValuesSizeVector()
 	sizes[1] = 8;                                                     //PEER MODE
     sizes[2] = 32;                                                    //CHUNKMAP.CHUNKUID.Cycle
     sizes[3] = 16;                                                    //CHUNKMAP.CHUNKUID.Position
-    sizes[4] = 16;                                                    //sizePeerListOut
+    sizes[4] = 16;                                                    //SIZEPEERLISTOUT
     return sizes;
 }

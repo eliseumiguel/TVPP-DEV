@@ -23,10 +23,15 @@
 
 class PeerManager
 {
+private:
+	bool ConnectSpecial(string peer, set<string>* peerActive);
+
 protected:
 	ServerAuxTypes peerManagerState;
 	unsigned int maxActivePeersIn;
 	unsigned int maxActivePeersOut;
+
+	bool removeWorsePartner;                             // used to remove the worse peer if new connection asked
 
 	map<string, PeerData> peerList;		                 // All know peers
 
@@ -48,7 +53,8 @@ protected:
     int showPeerActive(set<string>* peerActive);
 
 public:
-		PeerManager();
+
+    PeerManager();
 
 	ServerAuxTypes GetPeerManagerState();
 
@@ -57,7 +63,7 @@ public:
 	void SetMaxActivePeersIn(unsigned int maxActivePeers);
 	void SetMaxActivePeersOut(unsigned int maxActivePeers);
 
-	bool AddPeer(Peer* newPeer); //add na lista de vizinhos
+	bool AddPeer(Peer* newPeer, int sizePeerListOut = 0); //add na lista de vizinhos
 
     set<string>* GetPeerActiveIn();
     set<string>* GetPeerActiveOut();
@@ -71,6 +77,7 @@ public:
 	unsigned int GetPeerActiveSizeTotal();                   //fornecer o total de pares ativos em In + Out sem repetição.
 
 	bool IsPeerInPeerList(string peer);
+	void SetRemoveWorsePartner (bool removeWorsePartner);
 
 	bool IsPeerActive(string peer,set<string>* peerActive);
 	PeerData* GetPeerData(string peer);
