@@ -174,9 +174,9 @@ bool Client::ConnectToBootstrap()
     time_t nowtime;
     time(&nowtime);
     if (peerMode == MODE_SERVER && !serverActive)
-        message = new MessageChannel(CHANNEL_CREATE, perform_udp_punch, externalPort, idChannel, nowtime, XPConfig::Instance()->GetBool("serverCandidate"));
+        message = new MessageChannel(CHANNEL_CREATE, perform_udp_punch, externalPort, idChannel, nowtime, XPConfig::Instance()->GetBool("serverCandidate"), NULL_MODE, peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut()));
     else
-        message = new MessageChannel(CHANNEL_CONNECT, perform_udp_punch, externalPort, idChannel, nowtime, XPConfig::Instance()->GetBool("serverCandidate"));
+        message = new MessageChannel(CHANNEL_CONNECT, perform_udp_punch, externalPort, idChannel, nowtime, XPConfig::Instance()->GetBool("serverCandidate"), NULL_MODE, peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut()) );
     message->SetIntegrity();
     int32_t peers_port;
     if(perform_udp_punch)    //perform_udp_punch é usado para informar (uma vez) a porta udp atrás do NAT

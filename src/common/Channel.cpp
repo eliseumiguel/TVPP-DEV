@@ -508,7 +508,7 @@ vector<PeerData*> Channel::MakeServerAuxList()
  * garante que as redes (paralelas e principal) serão isoladas.
  * Método chamado pelo Bootstrap. Mutex de peerList já fechado.
  */
-vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, unsigned int peerQuantity, bool virtualPeer)
+vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, unsigned int peerQuantity, bool virtualPeer, bool sharePeerbybandwidth, uint8_t minimumBandwidth)
 {
     vector<PeerData*> allPeers, selectedPeers;
     int srcPeerChannelId_Sub = peerList[srcPeer->GetID()].GetChannelId_Sub();
@@ -560,7 +560,7 @@ vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, uns
 	}
 
     if (allPeers.size() <= peerQuantity)
-        return allPeers;
+    	selectedPeers = allPeers;
     else
     {
         strategy->Execute(&allPeers, srcPeer, peerQuantity);
@@ -586,7 +586,15 @@ vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, uns
 
         }
       }
-     return selectedPeers;
+
+    vector<PeerData*> selectedPeersAUX;
+    for (uint16_t i = 0; i < selectedPeers.size(); i++) {
+    	if ((!sharePeerbybandwidth) || (selectedPeers[i]->GetSizePeerListOutInformed() > minimumBandwidth)) {
+    		selectedPeersAUX.push_back(selectedPeers[i]);
+    	}
+
+    }
+    return selectedPeersAUX;
 }
 
 unsigned int Channel::GetPeerListSizeChannel_Sub(int channelId_Sub)

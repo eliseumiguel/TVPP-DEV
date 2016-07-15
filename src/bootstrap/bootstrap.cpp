@@ -10,7 +10,8 @@ using namespace std;
 Bootstrap::Bootstrap(string udpPort, string peerlistSelectorStrategy, unsigned int peerListSharedSize,
 		unsigned int maxSubChannel, unsigned int maxServerAuxCandidate,
 		unsigned int maxPeerInSubChannel, unsigned int sizeCluster,
-		MesclarModeServer MixType,	uint8_t QT_PeerMixType,	uint8_t TimeDescPeerMix, unsigned int avoidMasterPatner){
+		MesclarModeServer MixType,	uint8_t QT_PeerMixType,	uint8_t TimeDescPeerMix, unsigned int avoidMasterPatner,
+		uint8_t minimumBandwidth){
 
 	if (peerlistSelectorStrategy == "TournamentStrategy")
 		this->peerlistSelectorStrategy = new TournamentStrategy();
@@ -27,6 +28,7 @@ Bootstrap::Bootstrap(string udpPort, string peerlistSelectorStrategy, unsigned i
 
 	cout << "Starting Bootstrap Version[" << VERSION << "]" << endl;
 
+	this->minimumBandwidth = minimumBandwidth;
 	// para configurar o channel para o flash crowd.
 	this->maxSubChannel = maxSubChannel;
 	this->maxServerAuxCandidate = maxServerAuxCandidate;
@@ -62,12 +64,10 @@ Message *Bootstrap::HandleTCPMessage(Message* message, string sourceAddress,
 		return NULL;
 		break;
 	}
-	//delete message;
 }
 
-Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
-		string sourceAddress) {
-	Peer* source = new Peer(sourceAddress);
+Message *Bootstrap::HandleChannelMessage(MessageChannel* message, string sourceAddress) {
+
 
 	vector<int> channelHeader = message->GetHeaderValues();
 	uint8_t channelFlag = channelHeader[0];
@@ -78,6 +78,9 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
 	uint32_t clientTime = channelHeader[5];
 	bool auxiliarServerCandidate = channelHeader[6]; //ECM inform bootstrap if peer is or not auxiliary server candidate
 	uint8_t channelMode = channelHeader[7]; //ECM used if channelFlag == CHANGE_STATE
+	uint16_t sizePeerListOut = channelHeader[8];
+
+	Peer* source = new Peer(sourceAddress, sizePeerListOut);
 
 	cout << "Channel MSG: " << (uint32_t) channelFlag << ", " << performingPunch
 			<< ", " << version << ", " << externalPort << ", " << channelId
@@ -167,7 +170,8 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
 				}
 				else // Mensagem de novos vizinhos
 				{
-				     selectedPeers = channelList[channelId].SelectPeerList( peerlistSelectorStrategy, source, peerListSharedSize, XPConfig::Instance()->GetBool("isolaVirtutalPeerSameIP"));
+				     selectedPeers = channelList[channelId].SelectPeerList( peerlistSelectorStrategy, source, peerListSharedSize,
+				    		 XPConfig::Instance()->GetBool("isolaVirtutalPeerSameIP"), XPConfig::Instance()->GetBool("sharePeerbybandwidth"), minimumBandwidth);
 
 				      messageReply = new MessagePeerlistShare(selectedPeers.size(),
 					    	source->GetIP(), externalPort,
@@ -182,8 +186,7 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message,
 				 * envia para o cliente
 				 */
 				for (uint16_t i = 0; i < selectedPeers.size(); i++) {
-					((MessagePeerlist*) messageReply)->AddPeer(
-							selectedPeers[i]->GetPeer());
+						((MessagePeerlist*) messageReply)->AddPeer(selectedPeers[i]->GetPeer());
 
 				}
 				/* Se foi mensagem de lista de servidores, remover o vetor e
@@ -292,8 +295,8 @@ void Bootstrap::HandlePeerlistMessage(MessagePeerlist* message,
 	}
 }
 
-/* PING PACKET:        | OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM | PINGCODE | PEERMODE | CHUNKGUID |    BITMAP    | **************************************
- ** Sizes(bytes):       |   1    |     1      |     2    |     2    |    1     |     1    |  4  |  2  | BUFFERSIZE/8 | TOTAL: 6 || 14 + (BUFFERSIZE/8) Bytes */
+/* PING PACKET:        | OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM | LISTOUT | PINGCODE | PEERMODE | CHUNKGUID |    BITMAP    | **************************************
+ ** Sizes(bytes):      |   1    |     1      |     2    |     2    |    2    |    1     |     1    |  4  |  2  | BUFFERSIZE/8 | TOTAL: 8 || 16 + (BUFFERSIZE/8) Bytes */
 void Bootstrap::HandlePingMessage(MessagePingBoot* message,
 		string sourceAddress, uint32_t socket) {
 	Peer* srcPeer = new Peer(sourceAddress);
@@ -304,7 +307,7 @@ void Bootstrap::HandlePingMessage(MessagePingBoot* message,
 	PeerModes peerMode = (PeerModes) pingHeader[1];
 	ChunkUniqueID peerTipChunk = ChunkUniqueID(pingHeader[2],
 			(uint16_t) pingHeader[3]);
-	int sizePeerOut = pingHeader[4];
+	//int sizePeerOut = pingHeader[4];
 	int serverStreamRate = pingHeader[5];
 	uint32_t channelId = pingHeader[6];
 

@@ -55,7 +55,8 @@ class Bootstrap
         */
         Bootstrap(string udpPort, string peerlistSelectorStrategy, unsigned int peerListSharedSize, unsigned int maxSubChannel,
         		   unsigned int maxServerAuxCandidate, unsigned int maxPeerInSubChannel, unsigned int sizeCluster,
-					MesclarModeServer MixType,	uint8_t QT_PeerMixType,	uint8_t TimeDescPeerMix, unsigned int avoidMasterPatner);
+					MesclarModeServer MixType,	uint8_t QT_PeerMixType,	uint8_t TimeDescPeerMix, unsigned int avoidMasterPatner,
+					uint8_t minimumBandwidth);
 
         void TCPStart(const char *);
         void UDPStart();
@@ -85,6 +86,8 @@ class Bootstrap
         FILE *pfile;
         Strategy* peerlistSelectorStrategy;
         unsigned int peerListSharedSize;
+
+        uint8_t minimumBandwidth;
 
         //para o canal em flash crowd
 		unsigned int maxSubChannel;

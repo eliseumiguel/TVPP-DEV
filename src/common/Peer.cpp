@@ -4,11 +4,10 @@ using namespace std;
 
 Peer::Peer(string IP, string port, int sizePeerListOutInformed)
 {
-    ConstructorAux(IP,port);
-    this->sizePeerListOutInformed = sizePeerListOutInformed;
+    ConstructorAux(IP,port, sizePeerListOutInformed);
 }
 
-Peer::Peer(string IP_port)
+Peer::Peer(string IP_port, int sizePeerListOutInformed)
 {
     string IP, port;
     size_t pos;
@@ -17,14 +16,15 @@ Peer::Peer(string IP_port)
     IP = IP_port.substr(0, pos);
     port = IP_port.substr(pos+1);
 
-    ConstructorAux(IP,port);
+    ConstructorAux(IP,port, sizePeerListOutInformed);
 }
 
-void Peer::ConstructorAux(string IP, string port)
+void Peer::ConstructorAux(string IP, string port, int sizePeerListOutInformed)
 {
     this->IP = IP;
     this->port = port;
     ResetID();
+    this->sizePeerListOutInformed = sizePeerListOutInformed;
 }
 
 void Peer::ResetID()

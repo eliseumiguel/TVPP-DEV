@@ -14,8 +14,8 @@
 
 //Message Header Sizes
 #define MESSAGE_HEADER_SIZE                      6
-                                                    //O valor de cada mensagem abaixo deve ser somado a 6 do cabeçalho da mensagem.
-#define MESSAGE_CHANNEL_HEADER_SIZE             22  // aumento de 1 para o valor do booleano serverAux
+                                                      //O valor de cada mensagem abaixo deve ser somado a 6 do cabeçalho da mensagem.
+#define MESSAGE_CHANNEL_HEADER_SIZE             24    // aumento de 1 para serverAux e 2 para sizepeerlistout
 #define MESSAGE_REQUEST_HEADER_SIZE             18
 #define MESSAGE_ERROR_HEADER_SIZE                8
 #define MESSAGE_STATE_CHANNEL_SIZE               8

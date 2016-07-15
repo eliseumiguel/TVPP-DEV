@@ -55,21 +55,6 @@ map<string, unsigned int>* PeerManager::GetPeerActiveCooldown(set<string>* peerA
 bool PeerManager::ConnectPeer(string peer, set<string>* peerActive)
 {
 
-	/*
-	boost::mutex* peerActiveMutex = this->GetPeerActiveMutex(peerActive);
-	map<string, unsigned int>* peerActiveCooldown = this->GetPeerActiveCooldown(peerActive);
-
- esse código está correto, mas estou trocando por um que parece equivaliente. Isso deve ser testado...
- * esse código foi substituído pelo if ... else
-	for (map<string, unsigned int>::iterator i = peerActiveCooldown->begin(); i != peerActiveCooldown->end(); i++)
-		if ((i->first == peer) && (i != peerActiveCooldown->end()))
-			cout<<"Peer"<<peer<<" must wait "<<i->second<<" secunds to the next connection "<<endl;
-
-    //peer is not in PeerActiveCooldown
-	if (peerActiveCooldown->find(peer) == (*peerActiveCooldown).end())
-	{
-*/
-
 	boost::mutex* peerActiveMutex = this->GetPeerActiveMutex(peerActive);
 	map<string, unsigned int>* peerActiveCooldown = this->GetPeerActiveCooldown(peerActive);
 	map<string, unsigned int>::iterator i = peerActiveCooldown->find(peer);
@@ -148,7 +133,6 @@ bool PeerManager::ConnectSpecial(string peer, set<string>* peerActive){
 	}
 	return false;
 }
-
 
 
 void PeerManager::DisconnectPeer(string peer, set<string>* peerActive)

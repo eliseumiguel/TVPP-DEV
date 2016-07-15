@@ -11,20 +11,16 @@
 //|   1    |     1      |     2    |     2    |     2    |  4  |  2  |    2     |  6/peer  |  TOTAL: 16 Bytes + 6*QTDPEERS
 
 // PING MESSAGE
-//| OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM |  PINGCODE | PEERMODE | CHUNKGUID |
-//|   1    |     1      |     2    |     2    |     1     |     1    |  4  |  2  | TOTAL: 14
+//| OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM |  OUTLIST  | PINGCODE | PEERMODE | CHUNKGUID |
+//|   1    |     1      |     2    |     2    |      2    |    1     |     1    |  4  |  2  | TOTAL: 16
 
 // PING BOOT MESSAGE
-//| OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM |  PINGCODE | PEERMODE | CHUNKGUID | CHANNELID |
-//|   1    |     1      |     2    |     2    |     1     |     1    |  4  |  2  |    0|4    | TOTAL: 18
+//| OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM |  OUTLIST  | PINGCODE | PEERMODE | CHUNKGUID | STREAMRATE |CHANNELID |
+//|   1    |     1      |     2    |     2    |      2    |     1    |     1    |  4  |  2  |      4     |   0|4    | TOTAL: 24
 
 // PING CHUNKMAP MESSAGE
-//| OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM |  PINGCODE | PEERMODE | CHUNKGUID |    BITMAP    | 
-//|   1    |     1      |     2    |     2    |     1     |     1    |  4  |  2  | BUFFERSIZE/8 | TOTAL: 14 + (BUFFERSIZE/8) Bytes
-
-// PING LIVE OUT MESSAGE
-//| OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM |  PINGCODE | PEERMODE | CHUNKGUID |
-//|   1    |     1      |     2    |     2    |     1     |     1    |  4  |  2  | TOTAL: 14
+//| OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM |  OUTLIST  |  PINGCODE | PEERMODE | CHUNKGUID |    BITMAP    |
+//|   1    |     1      |     2    |     2    |      2    |     1     |     1    |  4  |  2  | BUFFERSIZE/8 | TOTAL: 16 + (BUFFERSIZE/8) Bytes
 
 // ERRO MESSAGE 
 //| OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM |  ERRORCODE | X | 

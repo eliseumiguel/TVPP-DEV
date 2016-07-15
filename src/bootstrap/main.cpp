@@ -27,11 +27,13 @@ int main(int argc, char* argv[]) {
     string peerlistSelectorStrategy = "";
 
     unsigned int maxSubChannel = 10;
-    unsigned int maxServerAuxCandidate = 200; //ECM quando ocorre o flash crowd, são selecionados o total de pares necessários para os subcanais
+    unsigned int maxServerAuxCandidate = 200;   //ECM quando ocorre o flash crowd, são selecionados o total de pares necessários para os subcanais
     unsigned int maxPeerInSubChannel = 2000;
-    unsigned int sizeCluster = 1; //ECM auxiliary server total in each subChannel
+    unsigned int sizeCluster = 1;               //ECM auxiliary server total in each subChannel
     unsigned int peerListSharedSize = 20;
     unsigned int avoidMasterPatner = 100;
+
+    uint8_t minimumBandwidth = 0;               //ECM minimum bandwidth to share peer to other to be neighbor
 
     // config merge mode...
 	MesclarModeServer mergeType          = (MesclarModeServer) 0x02;       //tipo de mesclagem
@@ -65,11 +67,15 @@ int main(int argc, char* argv[]) {
         cout <<"  -qt_PeerMergeType            define the peer quantity to be disconnected   (default: "<<(int)qt_PeerMergeType<<")"<<endl;
         cout <<"  -timeDescPeerMerge           define the time interval to disconnect peers  (default: "<<(int)timeDescPeerMerge<<")"<<endl;
         cout <<"                               *(should be timeDescPeerMerge > 0)"<<endl;
+        cout <<"  -minimumBandwidth            define the minimum bandwidth to share a peer  (defautl: "<<(int)minimumBandwidth<<")"<<endl;
+        cout <<endl;
+
         //cout <<"  -avoidMasterPatner           [0..100]% of partner that auxiliary server clear when flash crow active mode (default: "<<avoidMasterPatner<<")"<<endl;
         // ainda não funciona porque a eliminação de parceiros é no cliente... isso não foi implementado no cliente //
 
         cout <<"  --isolaVirtutalPeerSameIP    permit only different IP partner "<<endl;
         cout <<"  --subChannelMixed            create sub channel mixed whit the master network "<<endl;
+        cout <<"  --sharePeerbybandwidth       bootstrap avoids share peer with or less band minimumBandwidth "<<endl;
 
         exit(1);
     }
@@ -77,6 +83,7 @@ int main(int argc, char* argv[]) {
 
     XPConfig::Instance()->OpenConfigFile("");
     XPConfig::Instance()->SetBool("isolaVirtutalPeerSameIP", false);
+    XPConfig::Instance()->SetBool("sharePeerbybandwidth", false);
 
     int optind=1;
 
@@ -127,10 +134,18 @@ int main(int argc, char* argv[]) {
         {
             XPConfig::Instance()->SetBool("isolaVirtutalPeerSameIP", true);
         }
+        else if (swtc=="--sharePeerbybandwidth")
+        {
+            XPConfig::Instance()->SetBool("sharePeerbybandwidth", true);
+        }
         else if (swtc=="--subChannelMixed")
         {
             XPConfig::Instance()->SetBool("subChannelMixed", true);
         }
+        else if (swtc=="-minimumBandwidth") {
+            optind++;
+            minimumBandwidth = atoi(argv[optind]);
+         }
         else if (swtc=="-mergeType") {
             optind++;
             mergeType = (MesclarModeServer) atoi(argv[optind]);
@@ -170,7 +185,8 @@ int main(int argc, char* argv[]) {
 
 
     Bootstrap bootstrapInstance(myUDPPort, peerlistSelectorStrategy, peerListSharedSize, maxSubChannel, maxServerAuxCandidate,
-    		                    maxPeerInSubChannel, sizeCluster, mergeType , qt_PeerMergeType, timeDescPeerMerge, avoidMasterPatner);
+    		                    maxPeerInSubChannel, sizeCluster, mergeType , qt_PeerMergeType, timeDescPeerMerge, avoidMasterPatner,
+								minimumBandwidth);
     
     boost::thread TTCPSERVER(boost::bind(&Bootstrap::TCPStart, &bootstrapInstance, myTCPPort.c_str()));
     boost::thread TUDPSERVER(boost::bind(&Bootstrap::UDPStart, &bootstrapInstance));
