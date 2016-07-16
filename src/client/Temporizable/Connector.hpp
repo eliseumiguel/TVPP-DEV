@@ -11,9 +11,10 @@ class Connector : public Temporizable
 		Strategy *strategy;
 		PeerManager* peerManager;
 		set<string>* peerActive;
+		unsigned int minimalBandwidthToBeOUt;
 
     public:
-		Connector(Strategy *connectorStrategy, PeerManager* peerManager, uint64_t timerPeriod, set<string>* peerActive);
+		Connector(Strategy *connectorStrategy, PeerManager* peerManager, uint64_t timerPeriod, set<string>* peerActive, unsigned int minimalBandwidthToBeOUt);
 		void Connect();
 		void TimerAlarm(uint64_t timerPeriod, string timerName);
 };

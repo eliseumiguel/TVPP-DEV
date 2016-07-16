@@ -63,7 +63,7 @@ public:
 	void SetMaxActivePeersIn(unsigned int maxActivePeers);
 	void SetMaxActivePeersOut(unsigned int maxActivePeers);
 
-	bool AddPeer(Peer* newPeer, int sizePeerListOut = 0); //add na lista de vizinhos
+	bool AddPeer(Peer* newPeer, int sizePeerListOut = -1); //add na lista de vizinhos
 
     set<string>* GetPeerActiveIn();
     set<string>* GetPeerActiveOut();

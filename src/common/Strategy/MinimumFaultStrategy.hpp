@@ -7,6 +7,8 @@
 class MinimumFaultStrategy: public Strategy
 {
     private:
+
+	    void SelectPeers(vector<PeerData*>* peers, Peer* srcPeer, int quantity, unsigned int minimalBandwidthOut){}
         void SelectPeers(vector<PeerData*>* peers, Peer* srcPeer, int quantity)
         {
             //Randomize peers first in order to obtain a different peer everytime PendingRequests metric draw

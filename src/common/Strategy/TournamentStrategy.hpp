@@ -7,6 +7,8 @@
 class TournamentStrategy: public Strategy
 {
     private:
+
+        void SelectPeers(vector<PeerData*>* peers, Peer* srcPeer, int quantity, unsigned int minimalBandwidthOut){}
         void SelectPeers(vector<PeerData*>* peers, Peer* srcPeer, int quantity)
         {
             int originalQuantity = quantity;

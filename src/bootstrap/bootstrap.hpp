@@ -55,8 +55,7 @@ class Bootstrap
         */
         Bootstrap(string udpPort, string peerlistSelectorStrategy, unsigned int peerListSharedSize, unsigned int maxSubChannel,
         		   unsigned int maxServerAuxCandidate, unsigned int maxPeerInSubChannel, unsigned int sizeCluster,
-					MesclarModeServer MixType,	uint8_t QT_PeerMixType,	uint8_t TimeDescPeerMix, unsigned int avoidMasterPatner,
-					uint8_t minimumBandwidth);
+					MesclarModeServer MixType,	uint8_t QT_PeerMixType,	uint8_t TimeDescPeerMix, uint8_t minimumBandwidth);
 
         void TCPStart(const char *);
         void UDPStart();
@@ -99,7 +98,6 @@ class Bootstrap
 		MesclarModeServer MixType;  //tipo de mesclagem
 		uint8_t QT_PeerMixType;     //quantidade de pares a serem desconectados durante a mesclagem
 		uint8_t TimeDescPeerMix;    //intervalo de tempo para cada desconexão
-		unsigned int avoidMasterPatner; // determina a porcentagem de pares isolados durante o flash crowd.
 
 		//usado por segurnaça para que os clientes autentiquem cada mensagem do bootstrap
 		//Caso mude, significa que o cliente estava comunicando com um bootstrap que já foi fechado

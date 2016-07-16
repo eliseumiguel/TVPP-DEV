@@ -5,7 +5,6 @@ Channel::Channel(unsigned int channelId, Peer* serverPeer,
 				 unsigned int maxServerAuxCandidate,
 				 unsigned int maxPeerInSubChannel,
 				 unsigned int sizeCluster,
-				 unsigned int avoidMasterPatner,
 				 bool modeFlasCrowdSemSubChannel,
 				 bool mesclar)
 
@@ -25,7 +24,6 @@ Channel::Channel(unsigned int channelId, Peer* serverPeer,
         this->maxSubChannel            = maxSubChannel;
         this->maxServerAuxCandidate    = maxServerAuxCandidate;
         this->modeFlasCrowdSemSubChannel = modeFlasCrowdSemSubChannel;
-        this->avoidMasterPatner         = avoidMasterPatner;
         this->mesclarRedes             = mesclar;
         this->GenerateAllLogs          = false; //ECM Falso, gera apenas o log perf-all e overaly-all
 
@@ -508,7 +506,7 @@ vector<PeerData*> Channel::MakeServerAuxList()
  * garante que as redes (paralelas e principal) serão isoladas.
  * Método chamado pelo Bootstrap. Mutex de peerList já fechado.
  */
-vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, unsigned int peerQuantity, bool virtualPeer, bool sharePeerbybandwidth, uint8_t minimumBandwidth)
+vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, unsigned int peerQuantity, bool virtualPeer, uint8_t minimumBandwidth)
 {
     vector<PeerData*> allPeers, selectedPeers;
     int srcPeerChannelId_Sub = peerList[srcPeer->GetID()].GetChannelId_Sub();
@@ -589,7 +587,7 @@ vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, uns
 
     vector<PeerData*> selectedPeersAUX;
     for (uint16_t i = 0; i < selectedPeers.size(); i++) {
-    	if ((!sharePeerbybandwidth) || (selectedPeers[i]->GetSizePeerListOutInformed() > minimumBandwidth)) {
+    	if (selectedPeers[i]->GetSizePeerListOutInformed() >= minimumBandwidth) {
     		selectedPeersAUX.push_back(selectedPeers[i]);
     	}
 

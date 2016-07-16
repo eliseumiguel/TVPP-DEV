@@ -10,8 +10,7 @@ using namespace std;
 Bootstrap::Bootstrap(string udpPort, string peerlistSelectorStrategy, unsigned int peerListSharedSize,
 		unsigned int maxSubChannel, unsigned int maxServerAuxCandidate,
 		unsigned int maxPeerInSubChannel, unsigned int sizeCluster,
-		MesclarModeServer MixType,	uint8_t QT_PeerMixType,	uint8_t TimeDescPeerMix, unsigned int avoidMasterPatner,
-		uint8_t minimumBandwidth){
+		MesclarModeServer MixType,	uint8_t QT_PeerMixType,	uint8_t TimeDescPeerMix, uint8_t minimumBandwidth){
 
 	if (peerlistSelectorStrategy == "TournamentStrategy")
 		this->peerlistSelectorStrategy = new TournamentStrategy();
@@ -39,7 +38,6 @@ Bootstrap::Bootstrap(string udpPort, string peerlistSelectorStrategy, unsigned i
 	this->MixType             = MixType;
 	this->QT_PeerMixType      = QT_PeerMixType;
 	this->TimeDescPeerMix     = TimeDescPeerMix;
-	this->avoidMasterPatner   = avoidMasterPatner;
 
 
 	time_t boot_ID;
@@ -97,10 +95,8 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message, string sourceA
 		case CHANNEL_CREATE:
 			if (channelList.find(channelId) == channelList.end()) {
 				channelList[channelId] = Channel(channelId, source,
-						maxSubChannel, maxServerAuxCandidate,
-						maxPeerInSubChannel, this->sizeCluster, this->avoidMasterPatner,
-						XPConfig::Instance()->GetBool("subChannelMixed"),
-						false);
+						maxSubChannel, maxServerAuxCandidate, maxPeerInSubChannel, this->sizeCluster,
+						XPConfig::Instance()->GetBool("subChannelMixed"), false);
 			} else {
 				messageReply = new MessageError(ERROR_CHANNEL_CANT_BE_CREATED);
 			}
@@ -171,7 +167,7 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message, string sourceA
 				else // Mensagem de novos vizinhos
 				{
 				     selectedPeers = channelList[channelId].SelectPeerList( peerlistSelectorStrategy, source, peerListSharedSize,
-				    		 XPConfig::Instance()->GetBool("isolaVirtutalPeerSameIP"), XPConfig::Instance()->GetBool("sharePeerbybandwidth"), minimumBandwidth);
+				    		 XPConfig::Instance()->GetBool("isolaVirtutalPeerSameIP"), minimumBandwidth);
 
 				      messageReply = new MessagePeerlistShare(selectedPeers.size(),
 					    	source->GetIP(), externalPort,

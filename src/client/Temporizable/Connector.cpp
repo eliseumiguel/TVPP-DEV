@@ -10,18 +10,18 @@
 
 #include "Connector.hpp"
 
-Connector::Connector(Strategy *connectorStrategy, PeerManager* peerManager, uint64_t timerPeriod, set<string>* peerActive) : Temporizable(timerPeriod)
+Connector::Connector(Strategy *connectorStrategy, PeerManager* peerManager, uint64_t timerPeriod, set<string>* peerActive, unsigned int minimalBandwidthToBeOUt) : Temporizable(timerPeriod)
 {
 	this->strategy = connectorStrategy;
 	this->peerManager = peerManager;
 	this->peerActive = peerActive;
+	this->minimalBandwidthToBeOUt = minimalBandwidthToBeOUt;
 }
 
 
 void Connector::Connect()
 {
 	vector<PeerData*> peers;
-	//vector<PeerData> peerCopy;
 
 	boost::mutex::scoped_lock peerListLock(*peerManager->GetPeerListMutex());
 	for (map<string, PeerData>::iterator i = peerManager->GetPeerList()->begin(); i != peerManager->GetPeerList()->end(); i++)
@@ -29,8 +29,7 @@ void Connector::Connect()
 		if (!peerManager->IsPeerActive(i->first,peerActive))
 			peers.push_back(&i->second);
 	}
-    // gera vetor aleatório de vizinhos e tenta conectar em ordem
-	strategy->Execute(&peers, NULL, peerManager->GetMaxActivePeers(peerActive));
+	strategy->Execute(&peers, NULL, peerManager->GetMaxActivePeers(peerActive), minimalBandwidthToBeOUt);
 
 	unsigned int vacancies = peerManager->GetMaxActivePeers(peerActive) - peerManager->GetPeerActiveSize(peerActive);
 	if (vacancies > peers.size()) vacancies = peers.size();

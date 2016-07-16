@@ -7,7 +7,12 @@
 class RandomStrategy: public Strategy
 {
     private:
-        void SelectPeers(vector<PeerData*>* peers, Peer* srcPeer, int quantity)
+
+		void SelectPeers(vector<PeerData*>* peers, Peer* srcPeer, int quantity, unsigned int minimalBandwidthOut){
+			shuffle(*peers);
+		}
+
+		void SelectPeers(vector<PeerData*>* peers, Peer* srcPeer, int quantity)
         {
             shuffle(*peers);
         }

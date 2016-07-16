@@ -19,7 +19,7 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
             string peers_udp_port, string streamingPort, PeerModes mode, uint32_t buffer, 
             int maxPeersIn, int maxPeersOut, int janela, int num, int ttlIn, int ttlOut, int maxRequestAttempt, int tipOffsetTime, int limitDownload, int limitUpload,
             string disconnectorStrategyIn, string disconnectorStrategyOut, int quantityDisconnect,
-			string connectorStrategy, int timeToRemovePeerOutWorseBand,
+			string connectorStrategy, unsigned int minimalBandwidthToBeOUt, int timeToRemovePeerOutWorseBand,
 			string chunkSchedulerStrategy,
             string messageSendScheduler, string messageReceiveScheduler)
 {
@@ -104,18 +104,18 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
     if (peerMode == MODE_SERVER)
     {
         this->connectorIn = NULL;
-        //this->connectorOut = NULL; // pode ser usado se quiser oferecer dados a quem não te conhece....
         delete requester;
         this->requester = NULL;
     }
     else
     {
-        this->connectorIn = new Connector(new RandomStrategy(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveIn());
-        //this->connectorOut = new Connector(new RandomStrategy(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveOut());
+    	if (connectorStrategy == "RandomWhitoutPoor")
+            this->connectorIn = new Connector(new RandomStrategyWhitoutPoorBand(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveIn(),minimalBandwidthToBeOUt);
+    	else
+    		this->connectorIn = new Connector(new RandomStrategy(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveIn(),minimalBandwidthToBeOUt);
     }
     //TODO More connector options
     if (connectorIn) temporizableList.push_back(connectorIn);
-    //if (connectorOut) temporizableList.push_back(connectorOut);
     if (requester) temporizableList.push_back(requester);
 
     receiveRequestPosition = true;
@@ -176,7 +176,7 @@ bool Client::ConnectToBootstrap()
     if (peerMode == MODE_SERVER && !serverActive)
         message = new MessageChannel(CHANNEL_CREATE, perform_udp_punch, externalPort, idChannel, nowtime, XPConfig::Instance()->GetBool("serverCandidate"), NULL_MODE, peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut()));
     else
-        message = new MessageChannel(CHANNEL_CONNECT, perform_udp_punch, externalPort, idChannel, nowtime, XPConfig::Instance()->GetBool("serverCandidate"), NULL_MODE, peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut()) );
+        message = new MessageChannel(CHANNEL_CONNECT, perform_udp_punch, externalPort, idChannel, nowtime, XPConfig::Instance()->GetBool("serverCandidate"), NULL_MODE, peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut()));
     message->SetIntegrity();
     int32_t peers_port;
     if(perform_udp_punch)    //perform_udp_punch é usado para informar (uma vez) a porta udp atrás do NAT
@@ -477,7 +477,7 @@ void Client::HandlePingMessageIn(vector<int>* pingHeader, MessagePing* message, 
     uint16_t sizePeerListOut = (*pingHeader)[4];
 
     //I get to know that peer now if i didn't
-    Peer* newPeer = new Peer(sourceAddress);
+    Peer* newPeer = new Peer(sourceAddress, sizePeerListOut);
     if (!peerManager.AddPeer(newPeer, sizePeerListOut))
         delete newPeer;
 
@@ -524,7 +524,7 @@ void Client::HandlePingMessageOut(vector<int>* pingHeader, MessagePing* message,
     uint16_t sizePeerListOut = (*pingHeader)[4];
     
     //I get to know that peer now if i didnt
-    Peer* newPeer = new Peer(sourceAddress);
+    Peer* newPeer = new Peer(sourceAddress, sizePeerListOut);
     if (!peerManager.AddPeer(newPeer, sizePeerListOut))
         delete newPeer;
 
@@ -670,7 +670,6 @@ void Client::HandleRequestMessage(MessageRequest* message, string sourceAddress,
     }
     if (messageReply)
     {
-        //udp->Send(sourceAddress, messageReply->GetFirstByte(), messageReply->GetSize());
         udp->EnqueueSend(sourceAddress, messageReply);
     }
 }
@@ -994,7 +993,6 @@ void Client::Ping()
         if (pingMessage)
         {
             pingMessage->SetIntegrity();
-            //udp->Send(bootstrap->GetID(), pingMessage->GetFirstByte(), pingMessage->GetSize());
             udp->EnqueueSend(bootstrap->GetID(), pingMessage);
 
 
@@ -1064,7 +1062,6 @@ void Client::Ping()
                         peerlistMessage->AddPeer(peer); //insere pares out no log de ovrelay do participante
                     if (pingMessage && peer)
                     {
-                        //udp->Send(peer->GetID(), pingMessage->GetFirstByte(), pingMessage->GetSize()); 
                         udp->EnqueueSend(peer->GetID(), pingMessage); 
                     }
                 }
@@ -1080,7 +1077,6 @@ void Client::Ping()
         if (peerlistMessage)
         {
             peerlistMessage->SetIntegrity();
-            //udp->Send(bootstrap->GetID(), peerlistMessage->GetFirstByte(), peerlistMessage->GetSize());
             udp->EnqueueSend(bootstrap->GetID(), peerlistMessage);
         }
     }//while (true)
@@ -1326,12 +1322,10 @@ void Client::FazPedidos(int stepInMs)
                 PeerData* chosenPeerData = peerManager.GetPeerData(chosenPeer->GetID());
                 chosenPeerData->IncPendingRequests();
                 (*it)->CreateAttempt(chosenPeerData);
-                //udp->Send(chosenPeer->GetID(), message->GetFirstByte(), message->GetSize());
                 udp->EnqueueSend(chosenPeer->GetID(), message);
             }
             peerActiveInLock.unlock();
             peerListLock.unlock();
-            //delete message;
         }
         (*it)->DecTTL(stepInMs);
     }
@@ -1625,7 +1619,6 @@ void Client::UDPSend()
                  */
                 if (aMessage->GetMessage()->GetOpcode() == OPCODE_DATA)
                    chunksSent++;
-                //delete aMessage; ????
             }
         }
     }

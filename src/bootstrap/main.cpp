@@ -31,7 +31,6 @@ int main(int argc, char* argv[]) {
     unsigned int maxPeerInSubChannel = 2000;
     unsigned int sizeCluster = 1;               //ECM auxiliary server total in each subChannel
     unsigned int peerListSharedSize = 20;
-    unsigned int avoidMasterPatner = 100;
 
     uint8_t minimumBandwidth = 0;               //ECM minimum bandwidth to share peer to other to be neighbor
 
@@ -54,28 +53,22 @@ int main(int argc, char* argv[]) {
         cout <<"  -udpPort                     define the tcp bootstrap port (default: "<<myUDPPort<<")"<<endl;
         cout <<"  -peerlistSelectorStrategy    define the tcp bootstrap port (default: RandomStrategy)"<<endl;
         cout <<"  -peerListSharedSize          define the peer quantity to be shared each time between bootstrap and peer ()(default: "<<peerListSharedSize<<")"<<endl;
+        cout <<"  -minimumBandwidth            define the minimum bandwidth to share a peer  (defautl: "<<(int)minimumBandwidth<<")"<<endl;
         cout <<endl;
-        cout <<"                           FLASH CROWD"<<endl;
+        cout <<"      ****  FLASH CROWD ***"<<endl;
 
         cout <<"  -maxSubChannel               define the sub channel limit                  (default: "<<maxSubChannel<<")"<<endl;
         cout <<"  -maxServerAuxCandidate       define the server limit to create sub channel (default: "<<maxServerAuxCandidate<<")"<<endl;
         cout <<"  -maxPeerInSubChannel         define the peer number in new sub channel     (default: "<<maxPeerInSubChannel<<")"<<endl;
         cout <<"  -sizeCluster                 define the cluster size for each sub channel  (default: "<<sizeCluster<<")"<<endl;
-
         cout <<"  -mergeType                   define the server_aux merge mode              (default: "<<mergeType<<")"<<endl;
         cout <<"                               *(s-kill 0, s-avoid-p 1, s-permit-p 2, s-avoid-kill 3, s-permit-kill 4, s-noting 5)"<<endl;
         cout <<"  -qt_PeerMergeType            define the peer quantity to be disconnected   (default: "<<(int)qt_PeerMergeType<<")"<<endl;
         cout <<"  -timeDescPeerMerge           define the time interval to disconnect peers  (default: "<<(int)timeDescPeerMerge<<")"<<endl;
         cout <<"                               *(should be timeDescPeerMerge > 0)"<<endl;
-        cout <<"  -minimumBandwidth            define the minimum bandwidth to share a peer  (defautl: "<<(int)minimumBandwidth<<")"<<endl;
         cout <<endl;
-
-        //cout <<"  -avoidMasterPatner           [0..100]% of partner that auxiliary server clear when flash crow active mode (default: "<<avoidMasterPatner<<")"<<endl;
-        // ainda não funciona porque a eliminação de parceiros é no cliente... isso não foi implementado no cliente //
-
         cout <<"  --isolaVirtutalPeerSameIP    permit only different IP partner "<<endl;
         cout <<"  --subChannelMixed            create sub channel mixed whit the master network "<<endl;
-        cout <<"  --sharePeerbybandwidth       bootstrap avoids share peer with or less band minimumBandwidth "<<endl;
 
         exit(1);
     }
@@ -83,7 +76,6 @@ int main(int argc, char* argv[]) {
 
     XPConfig::Instance()->OpenConfigFile("");
     XPConfig::Instance()->SetBool("isolaVirtutalPeerSameIP", false);
-    XPConfig::Instance()->SetBool("sharePeerbybandwidth", false);
 
     int optind=1;
 
@@ -126,17 +118,9 @@ int main(int argc, char* argv[]) {
             optind++;
             sizeCluster = (unsigned int) atoi(argv[optind]);
         }
-        else if (swtc=="-avoidMasterPatner") {
-            optind++;
-            avoidMasterPatner = (unsigned int) atoi(argv[optind]);
-        }
         else if (swtc=="--isolaVirtutalPeerSameIP")
         {
             XPConfig::Instance()->SetBool("isolaVirtutalPeerSameIP", true);
-        }
-        else if (swtc=="--sharePeerbybandwidth")
-        {
-            XPConfig::Instance()->SetBool("sharePeerbybandwidth", true);
         }
         else if (swtc=="--subChannelMixed")
         {
@@ -185,8 +169,7 @@ int main(int argc, char* argv[]) {
 
 
     Bootstrap bootstrapInstance(myUDPPort, peerlistSelectorStrategy, peerListSharedSize, maxSubChannel, maxServerAuxCandidate,
-    		                    maxPeerInSubChannel, sizeCluster, mergeType , qt_PeerMergeType, timeDescPeerMerge, avoidMasterPatner,
-								minimumBandwidth);
+    		                    maxPeerInSubChannel, sizeCluster, mergeType , qt_PeerMergeType, timeDescPeerMerge, minimumBandwidth);
     
     boost::thread TTCPSERVER(boost::bind(&Bootstrap::TCPStart, &bootstrapInstance, myTCPPort.c_str()));
     boost::thread TUDPSERVER(boost::bind(&Bootstrap::UDPStart, &bootstrapInstance));

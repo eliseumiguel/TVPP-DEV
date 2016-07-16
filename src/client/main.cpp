@@ -64,12 +64,17 @@ int main (int argc, char* argv[])
     int tipOffsetTime = 3;
     int limitDownload = -1;
     int limitUpload = -1;
-	string disconnectorStrategyIn = "None";                         //ECM separate In and Out to be possible disconnect only Out or In or both
 
+    																// ** Used for disconnector
+	string disconnectorStrategyIn = "None";                         //ECM separate In and Out to be possible disconnect only Out or In or both
 	string disconnectorStrategyOut = "None";                        //ECM ensures that make peerListOut new connections
 	unsigned int quantityDisconnect = 0;                            //ECM quantity of peer to be disconnected
+
+    																// ** Used for connector
 	string connectorStrategy = "Random";                            //ECM for In and Out. But, in client, the connectorOut is unable
-	unsigned int timeToRemovePeerOutWorseBand = 20;                 // Time to connector remove worse peer band if
+	unsigned int timeToRemovePeerOutWorseBand = 0;                  //Time interval to remove worse peer band if a good new peer ask for connection
+	unsigned int minimalBandwidthToBeOUt      = 1;                  // minimal size to try connecting IN
+
     string chunkSchedulerStrategy = "Random";
     string messageSendScheduler = "FIFO";
     string messageReceiveScheduler = "FIFO";
@@ -89,9 +94,12 @@ int main (int argc, char* argv[])
 			cout <<"  -disconnectorStrategyOut      select a strategy for peer disconnection (default: "<<disconnectorStrategyOut<<")"<<endl;
             cout <<"                                *(Options: None, Random, or RandomOnlyNoServerActive)"<<endl;
             cout <<"  -quantityDisconnect           number of peer to be disconnected by disconnectorStrategy (default: "<<quantityDisconnect<<")"<<endl;
+            cout <<"                                ---"<<endl;
 			cout <<"  -connectorStrategy            select a strategy for peer connection (default: "<<connectorStrategy<<")"<<endl;
-            cout <<"                                *(Options: Random, RandomWhitoutFreeRider)"<<endl;
+            cout <<"                                *(Options: Random, RandomWhitoutPoor)"<<endl;
             cout <<"  -timeToRemovePeerOutWorseBand time to connector remove someone case RandomAndChooseBestBandWhenAsked (default: "<<timeToRemovePeerOutWorseBand<<")"<<endl;
+            cout <<"  -minimalBandwidthToBeOUt      minimal peersizeOut to try connecting IN (default: "<<minimalBandwidthToBeOUt<<")"<<endl;
+            cout <<"                                ---"<<endl;
             cout <<"  -chunkSchedulerStrategy       select a strategy for chunk scheduling (default: "<<chunkSchedulerStrategy<<")"<<endl;
             cout <<"                                *(Options: MinimumFaultStrategy, NullStrategy, RandomStrategy)"<<endl;
             cout <<"  -messageSendScheduler         select a strategy for message reception (default: "<<messageSendScheduler<<")"<<endl;
@@ -113,6 +121,7 @@ int main (int argc, char* argv[])
             cout <<"  -ttlIn                        partnership time to live list In (default: "<<ttlIn<<")"<<endl;
             cout <<"  -ttlOut                       partnership time to live list Out (default: "<<ttlOut<<")"<<endl;
             cout <<"  -udpPort                      bootstrap udp port (default: "<<udpPort<<")"<<endl;
+            cout <<"                  ***           "<<endl;
             cout <<"\n"<<endl;
             cout <<"  --playerDisabled              disables stream dispatch to player"<<endl;
             cout <<"  --blockFreeriders             blocks requests to freeriders"<<endl;
@@ -247,6 +256,11 @@ int main (int argc, char* argv[])
             optind++;
             timeToRemovePeerOutWorseBand = atoi(argv[optind]);
         }
+		else if (swtc=="-minimalBandwidthToBeOUt")
+        {
+            optind++;
+            minimalBandwidthToBeOUt = atoi(argv[optind]);
+        }
         else if (swtc=="-chunkSchedulerStrategy")
         {
             optind++;
@@ -297,8 +311,8 @@ int main (int argc, char* argv[])
     clientInstance.ClientInit(ip, tcpPort, udpPort, idChannel, 
                                 peerPort, streamingPort, mode, bufferSize, 
                                 maxPartnersIn, maxPartnersOut, windowOfInterest, requestLimit, ttlIn, ttlOut, maxRequestAttempt, tipOffsetTime, limitDownload, limitUpload,
-                                disconnectorStrategyIn, disconnectorStrategyOut, quantityDisconnect, connectorStrategy, timeToRemovePeerOutWorseBand, chunkSchedulerStrategy,
-                                messageSendScheduler, messageReceiveScheduler);
+                                disconnectorStrategyIn, disconnectorStrategyOut, quantityDisconnect, connectorStrategy, minimalBandwidthToBeOUt, timeToRemovePeerOutWorseBand,
+								chunkSchedulerStrategy, messageSendScheduler, messageReceiveScheduler);
     
     boost::thread TPING(boost::bind(&Client::Ping, &clientInstance));
     boost::thread TUDPSTART(boost::bind(&Client::UDPStart, &clientInstance));

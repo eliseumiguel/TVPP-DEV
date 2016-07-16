@@ -49,6 +49,7 @@
 #include "../common/Strategy/MinimumFaultStrategy.hpp"
 #include "../common/Strategy/NullStrategy.hpp"
 #include "../common/Strategy/RandomStrategy.hpp"
+#include "../common/Strategy/RandomStrategyWhitoutPoorBand.hpp"
 
 #include "../common/Messages/MessageData.hpp"
 #include "../common/Messages/MessageRequest.hpp"
@@ -76,7 +77,7 @@ class Client
              string peers_udp_port,  string streamingPort, PeerModes mode, uint32_t buffer, 
             int maxpeersIn, int maxpeersOut, int janela, int num, int ttlIn, int ttlOut, int maxRequestAttempt, int tipOffsetTime, int limitDownload, int limitUpload,
             string disconnectorStrategyIn, string disconnectorStrategyOut, int quantityDisconnect,
-			string connectorStrategy, int timeToRemovePeerOutWorseBand,
+			string connectorStrategy, unsigned int minimalBandwidthToBeOUt, int timeToRemovePeerOutWorseBand,
 			string chunkSchedulerStrategy, string messageSendScheduler, string messageReceptionScheduler);
         virtual void Ping();
         void CyclicTimers();
@@ -148,9 +149,8 @@ class Client
 		Disconnector* disconnectorIn;
 		Disconnector* disconnectorOut;
 		Connector* connectorIn;
-		//Connector* connectorOut;
-		int timeToRemovePeerOutWorseBand;  // ECM only if XPConfig::Instance()->GetBool("removeWorsePartner")== true;
-		                                   // used for connect a new partner whit good band tham other in peerActiveList.
+		int timeToRemovePeerOutWorseBand;            // ECM only if XPConfig::Instance()->GetBool("removeWorsePartner")== true;
+		                                             // used for connect a new partner whit good band than other in peerActiveList.
 
 		PeerRequester* requester;
         Strategy* chunkSchedulerStrategy;
