@@ -9,6 +9,7 @@
 #define RANDOMSTRATEGYWHITOUTPOORBAND_H
 
 #include "Strategy.hpp"
+#include "RandomStrategy.hpp"
 #include <time.h>
 
 class RandomStrategyWhitoutPoorBand: public Strategy
@@ -16,37 +17,20 @@ class RandomStrategyWhitoutPoorBand: public Strategy
     private:
 
 		void SelectPeers(vector<PeerData*>* peers, Peer* srcPeer, int quantity, unsigned int minimalBandwidthOut){
-			cout<<"fazendo a estratégia"<<endl;
 			vector<PeerData*> peersAUX;
 			for (unsigned int i=0; i < peers->size(); i++)
 			{
+				cout<<"Peer "<<((*peers)[i]->GetPeer())->GetID()<<" tem lista out size = "<<(*peers)[i]->GetSizePeerListOutInformed()<<endl;
 				if (((*peers)[i]->GetSizePeerListOutInformed() >= (int)minimalBandwidthOut) || ((*peers)[i]->GetSizePeerListOutInformed() < 0))
-				{
-					cout<<"Peer "<<((*peers)[i]->GetPeer())->GetID()<<" tem lista out size = "<<(*peers)[i]->GetSizePeerListOutInformed()<<endl;
 					peersAUX.push_back((*peers)[i]);
-				}
+
 			}
 
 			*peers = peersAUX;
-			shuffle(*peers);
+
+			RandomStrategy* randomPeers = new RandomStrategy();
+			randomPeers->Execute(&(*peers), srcPeer, quantity);
 		}
-
-		void SelectPeers(vector<PeerData*>* peers, Peer* srcPeer, int quantity)
-        {
-			cout<<"acaba de cometer um grande erro"<<endl;
-            shuffle(*peers);
-        }
-
-        template<class c> void shuffle(std::vector<c>& thevec)
-        {
-            for (unsigned int i = 0; i < thevec.size(); i++)
-            {
-                int r = i + drand48()*(thevec.size() - i);
-                c temp = thevec[i];
-                thevec[i] = thevec[r];
-                thevec[r] = temp;
-            }
-        };
+		void SelectPeers(vector<PeerData*>* peers, Peer* srcPeer, int quantity) {}
 };
-
 #endif
