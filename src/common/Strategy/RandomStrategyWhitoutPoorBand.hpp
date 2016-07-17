@@ -1,5 +1,8 @@
 /*
  * RandomStrategyWhitoutPoorBand.h
+ *  Com esta estratégia, o par pode fazer a escolha aleatória de
+ *  novos parceiros mas considerando o limite inferior de banda
+ *  out que o parceiro oferece.
  *
  *  Created on: 15 de jul de 2016
  *      Author: eliseu
@@ -20,7 +23,6 @@ class RandomStrategyWhitoutPoorBand: public Strategy
 			vector<PeerData*> peersAUX;
 			for (unsigned int i=0; i < peers->size(); i++)
 			{
-				cout<<"Peer "<<((*peers)[i]->GetPeer())->GetID()<<" tem lista out size = "<<(*peers)[i]->GetSizePeerListOutInformed()<<endl;
 				if (((*peers)[i]->GetSizePeerListOutInformed() >= (int)minimalBandwidthOut) || ((*peers)[i]->GetSizePeerListOutInformed() < 0))
 					peersAUX.push_back((*peers)[i]);
 

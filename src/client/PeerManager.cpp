@@ -25,7 +25,6 @@ bool PeerManager::AddPeer(Peer* newPeer, int sizePeerListOut)
 	boost::mutex::scoped_lock peerListLock(peerListMutex);
 	if (peerList.find(newPeer->GetID()) == peerList.end())
 	{
-		//ECM Inserting peer....
 		peerList[newPeer->GetID()] = PeerData(newPeer);
 		peerList[newPeer->GetID()].SetSizePeerListOutInformed(sizePeerListOut);
 		if (peerManagerState == SERVER_AUX_ACTIVE)
@@ -34,7 +33,8 @@ bool PeerManager::AddPeer(Peer* newPeer, int sizePeerListOut)
 		cout<<"Peer "<<newPeer->GetID()<<" added to PeerList"<<endl;
 		return true;
 	}
-	peerList[newPeer->GetID()].SetSizePeerListOutInformed(sizePeerListOut);
+	if (sizePeerListOut >= 0)
+		peerList[newPeer->GetID()].SetSizePeerListOutInformed(sizePeerListOut);
 	peerListLock.unlock();
 	return false;
 }
@@ -129,6 +129,7 @@ bool PeerManager::ConnectSpecial(string peer, set<string>* peerActive){
 		cout <<"removing "<<*smaller<<" out list["<<peerList[*smaller].GetSizePeerListOutInformed()<<"] to insert "<<peer<<" out list["<<peerList[peer].GetSizePeerListOutInformed()<<"]"<<endl;
 		peerActive->erase(smaller);
 		peerActive->insert(peer);
+		this->SetRemoveWorsePartner(false);
 		return true;
 	}
 	return false;
@@ -369,3 +370,6 @@ void PeerManager::SetRemoveWorsePartner (bool removeWorsePartner)
 	this->removeWorsePartner = removeWorsePartner;
 }
 
+bool PeerManager::GetRemoveWorsePartner (){
+	return this->removeWorsePartner;
+}

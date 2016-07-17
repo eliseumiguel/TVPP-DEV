@@ -78,6 +78,7 @@ public:
 
 	bool IsPeerInPeerList(string peer);
 	void SetRemoveWorsePartner (bool removeWorsePartner);
+	bool GetRemoveWorsePartner ();
 
 	bool IsPeerActive(string peer,set<string>* peerActive);
 	PeerData* GetPeerData(string peer);

@@ -73,7 +73,7 @@ int main (int argc, char* argv[])
     																// ** Used for connector
 	string connectorStrategy = "Random";                            //ECM for In and Out. But, in client, the connectorOut is unable
 	unsigned int timeToRemovePeerOutWorseBand = 0;                  //Time interval to remove worse peer band if a good new peer ask for connection
-	unsigned int minimalBandwidthToBeOUt      = 1;                  // minimal size to try connecting IN
+	unsigned int minimalBandwidthToBeMyIN     = 1;                  // minimal size to try connecting IN
 
     string chunkSchedulerStrategy = "Random";
     string messageSendScheduler = "FIFO";
@@ -92,26 +92,28 @@ int main (int argc, char* argv[])
             cout <<"  -channelId                    select a channel to transmit/receive (default: "<<idChannel<<")"<<endl;
 			cout <<"  -disconnectorStrategyIn       select a strategy for peer disconnection (default: "<<disconnectorStrategyIn<<")"<<endl;
 			cout <<"  -disconnectorStrategyOut      select a strategy for peer disconnection (default: "<<disconnectorStrategyOut<<")"<<endl;
-            cout <<"                                *(Options: None, Random, or RandomOnlyNoServerActive)"<<endl;
+            cout <<"                                 **(Options: None, Random, or RandomOnlyNoServerActive)"<<endl;
             cout <<"  -quantityDisconnect           number of peer to be disconnected by disconnectorStrategy (default: "<<quantityDisconnect<<")"<<endl;
-            cout <<"                                ---"<<endl;
+            cout <<"                                                                                                                             "<<endl;
 			cout <<"  -connectorStrategy            select a strategy for peer connection (default: "<<connectorStrategy<<")"<<endl;
-            cout <<"                                *(Options: Random, RandomWhitoutPoor)"<<endl;
-            cout <<"  -timeToRemovePeerOutWorseBand time to connector remove someone case RandomAndChooseBestBandWhenAsked (default: "<<timeToRemovePeerOutWorseBand<<")"<<endl;
-            cout <<"  -minimalBandwidthToBeOUt      minimal peersizeOut to try connecting IN (default: "<<minimalBandwidthToBeOUt<<")"<<endl;
+            cout <<"                                 **(Options: Random, RandomWhitoutPoor)"<<endl;
+            cout <<"  -minimalBandwidthToBeMyIN     minimal partner's peersizeOut to ask for new partner IN (default: "<<minimalBandwidthToBeMyIN<<")"<<endl;
+            cout <<"                                 **(if chosen, it sets automatically connectorStrategy = RandomWhitoutPoor)"<<endl;
+            cout <<"  -timeToRemovePeerOutWorseBand time to remove someone and connect a better new peer asking to be partner (default: disabled)"<<endl;
+            cout <<"                                 **(for to able, choose a positive number)"<<endl;
             cout <<"                                ---"<<endl;
             cout <<"  -chunkSchedulerStrategy       select a strategy for chunk scheduling (default: "<<chunkSchedulerStrategy<<")"<<endl;
-            cout <<"                                *(Options: MinimumFaultStrategy, NullStrategy, RandomStrategy)"<<endl;
+            cout <<"                                 **(Options: MinimumFaultStrategy, NullStrategy, RandomStrategy)"<<endl;
             cout <<"  -messageSendScheduler         select a strategy for message reception (default: "<<messageSendScheduler<<")"<<endl;
-            cout <<"                                *(Options: FIFO, RR - RoundRobin, Random, CDF - Closest Deadline First)"<<endl;
+            cout <<"                                 **(Options: FIFO, RR - RoundRobin, Random, CDF - Closest Deadline First)"<<endl;
             cout <<"  -messageReceiveScheduler      select a strategy for message reception (default: "<<messageReceiveScheduler<<")"<<endl;
-            cout <<"                                *(Options: FIFO, RR - RoundRobin, Random, CDF - Closest Deadline First)"<<endl;
+            cout <<"                                 **(Options: FIFO, RR - RoundRobin, Random, CDF - Closest Deadline First)"<<endl;
             cout <<"  -limitDownload                limits the download bandwidht usage in b/s (default: "<<limitDownload<<")"<<endl;
             cout <<"  -limitUpload                  limits the upload bandwidht usage in b/s (default: "<<limitUpload<<")"<<endl;
             cout <<"  -maxPartnersIn                maximum number of neighbors-In(default: "<<maxPartnersIn<<")"<<endl;
             cout <<"  -maxPartnersOut               maximum number of neighbors-Out(default: "<<maxPartnersOut<<")"<<endl;
             cout <<"  -mode                         define the type of client. (default: "<<mode<<")"<<endl;
-            cout <<"                                *(Options: client (0); server (1); free-rider-good (2))"<<endl;
+            cout <<"                                 **(Options: client (0); server (1); free-rider-good (2))"<<endl;
             cout <<"  -peerPort                     port for inter peer comunication (default: "<<peerPort<<")"<<endl;
             cout <<"  -maxRequestAttempt            maximum number of attempts to perform a request(default: "<<maxRequestAttempt<<")"<<endl;;
             cout <<"  -tipOffsetTime                amount of seconds from where to start requesting chunks prior to stream tip (default: "<<tipOffsetTime<<" )"<<endl;;
@@ -128,7 +130,6 @@ int main (int argc, char* argv[])
             cout <<"  --clientLogsDisabled          disables client logging service"<<endl;
             cout <<"  --leakyBucketDataFilter       forces data packets only to pass through upload leaky bucket"<<endl;
             cout <<"  --serverCandidate             permits that peer becomes a auxiliary server on parallel network"<<endl;
-            cout <<"  --removeWorsePartner          permits that peer remove a worse partner by band when new good peer ask by Out relationship"<<endl;
             exit(1);
         }
         else
@@ -139,6 +140,7 @@ int main (int argc, char* argv[])
     }
 
     XPConfig::Instance()->OpenConfigFile("");
+    XPConfig::Instance()->SetBool("removeWorsePartner",false);
     
     // decode arguments
     while ((optind < argc) && (argv[optind][0]=='-'))
@@ -255,11 +257,13 @@ int main (int argc, char* argv[])
         {
             optind++;
             timeToRemovePeerOutWorseBand = atoi(argv[optind]);
+            XPConfig::Instance()->SetBool("removeWorsePartner", true);
         }
-		else if (swtc=="-minimalBandwidthToBeOUt")
+		else if (swtc=="-minimalBandwidthToBeMyIN")
         {
             optind++;
-            minimalBandwidthToBeOUt = atoi(argv[optind]);
+            minimalBandwidthToBeMyIN = atoi(argv[optind]);
+            connectorStrategy = "RandomWhitoutPoor";
         }
         else if (swtc=="-chunkSchedulerStrategy")
         {
@@ -296,10 +300,6 @@ int main (int argc, char* argv[])
         {
             XPConfig::Instance()->SetBool("serverCandidate", true);
         }
-        else if (swtc=="--removeWorsePartner")
-        {
-            XPConfig::Instance()->SetBool("removeWorsePartner", true);
-        }
         else
         {
             cout << "Invalid Arguments. Try --help"<<endl;
@@ -311,7 +311,7 @@ int main (int argc, char* argv[])
     clientInstance.ClientInit(ip, tcpPort, udpPort, idChannel, 
                                 peerPort, streamingPort, mode, bufferSize, 
                                 maxPartnersIn, maxPartnersOut, windowOfInterest, requestLimit, ttlIn, ttlOut, maxRequestAttempt, tipOffsetTime, limitDownload, limitUpload,
-                                disconnectorStrategyIn, disconnectorStrategyOut, quantityDisconnect, connectorStrategy, minimalBandwidthToBeOUt, timeToRemovePeerOutWorseBand,
+                                disconnectorStrategyIn, disconnectorStrategyOut, quantityDisconnect, connectorStrategy, minimalBandwidthToBeMyIN, timeToRemovePeerOutWorseBand,
 								chunkSchedulerStrategy, messageSendScheduler, messageReceiveScheduler);
     
     boost::thread TPING(boost::bind(&Client::Ping, &clientInstance));

@@ -62,10 +62,10 @@ int main(int argc, char* argv[]) {
         cout <<"  -maxPeerInSubChannel         define the peer number in new sub channel     (default: "<<maxPeerInSubChannel<<")"<<endl;
         cout <<"  -sizeCluster                 define the cluster size for each sub channel  (default: "<<sizeCluster<<")"<<endl;
         cout <<"  -mergeType                   define the server_aux merge mode              (default: "<<mergeType<<")"<<endl;
-        cout <<"                               *(s-kill 0, s-avoid-p 1, s-permit-p 2, s-avoid-kill 3, s-permit-kill 4, s-noting 5)"<<endl;
+        cout <<"                                **(s-kill 0, s-avoid-p 1, s-permit-p 2, s-avoid-kill 3, s-permit-kill 4, s-noting 5)"<<endl;
         cout <<"  -qt_PeerMergeType            define the peer quantity to be disconnected   (default: "<<(int)qt_PeerMergeType<<")"<<endl;
         cout <<"  -timeDescPeerMerge           define the time interval to disconnect peers  (default: "<<(int)timeDescPeerMerge<<")"<<endl;
-        cout <<"                               *(should be timeDescPeerMerge > 0)"<<endl;
+        cout <<"                                **(should be timeDescPeerMerge > 0)"<<endl;
         cout <<endl;
         cout <<"  --isolaVirtutalPeerSameIP    permit only different IP partner "<<endl;
         cout <<"  --subChannelMixed            create sub channel mixed whit the master network "<<endl;

@@ -2,7 +2,6 @@
 #define CLIENT_H_INCLUDED
 
 #include <iostream>
-//#include <cstdlib>
 
 #include <map>
 #include <vector>
@@ -77,7 +76,7 @@ class Client
              string peers_udp_port,  string streamingPort, PeerModes mode, uint32_t buffer, 
             int maxpeersIn, int maxpeersOut, int janela, int num, int ttlIn, int ttlOut, int maxRequestAttempt, int tipOffsetTime, int limitDownload, int limitUpload,
             string disconnectorStrategyIn, string disconnectorStrategyOut, int quantityDisconnect,
-			string connectorStrategy, unsigned int minimalBandwidthToBeOUt, int timeToRemovePeerOutWorseBand,
+			string connectorStrategy, unsigned int minimalBandwidthToBeMyIN, int timeToRemovePeerOutWorseBand,
 			string chunkSchedulerStrategy, string messageSendScheduler, string messageReceptionScheduler);
         virtual void Ping();
         void CyclicTimers();

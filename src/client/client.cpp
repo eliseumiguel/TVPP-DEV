@@ -19,7 +19,7 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
             string peers_udp_port, string streamingPort, PeerModes mode, uint32_t buffer, 
             int maxPeersIn, int maxPeersOut, int janela, int num, int ttlIn, int ttlOut, int maxRequestAttempt, int tipOffsetTime, int limitDownload, int limitUpload,
             string disconnectorStrategyIn, string disconnectorStrategyOut, int quantityDisconnect,
-			string connectorStrategy, unsigned int minimalBandwidthToBeOUt, int timeToRemovePeerOutWorseBand,
+			string connectorStrategy, unsigned int minimalBandwidthToBeMyIN, int timeToRemovePeerOutWorseBand,
 			string chunkSchedulerStrategy,
             string messageSendScheduler, string messageReceiveScheduler)
 {
@@ -110,9 +110,9 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
     else
     {
     	if (connectorStrategy == "RandomWhitoutPoor")
-            this->connectorIn = new Connector(new RandomStrategyWhitoutPoorBand(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveIn(),minimalBandwidthToBeOUt);
+            this->connectorIn = new Connector(new RandomStrategyWhitoutPoorBand(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveIn(),minimalBandwidthToBeMyIN);
     	else
-    		this->connectorIn = new Connector(new RandomStrategy(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveIn(),minimalBandwidthToBeOUt);
+    		this->connectorIn = new Connector(new RandomStrategy(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveIn(), 0);
     }
     //TODO More connector options
     if (connectorIn) temporizableList.push_back(connectorIn);
@@ -212,7 +212,9 @@ void Client::CyclicTimers()
     uint16_t cycle = 0;
     uint32_t step = 100000000; //100mS++
     uint8_t  mergeCSA_Temp;
-    mergeCSA_Temp = 0;  //ECM
+    uint8_t removeWorsePartnerTemp;
+    mergeCSA_Temp = 0;                   //ECM
+    removeWorsePartnerTemp = this->timeToRemovePeerOutWorseBand;          //ECM
 
     while (!quit)
     {
@@ -235,6 +237,16 @@ void Client::CyclicTimers()
             downloadPerSecDone = 0;
             uploadPerSecDone = 0;
             peerManager.CheckPeerList();
+
+            if ((XPConfig::Instance()->GetBool("removeWorsePartner")))
+            	if (!this->peerManager.GetRemoveWorsePartner()){
+            		if (removeWorsePartnerTemp == 0){
+            			this->peerManager.SetRemoveWorsePartner(true);
+            			removeWorsePartnerTemp = this->timeToRemovePeerOutWorseBand;
+            		}
+            		else
+            			removeWorsePartnerTemp--;
+            	}
 
             //ECM time to Merge subnetworks
             if (this->peerManager.GetPeerManagerState() == SERVER_AUX_MESCLAR){
@@ -296,8 +308,6 @@ Message *Client::HandleTCPMessage(Message* message, string sourceAddress, uint32
             return NULL;
             break;
     }
-    
-    //delete message;
 }
  
 void Client::HandleUDPMessage(Message* message, string sourceAddress)

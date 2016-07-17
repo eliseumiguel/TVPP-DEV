@@ -1,6 +1,10 @@
 /*
+
  * Modificado: Eliseu César miguel
- * Data:       2015-01-19
+ * Data:       2016-07-16
+ * Inclusão da estratégia RandomStrategyWhitoutPoorBand. Assim, o par faz a
+ * escolha de parceiros IN considerando uma banda mínima.
+ *
  * Com a separação da lista de PeerManage::peerActive em listas de In e Out,
  * não é necessário executar o connector para a lista Out, visto que os pares
  * que solicitam dados tornam-se, automaticamente Out. Contudo, os parâmetros
@@ -10,12 +14,12 @@
 
 #include "Connector.hpp"
 
-Connector::Connector(Strategy *connectorStrategy, PeerManager* peerManager, uint64_t timerPeriod, set<string>* peerActive, unsigned int minimalBandwidthToBeOUt) : Temporizable(timerPeriod)
+Connector::Connector(Strategy *connectorStrategy, PeerManager* peerManager, uint64_t timerPeriod, set<string>* peerActive, unsigned int minimalBandwidthToBeMyIN) : Temporizable(timerPeriod)
 {
 	this->strategy = connectorStrategy;
 	this->peerManager = peerManager;
 	this->peerActive = peerActive;
-	this->minimalBandwidthToBeOUt = minimalBandwidthToBeOUt;
+	this->minimalBandwidthToBeMyIN = minimalBandwidthToBeMyIN;
 }
 
 
@@ -29,7 +33,7 @@ void Connector::Connect()
 		if (!peerManager->IsPeerActive(i->first,peerActive))
 			peers.push_back(&i->second);
 	}
-	strategy->Execute(&peers, NULL, peerManager->GetMaxActivePeers(peerActive), minimalBandwidthToBeOUt);
+	strategy->Execute(&peers, NULL, peerManager->GetMaxActivePeers(peerActive), minimalBandwidthToBeMyIN);
 
 	unsigned int vacancies = peerManager->GetMaxActivePeers(peerActive) - peerManager->GetPeerActiveSize(peerActive);
 	if (vacancies > peers.size()) vacancies = peers.size();
