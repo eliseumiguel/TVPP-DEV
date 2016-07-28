@@ -306,10 +306,13 @@ void Bootstrap::HandlePingMessage(MessagePingBoot* message,
 	//int sizePeerOut = pingHeader[4];
 	int serverStreamRate = pingHeader[5];
 	uint32_t channelId = pingHeader[6];
+	unsigned short totalPeer = 0;
 
 	boost::mutex::scoped_lock channelListLock(channelListMutex);
 	if (channelList.count(channelId) != 0) //Channel exists
 			{
+
+		totalPeer = channelList[channelId].GetPeerListSize();
 		if (channelList[channelId].HasPeer(srcPeer)) {
 			channelList[channelId].GetPeerData(srcPeer).SetMode(peerMode);
 			channelList[channelId].GetPeerData(srcPeer).SetTTLChannel(
@@ -392,10 +395,10 @@ void Bootstrap::HandlePingMessage(MessagePingBoot* message,
 						pingHeader[indexPerfStart + 20]) + " "; //ECM NeighborhoodSizeOut
 				performanceLog += boost::lexical_cast<string>(
 						pingHeader[4]) + " ";                   //ECM sizePeerListOut
-				performanceLog +=
-						boost::lexical_cast<string>(
-								channelList[channelId].GetPeerData(srcPeer).GetChannelId_Sub())
-								+ "\n"; //ECM
+				performanceLog += boost::lexical_cast<string>(
+						channelList[channelId].GetPeerData(srcPeer).GetChannelId_Sub())	+ " "; //ECM
+				performanceLog += boost::lexical_cast<string>(
+						totalPeer) + "\n";
 
 				//if (performanceFile)
 				for (vector<FILE*>::iterator f = performanceFile.begin();

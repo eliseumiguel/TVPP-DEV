@@ -73,7 +73,7 @@ int main (int argc, char* argv[])
     																// ** Used for connector
 	string connectorStrategy = "Random";                            //ECM for In and Out. But, in client, the connectorOut is unable
 	unsigned int timeToRemovePeerOutWorseBand = 0;                  //Time interval to remove worse peer band if a good new peer ask for connection
-	unsigned int minimalBandwidthToBeMyIN     = 1;                  // minimal size to try connecting IN
+	unsigned int minimalBandwidthToBeMyIN     = 0;                  // minimal size to try connecting IN
 
     string chunkSchedulerStrategy = "Random";
     string messageSendScheduler = "FIFO";
