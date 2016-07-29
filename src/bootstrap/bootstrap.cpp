@@ -312,7 +312,7 @@ void Bootstrap::HandlePingMessage(MessagePingBoot* message,
 	if (channelList.count(channelId) != 0) //Channel exists
 			{
 
-		totalPeer = channelList[channelId].GetPeerListSize();
+		totalPeer = channelList[channelId].GetPeerListSize()-1; //subtrai um para excluir o servidor
 		if (channelList[channelId].HasPeer(srcPeer)) {
 			channelList[channelId].GetPeerData(srcPeer).SetMode(peerMode);
 			channelList[channelId].GetPeerData(srcPeer).SetTTLChannel(
