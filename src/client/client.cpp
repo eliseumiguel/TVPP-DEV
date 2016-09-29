@@ -179,13 +179,13 @@ bool Client::ConnectToBootstrap()
     if (peerMode == MODE_SERVER && !serverActive)
         message = new MessageChannel(CHANNEL_CREATE, perform_udp_punch, externalPort, idChannel, nowtime,
         		XPConfig::Instance()->GetBool("serverCandidate"), NULL_MODE,
-				peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut())
-				+peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut(true,0))); //servidor (poderei usar a lista outFree para conectar pares especiais ao servidor
+				peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut()),
+				peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut(true,0))); //servidor (poderei usar a lista outFree para conectar pares especiais ao servidor
     else
         message = new MessageChannel(CHANNEL_CONNECT, perform_udp_punch, externalPort, idChannel, nowtime,
         		XPConfig::Instance()->GetBool("serverCandidate"), NULL_MODE,
-				peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut())
-				+peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut(true,0))); //soma maxActiveOut com maxActiveOutFree
+				peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut()),
+				peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut(true,0))); //soma maxActiveOut com maxActiveOutFree
 
     message->SetIntegrity();
     int32_t peers_port;
@@ -913,7 +913,7 @@ void Client::Ping()
 
         if (pingsSend % step != 0)    //Each 10s
         {
-            pingMessage = new MessagePingBoot(peerMode, latestReceivedPosition, peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut())+
+            pingMessage = new MessagePingBoot(peerMode, latestReceivedPosition, peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut()),
             		                          peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut(true,0)),
             		                          Statistics::Instance()->GetEstimatedChunkRate(), idChannel);
         }
@@ -966,17 +966,33 @@ void Client::Ping()
 
             int chunksExpected = chunksMissed + chunksPlayed;
 
-            pingMessage = new MessagePingBootPerf(peerMode, latestReceivedPosition, peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut())+
-            		                peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut(true,0)),
-            		                Statistics::Instance()->GetEstimatedChunkRate(), idChannel,
-                                    chunksGeneratedPerSecond, chunksSentPerSecond, chunksReceivedPerSecond, chunksOverloadPerSecond,
-                                    requestsSentPerSecond, requestsRecvPerSecond, requestRetriesPerSecond,
-                                    chunksMissed, chunksExpected,
-                                    meanHop, meanTries, meanTriesPerRequest, peerManager.GetPeerActiveSizeTotal(),
-                                    lastMediaID, lastMediaHopCount, lastMediaTriesCount, lastMediaTime + bootstrapTimeShift,
+            pingMessage = new MessagePingBootPerf(
+            		                peerMode,
+									latestReceivedPosition,
+									peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut())+peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut(true,0)),
+            		                Statistics::Instance()->GetEstimatedChunkRate(),
+									idChannel,
+                                    chunksGeneratedPerSecond,
+									chunksSentPerSecond,
+									chunksReceivedPerSecond,
+									chunksOverloadPerSecond,
+                                    requestsSentPerSecond,
+									requestsRecvPerSecond,
+									requestRetriesPerSecond,
+                                    chunksMissed,
+									chunksExpected,
+                                    meanHop,
+									meanTries,
+									meanTriesPerRequest,
+									peerManager.GetPeerActiveSizeTotal(),
+                                    lastMediaID,
+									lastMediaHopCount,
+									lastMediaTriesCount,
+									lastMediaTime + bootstrapTimeShift,
                                     nowtime + bootstrapTimeShift,
-                                    peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()),peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut())
-									+peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut(true,0)));
+                                    peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()),
+									peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut()),
+									peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut(true,0)));
 
             peerlistMessage = new MessagePeerlistLog( 1 + peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut())
             		                                    + peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut(true,0))
@@ -1032,8 +1048,8 @@ void Client::Ping()
             if(peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()) > 0)
             {
                 pingMessage = new MessagePing(PING_LIVE_OUT, BUFFER_SIZE/8, peerMode, latestReceivedPosition,
-                		                      peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut())
-                		                      +peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut(true,0)));
+                		                      peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut()),
+                		                      peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut(true,0)));
                 pingMessage->SetIntegrity();
 
                 boost::mutex::scoped_lock peerListLock(*peerManager.GetPeerListMutex());
@@ -1066,7 +1082,9 @@ void Client::Ping()
           for (int out=0;out<=1;out++){
             if (peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut(out,0)) > 0)
             {
-                pingMessage = new MessagePing(PING_PART_CHUNKMAP, BUFFER_SIZE/8, peerMode, latestReceivedPosition, peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut(out,0)));
+                pingMessage = new MessagePing(PING_PART_CHUNKMAP, BUFFER_SIZE/8, peerMode, latestReceivedPosition,
+                		                      peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut(false,0)),
+											  peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut(true,0)));
                 pingMessage->SetIntegrity();
                 uint8_t headerSize = pingMessage->GetHeaderSize();
                 uint8_t *chunkMap = new uint8_t[BUFFER_SIZE/8];

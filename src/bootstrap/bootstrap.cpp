@@ -77,8 +77,9 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message, string sourceA
 	bool auxiliarServerCandidate = channelHeader[6]; //ECM inform bootstrap if peer is or not auxiliary server candidate
 	uint8_t channelMode = channelHeader[7]; //ECM used if channelFlag == CHANGE_STATE
 	uint16_t sizePeerListOut = channelHeader[8];
+	uint16_t sizePeerListOut_FREE = channelHeader[9];
 
-	Peer* source = new Peer(sourceAddress, sizePeerListOut);
+	Peer* source = new Peer(sourceAddress, sizePeerListOut, sizePeerListOut_FREE );
 
 	cout << "Channel MSG: " << (uint32_t) channelFlag << ", " << performingPunch
 			<< ", " << version << ", " << externalPort << ", " << channelId
@@ -304,10 +305,12 @@ void Bootstrap::HandlePingMessage(MessagePingBoot* message,
 	ChunkUniqueID peerTipChunk = ChunkUniqueID(pingHeader[2],
 			(uint16_t) pingHeader[3]);
 	//int sizePeerOut = pingHeader[4];
-	int serverStreamRate = pingHeader[5];
-	uint32_t channelId = pingHeader[6];
+	//int sizePeerOut_FREE = pingHeader[5];
+	int serverStreamRate = pingHeader[6];
+	uint32_t channelId = pingHeader[7];
 	unsigned short totalPeer = 0;
 
+	cout << "recebeu log perform de "<<endl;
 	boost::mutex::scoped_lock channelListLock(channelListMutex);
 	if (channelList.count(channelId) != 0) //Channel exists
 			{
@@ -395,6 +398,8 @@ void Bootstrap::HandlePingMessage(MessagePingBoot* message,
 						pingHeader[indexPerfStart + 20]) + " "; //ECM NeighborhoodSizeOut
 				performanceLog += boost::lexical_cast<string>(
 						pingHeader[4]) + " ";                   //ECM sizePeerListOut
+				performanceLog += boost::lexical_cast<string>(
+						pingHeader[5]) + " ";                   //ECM sizePeerListOut_FREE
 				performanceLog += boost::lexical_cast<string>(
 						channelList[channelId].GetPeerData(srcPeer).GetChannelId_Sub())	+ " "; //ECM
 				performanceLog += boost::lexical_cast<string>(

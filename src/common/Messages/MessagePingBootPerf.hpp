@@ -10,21 +10,45 @@ class MessagePingBootPerf : public MessagePingBoot
                                     uint32_t chunksGeneratedPerSecond, uint32_t chunksSentPerSecond, uint32_t chunksReceivedPerSecond, uint32_t chunksOverloadPerSecond,
                                     uint32_t requestsSentPerSecond, uint32_t requestsRecvPerSecond, uint32_t requestsRetriesPerSecond, uint32_t chunksMissed, uint32_t chunksExpected, float meanHop, float meanTries, float meanTriesPerRequest,
                                     uint16_t neighborhoodSize, ChunkUniqueID* lastMediaID, int lastMediaHopCount, int lastMediaTriesCount, uint32_t lastMediaTime, uint32_t nowtime,
-                                    uint16_t neighborhoodSizeIn, uint16_t neighborhoodSizeOut); //ECM
+                                    uint16_t neighborhoodSizeIn,
+									uint16_t neighborhoodSizeOut,
+									uint16_t neighborhoodSizeOut_FREE); //ECM
     public:
         MessagePingBootPerf(Message* message) : MessagePingBoot(message) {};
 
-        MessagePingBootPerf(PeerModes mode, ChunkUniqueID chunkuid, uint16_t sizePeerListOu, uint32_t estimatedStreamRate, uint32_t channelId,
-                                    uint32_t chunksGeneratedPerSecond, uint32_t chunksSentPerSecond, uint32_t chunksReceivedPerSecond, uint32_t chunksOverloadPerSecond,
-                                    uint32_t requestsSentPerSecond, uint32_t requestsRecvPerSecond, uint32_t requestsRetriesPerSecond, uint32_t chunksMissed, uint32_t chunksExpected, float meanHop, float meanTries, float meanTriesPerRequest,
-                                    uint16_t neighborhoodSize, ChunkUniqueID* lastMediaID, int lastMediaHopCount, int lastMediaTriesCount, uint32_t lastMediaTime, uint32_t nowtime,
-                                    uint16_t neighborhoodSizeIn, uint16_t neighborhoodSizeOut); //ECM
+        MessagePingBootPerf(PeerModes mode,
+        		            ChunkUniqueID chunkuid,
+							uint16_t sizePeerListOu,
+							uint32_t estimatedStreamRate,
+							uint32_t channelId,
+                            uint32_t chunksGeneratedPerSecond,
+						    uint32_t chunksSentPerSecond,
+							uint32_t chunksReceivedPerSecond,
+							uint32_t chunksOverloadPerSecond,
+                                    uint32_t requestsSentPerSecond,
+									uint32_t requestsRecvPerSecond,
+									uint32_t requestsRetriesPerSecond,
+									uint32_t chunksMissed,
+									uint32_t chunksExpected,
+									float meanHop,
+									float meanTries,
+									float meanTriesPerRequest,
+                                    uint16_t neighborhoodSize,
+									ChunkUniqueID* lastMediaID,
+									int lastMediaHopCount,
+									int lastMediaTriesCount,
+									uint32_t lastMediaTime,
+									uint32_t nowtime,
+                                    uint16_t neighborhoodSizeIn,
+									uint16_t neighborhoodSizeOut,
+									uint16_t neighborhoodSizeOut_FREE); //ECM
 
         vector<int> GetHeaderValuesDataVector(PeerModes mode, ChunkUniqueID chunkuid, uint16_t sizePeerListOu, uint32_t estimatedStreamRate, uint32_t channelId,
                                     uint32_t chunksGeneratedPerSecond, uint32_t chunksSentPerSecond, uint32_t chunksReceivedPerSecond, uint32_t chunksOverloadPerSecond,
                                     uint32_t requestsSentPerSecond, uint32_t requestsRecvPerSecond, uint32_t requestsRetriesPerSecond, uint32_t chunksMissed, uint32_t chunksExpected, float meanHop, float meanTries, float meanTriesPerRequest,
                                     uint16_t neighborhoodSize, ChunkUniqueID* lastMediaID, int lastMediaHopCount, int lastMediaTriesCount, uint32_t lastMediaTime, uint32_t nowtime,
-                                    uint16_t neighborhoodSizeIn, uint16_t neighborhoodSizeOut); //ECM
+                                    uint16_t neighborhoodSizeIn, uint16_t neighborhoodSizeOut,
+									uint16_t neighborhoodSizeOut_FREE); //ECM
 
         virtual vector<uint8_t> GetHeaderValuesSizeVector();
 };
