@@ -77,7 +77,8 @@ class Client
             int maxpeersIn, int maxpeersOut, int janela, int num, int ttlIn, int ttlOut, int maxRequestAttempt, int tipOffsetTime, int limitDownload, int limitUpload,
             string disconnectorStrategyIn, string disconnectorStrategyOut, int quantityDisconnect,
 			string connectorStrategy, unsigned int minimalBandwidthToBeMyIN, int timeToRemovePeerOutWorseBand,
-			string chunkSchedulerStrategy, string messageSendScheduler, string messageReceptionScheduler);
+			string chunkSchedulerStrategy, string messageSendScheduler, string messageReceptionScheduler,
+			int maxPartnersOutFREE, unsigned int outLimitToSeparateFree);
         virtual void Ping();
         void CyclicTimers();
         void PeerCtoPeerA();

@@ -21,7 +21,8 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
             string disconnectorStrategyIn, string disconnectorStrategyOut, int quantityDisconnect,
 			string connectorStrategy, unsigned int minimalBandwidthToBeMyIN, int timeToRemovePeerOutWorseBand,
 			string chunkSchedulerStrategy,
-            string messageSendScheduler, string messageReceiveScheduler)
+            string messageSendScheduler, string messageReceiveScheduler,
+			int maxPartnersOutFREE, unsigned int outLimitToSeparateFree)
 {
     cout <<"Starting Client Version["<<VERSION<<"]" <<endl;
     Bootstrap_IP = host_ip;
@@ -38,7 +39,9 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
     BUFFER_SIZE = buffer;
     peerManager.SetMaxActivePeersIn(maxPeersIn);
     peerManager.SetMaxActivePeersOut(maxPeersOut);
+    peerManager.SetMaxActivePeersOutFREE(maxPartnersOutFREE);
     peerManager.SetRemoveWorsePartner (XPConfig::Instance()->GetBool("removeWorsePartner"));
+    peerManager.SetMaxOutFreeToBeSeparated(outLimitToSeparateFree);
     JANELA = janela;
     NUM_PEDIDOS = num;
     TTL_MAX_In = ttlIn;
@@ -174,9 +177,16 @@ bool Client::ConnectToBootstrap()
     time_t nowtime;
     time(&nowtime);
     if (peerMode == MODE_SERVER && !serverActive)
-        message = new MessageChannel(CHANNEL_CREATE, perform_udp_punch, externalPort, idChannel, nowtime, XPConfig::Instance()->GetBool("serverCandidate"), NULL_MODE, peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut()));
+        message = new MessageChannel(CHANNEL_CREATE, perform_udp_punch, externalPort, idChannel, nowtime,
+        		XPConfig::Instance()->GetBool("serverCandidate"), NULL_MODE,
+				peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut())
+				+peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut(true,0))); //servidor (poderei usar a lista outFree para conectar pares especiais ao servidor
     else
-        message = new MessageChannel(CHANNEL_CONNECT, perform_udp_punch, externalPort, idChannel, nowtime, XPConfig::Instance()->GetBool("serverCandidate"), NULL_MODE, peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut()));
+        message = new MessageChannel(CHANNEL_CONNECT, perform_udp_punch, externalPort, idChannel, nowtime,
+        		XPConfig::Instance()->GetBool("serverCandidate"), NULL_MODE,
+				peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut())
+				+peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut(true,0))); //soma maxActiveOut com maxActiveOutFree
+
     message->SetIntegrity();
     int32_t peers_port;
     if(perform_udp_punch)    //perform_udp_punch é usado para informar (uma vez) a porta udp atrás do NAT
@@ -537,13 +547,16 @@ void Client::HandlePingMessageOut(vector<int>* pingHeader, MessagePing* message,
     Peer* newPeer = new Peer(sourceAddress, sizePeerListOut);
     if (!peerManager.AddPeer(newPeer, sizePeerListOut))
         delete newPeer;
+    bool outFree= XPConfig::Instance()->GetBool("separatedFreeOutList");
 
     boost::mutex::scoped_lock peerListLock(*peerManager.GetPeerListMutex());
-    if (!peerManager.IsPeerActive(sourceAddress, peerManager.GetPeerActiveOut())) //I received a ping from someone that is not on my active peer list
+    if (!peerManager.IsPeerActive(sourceAddress, peerManager.GetPeerActiveOut(outFree,sizePeerListOut))) //I received a ping from someone that is not on my active peer list
     {
-        if (!peerManager.ConnectPeer(sourceAddress, peerManager.GetPeerActiveOut()))
+        if (!peerManager.ConnectPeer(sourceAddress, peerManager.GetPeerActiveOut(outFree,sizePeerListOut)))
         {
-        	cout<<"Ping by "<<sourceAddress<<" tried to connect to me to be Out but failed. Neighborhood ["<<peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut())<<"/"<<peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut())<<"]"<<endl;
+        	cout<<"Ping by "<<sourceAddress<<" tried to connect to me to be Out but failed. Neighborhood "
+        			"                          ["<<peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut(outFree,sizePeerListOut))
+					                           <<"/"<<peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut(outFree,sizePeerListOut))<<"]"<<endl;
             return;
         }
     }
@@ -654,7 +667,8 @@ void Client::HandleRequestMessage(MessageRequest* message, string sourceAddress,
     vector<int> requestHeader = message->GetHeaderValues();
     ChunkUniqueID requestedChunk(requestHeader[0], (uint16_t)requestHeader[1]);
 
-    if (peerManager.IsPeerActive(sourceAddress, peerManager.GetPeerActiveOut()))
+    if (peerManager.IsPeerActive(sourceAddress, peerManager.GetPeerActiveOut()) ||
+    		peerManager.IsPeerActive(sourceAddress, peerManager.GetPeerActiveOut(true,0)))
     {
         if ((mediaBuffer->Available(requestedChunk.GetPosition()))             //If i have the chunk
             && (latestReceivedPosition >= requestedChunk)                      //The request is for past chunks
@@ -899,7 +913,8 @@ void Client::Ping()
 
         if (pingsSend % step != 0)    //Each 10s
         {
-            pingMessage = new MessagePingBoot(peerMode, latestReceivedPosition, peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut()),
+            pingMessage = new MessagePingBoot(peerMode, latestReceivedPosition, peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut())+
+            		                          peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut(true,0)),
             		                          Statistics::Instance()->GetEstimatedChunkRate(), idChannel);
         }
         else
@@ -951,7 +966,8 @@ void Client::Ping()
 
             int chunksExpected = chunksMissed + chunksPlayed;
 
-            pingMessage = new MessagePingBootPerf(peerMode, latestReceivedPosition, peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut()),
+            pingMessage = new MessagePingBootPerf(peerMode, latestReceivedPosition, peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut())+
+            		                peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut(true,0)),
             		                Statistics::Instance()->GetEstimatedChunkRate(), idChannel,
                                     chunksGeneratedPerSecond, chunksSentPerSecond, chunksReceivedPerSecond, chunksOverloadPerSecond,
                                     requestsSentPerSecond, requestsRecvPerSecond, requestRetriesPerSecond,
@@ -959,9 +975,11 @@ void Client::Ping()
                                     meanHop, meanTries, meanTriesPerRequest, peerManager.GetPeerActiveSizeTotal(),
                                     lastMediaID, lastMediaHopCount, lastMediaTriesCount, lastMediaTime + bootstrapTimeShift,
                                     nowtime + bootstrapTimeShift,
-                                    peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()),peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut()));
+                                    peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()),peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut())
+									+peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut(true,0)));
 
             peerlistMessage = new MessagePeerlistLog( 1 + peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut())
+            		                                    + peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut(true,0))
             		                                    + peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()),
             		                                  idChannel, nowtime + bootstrapTimeShift);
 
@@ -1008,10 +1026,14 @@ void Client::Ping()
 
             /* ECM - código 100% incluído
              * ping to Active Peer List In
-             * aqui, será enviada mensagem simples para informar aos peerActiveIn que this está vivo */
+             * aqui, será enviada mensagem simples para informar aos peerActiveIn que this está vivo
+             * informa ao in dele qual é o Out total que ele oferece */
+
             if(peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()) > 0)
             {
-                pingMessage = new MessagePing(PING_LIVE_OUT, BUFFER_SIZE/8, peerMode, latestReceivedPosition, peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut()));
+                pingMessage = new MessagePing(PING_LIVE_OUT, BUFFER_SIZE/8, peerMode, latestReceivedPosition,
+                		                      peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut())
+                		                      +peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut(true,0)));
                 pingMessage->SetIntegrity();
 
                 boost::mutex::scoped_lock peerListLock(*peerManager.GetPeerListMutex());
@@ -1037,10 +1059,14 @@ void Client::Ping()
 
 
             /* ping to Active Peer List Out
-             * ECM. Aqui, será enviada mensagem com buffermap para os peerActiveOut */
-            if (peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut()) > 0)
+             * ECM. Aqui, será enviada mensagem com buffermap para os peerActiveOut
+             * a variável i significa true e false. Com ela, o código é repetido duas vezes. Uma para os OUT e outra para OUTFREE
+             * O parâmetro 0 permite pegar o tamanho da lista OUTFree*/
+
+          for (int out=0;out<=1;out++){
+            if (peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut(out,0)) > 0)
             {
-                pingMessage = new MessagePing(PING_PART_CHUNKMAP, BUFFER_SIZE/8, peerMode, latestReceivedPosition, peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut()));
+                pingMessage = new MessagePing(PING_PART_CHUNKMAP, BUFFER_SIZE/8, peerMode, latestReceivedPosition, peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut(out,0)));
                 pingMessage->SetIntegrity();
                 uint8_t headerSize = pingMessage->GetHeaderSize();
                 uint8_t *chunkMap = new uint8_t[BUFFER_SIZE/8];
@@ -1057,28 +1083,28 @@ void Client::Ping()
                     chunkMap = BitsetToBytes(mediaBuffer->GetMap());
                     bufferMapLock.unlock();
                 }
-    
+
                 for (uint32_t i = 0; i < BUFFER_SIZE/8; i++)
                 {
                     pingMessage->GetFirstByte()[headerSize + i] = chunkMap[i];
                 }
 
                 boost::mutex::scoped_lock peerListLock(*peerManager.GetPeerListMutex());
-                boost::mutex::scoped_lock peerActiveOutLock(*peerManager.GetPeerActiveMutex(peerManager.GetPeerActiveOut()));
-                for (set<string>::iterator i = peerManager.GetPeerActiveOut()->begin(); i != peerManager.GetPeerActiveOut()->end(); i++)
+                boost::mutex::scoped_lock peerActiveOutLock(*peerManager.GetPeerActiveMutex(peerManager.GetPeerActiveOut(out,0)));
+                for (set<string>::iterator i = peerManager.GetPeerActiveOut(out,0)->begin(); i != peerManager.GetPeerActiveOut(out,0)->end(); i++)
                 {
                     Peer* peer = peerManager.GetPeerData(*i)->GetPeer();
                     if (peerlistMessage)
                         peerlistMessage->AddPeer(peer); //insere pares out no log de ovrelay do participante
                     if (pingMessage && peer)
                     {
-                        udp->EnqueueSend(peer->GetID(), pingMessage); 
+                        udp->EnqueueSend(peer->GetID(), pingMessage);
                     }
                 }
                 peerActiveOutLock.unlock();
                 peerListLock.unlock();
             }
-
+          }
 
         //---------------------------------------------------------------------------------------------------------
             pingsSend++;

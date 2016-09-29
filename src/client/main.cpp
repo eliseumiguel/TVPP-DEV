@@ -56,6 +56,7 @@ int main (int argc, char* argv[])
     int bufferSize = BUFFER_SIZE;
     int maxPartnersIn = MAX_PEER_ATIVO;
     int maxPartnersOut = MAX_PEER_ATIVO;
+    int maxPartnersOutFREE = 0;
     int windowOfInterest = JANELA;
     int requestLimit = NUM_PEDIDOS;
     int ttlIn = TTL_MAX;
@@ -73,7 +74,8 @@ int main (int argc, char* argv[])
     																// ** Used for connector
 	string connectorStrategy = "Random";                            //ECM for In and Out. But, in client, the connectorOut is unable
 	unsigned int timeToRemovePeerOutWorseBand = 0;                  //Time interval to remove worse peer band if a good new peer ask for connection
-	unsigned int minimalBandwidthToBeMyIN     = 0;                  // minimal size to try connecting IN
+	unsigned int minimalBandwidthToBeMyIN     = 0;                  // minimal new partner size OUT to try connecting IN
+	unsigned int outLimitToSeparateFree       = 4;                  // insert peer in PeerListOutFREE if peer Out <= outLimitToSeparateFree and maxPartnersOutFREE > 0
 
     string chunkSchedulerStrategy = "Random";
     string messageSendScheduler = "FIFO";
@@ -112,6 +114,9 @@ int main (int argc, char* argv[])
             cout <<"  -limitUpload                  limits the upload bandwidht usage in b/s (default: "<<limitUpload<<")"<<endl;
             cout <<"  -maxPartnersIn                maximum number of neighbors-In(default: "<<maxPartnersIn<<")"<<endl;
             cout <<"  -maxPartnersOut               maximum number of neighbors-Out(default: "<<maxPartnersOut<<")"<<endl;
+            cout <<"  -maxPartnersOutFREE           maximum number of neighbors-Out in special list Free (default: "<<maxPartnersOutFREE<<")"<<endl;
+            cout <<"                                 *(if not setted worse peer is inserted in a conventional peerListOut) "<<endl;
+            cout <<"  -outLimitToSeparateFree       maximum peer out to be insert in peerListOutFree (default: "<<outLimitToSeparateFree<<")"<<endl;
             cout <<"  -mode                         define the type of client. (default: "<<mode<<")"<<endl;
             cout <<"                                 **(Options: client (0); server (1); free-rider-good (2))"<<endl;
             cout <<"  -peerPort                     port for inter peer comunication (default: "<<peerPort<<")"<<endl;
@@ -141,6 +146,7 @@ int main (int argc, char* argv[])
 
     XPConfig::Instance()->OpenConfigFile("");
     XPConfig::Instance()->SetBool("removeWorsePartner",false);
+    XPConfig::Instance()->SetBool("separatedFreeOutList",false);
     
     // decode arguments
     while ((optind < argc) && (argv[optind][0]=='-'))
@@ -192,7 +198,19 @@ int main (int argc, char* argv[])
             optind++;
             maxPartnersOut = atoi(argv[optind]);
         }
+        else if (swtc=="-maxPartnersOutFREE")
+        {
+            optind++;
+            maxPartnersOutFREE = atoi(argv[optind]);
+            if (maxPartnersOutFREE > 0)
+               XPConfig::Instance()->SetBool("separatedFreeOutList", true);
 
+        }
+        else if (swtc=="-outLimitToSeparateFree")
+        {
+            optind++;
+            outLimitToSeparateFree = atoi(argv[optind]);
+        }
         else if (swtc=="-windowOfInterest")
         {
             optind++;
@@ -312,7 +330,7 @@ int main (int argc, char* argv[])
                                 peerPort, streamingPort, mode, bufferSize, 
                                 maxPartnersIn, maxPartnersOut, windowOfInterest, requestLimit, ttlIn, ttlOut, maxRequestAttempt, tipOffsetTime, limitDownload, limitUpload,
                                 disconnectorStrategyIn, disconnectorStrategyOut, quantityDisconnect, connectorStrategy, minimalBandwidthToBeMyIN, timeToRemovePeerOutWorseBand,
-								chunkSchedulerStrategy, messageSendScheduler, messageReceiveScheduler);
+								chunkSchedulerStrategy, messageSendScheduler, messageReceiveScheduler, maxPartnersOutFREE, outLimitToSeparateFree);
     
     boost::thread TPING(boost::bind(&Client::Ping, &clientInstance));
     boost::thread TUDPSTART(boost::bind(&Client::UDPStart, &clientInstance));
