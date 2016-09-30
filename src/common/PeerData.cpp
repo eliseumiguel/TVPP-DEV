@@ -31,9 +31,21 @@ int PeerData::GetSizePeerListOutInformed ()
 {
    return this->GetPeer()->GetSizePeerListOutInformed();
 }
+
+int PeerData::GetSizePeerListOutInformed_FREE ()
+{
+   return this->GetPeer()->GetSizePeerListOutInformed_FREE();
+}
+
+
 void PeerData::SetSizePeerListOutInformed(int sizePeerListOutInformed)
 {
 	this->GetPeer()->SetSizePeerListOutInformed(sizePeerListOutInformed);
+}
+
+void PeerData::SetSizePeerListOutInformed_FREE(int sizePeerListOutInformed_FREE)
+{
+	this->GetPeer()->SetSizePeerListOutInformed_FREE(sizePeerListOutInformed_FREE);
 }
 
 

@@ -14,8 +14,8 @@
 
 //Message Header Sizes
 #define MESSAGE_HEADER_SIZE                      6
-                                                      //O valor de cada mensagem abaixo deve ser somado a 6 do cabeçalho da mensagem.
-#define MESSAGE_CHANNEL_HEADER_SIZE             26    // aumento de 1 para serverAux e 2 para sizepeerlistout e 2 para sizepeerlistout_FREE
+                                                    //O valor de cada mensagem abaixo deve ser somado a 6 do cabeçalho da mensagem.
+#define MESSAGE_CHANNEL_HEADER_SIZE             26  // aumento de 2 serverAux + 2 maxPeerlistout + 2 para maxPeerlistout_FREE
 #define MESSAGE_REQUEST_HEADER_SIZE             18
 #define MESSAGE_ERROR_HEADER_SIZE                8
 #define MESSAGE_STATE_CHANNEL_SIZE               8
@@ -25,9 +25,9 @@
 #define MESSAGE_PEERLIST_HEADER_SIZE            10
 #define MESSAGE_PEERLIST_SHARE_HEADER_SIZE      42  //valor original 38
 #define MESSAGE_PEERLIST_LOG_HEADER_SIZE        18
-#define MESSAGE_PING_HEADER_SIZE                18  //aumento de 2 sizePeerListOut e 2 sizePeerListOut_FREE valor antigo = 14
-#define MESSAGE_PING_BOOT_HEADER_SIZE           26  //aumento de 4 herdado de PING_HEADER_SIZE valor antigo 22
-#define MESSAGE_PING_BOOT_PERF_HEADER_SIZE     102  // aumento de 2 In , 2 Out e 4 herdado de PING_HEADER_SIZE  valor antigo = 94
+#define MESSAGE_PING_HEADER_SIZE                24  //4 maxPeerListOut e maxPeerListOut + 6 parceiros + valor antigo = 14
+#define MESSAGE_PING_BOOT_HEADER_SIZE           32  //aumento de 10 herdado de PING_HEADER_SIZE + valor antigo 22
+#define MESSAGE_PING_BOOT_PERF_HEADER_SIZE     102  //aumento de 10 herdado de PING_HEADER_SIZE + valor antigo = 94 (-2 campo removido)
 #define MESSAGE_DATA_HEADER_SIZE                22
 
 //Client Operation Modes

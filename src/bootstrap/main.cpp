@@ -68,6 +68,7 @@ int main(int argc, char* argv[]) {
         cout <<"                                **(should be timeDescPeerMerge > 0)"<<endl;
         cout <<endl;
         cout <<"  --isolaVirtutalPeerSameIP    permit only different IP partner "<<endl;
+        cout <<"  --separatedFreeOutList       share peer per listOut or ListOut_FREE "<<endl;
         cout <<"  --subChannelMixed            create sub channel mixed whit the master network "<<endl;
 
         exit(1);
@@ -76,6 +77,7 @@ int main(int argc, char* argv[]) {
 
     XPConfig::Instance()->OpenConfigFile("");
     XPConfig::Instance()->SetBool("isolaVirtutalPeerSameIP", false);
+    XPConfig::Instance()->SetBool("separatedFreeOutList",false);
 
     int optind=1;
 
@@ -121,6 +123,10 @@ int main(int argc, char* argv[]) {
         else if (swtc=="--isolaVirtutalPeerSameIP")
         {
             XPConfig::Instance()->SetBool("isolaVirtutalPeerSameIP", true);
+        }
+        else if (swtc=="--separatedFreeOutList")
+        {
+            XPConfig::Instance()->SetBool("separatedFreeOutList", true);
         }
         else if (swtc=="--subChannelMixed")
         {

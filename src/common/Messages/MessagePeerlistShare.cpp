@@ -49,6 +49,6 @@ vector<uint8_t> MessagePeerlistShare::GetHeaderValuesSizeVector()
     sizes[prevSize + 8] = 32;                                                    //CHANNELCREATIONTIME
     sizes[prevSize + 9] = 32;                                                    //BOOTTIME
     sizes[prevSize + 10] = 32;                                                   //CLIENTTIME
-    sizes[prevSize + 11] = 32;                                                   //BOOTSTRAP_ID
+    sizes[prevSize + 11] = 32;                                                   //ECM BOOTSTRAP_ID
     return sizes;
 }

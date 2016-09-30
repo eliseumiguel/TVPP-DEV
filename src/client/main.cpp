@@ -202,7 +202,7 @@ int main (int argc, char* argv[])
         {
             optind++;
             maxPartnersOutFREE = atoi(argv[optind]);
-            if (maxPartnersOutFREE > 0)
+            if (maxPartnersOutFREE >= 0)                                          //se igual a zero, o peer não aceita free rider.
                XPConfig::Instance()->SetBool("separatedFreeOutList", true);
 
         }

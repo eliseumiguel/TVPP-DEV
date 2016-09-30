@@ -101,7 +101,7 @@ class Channel
         void SetmaxPeer_ChannelSub(int unsigned maxpeerChannelSub);
 
         vector<PeerData*> MakeServerAuxList(); //Usado para informar os peer da rede principal quem são os serverAux
-        vector<PeerData*> SelectPeerList(Strategy* strategy, Peer* srcPeer, unsigned int peerQuantity,bool virtualPeer, uint8_t minimumBandwidth);
+        vector<PeerData*> SelectPeerList(Strategy* strategy, Peer* srcPeer, unsigned int peerQuantity,bool virtualPeer, uint8_t minimumBandwidth, bool separatedFreeOutList);
         unsigned int GetPeerListSize(); //usada apenas pelo bootstrap em HHTLog
 
         unsigned int GetPeerListSizeChannel_Sub(int channelId_Sub); //retorna quantos pares estão em um subcanal

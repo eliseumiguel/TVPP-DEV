@@ -2,11 +2,11 @@
 
 MessageChannel::MessageChannel(uint8_t channelFlag, bool performingPunch, uint16_t externalPort, uint32_t idChannel,
 		uint32_t nowTime, bool serverCandidate, uint8_t channelState,
-		uint16_t sizePeerListOutInformed, uint16_t sizePeerListOutInformed_FREE)
+		uint16_t maxPeerListOutInformed, uint16_t maxPeerListOutInformed_FREE)
 {
     vector<int> data = GetHeaderValuesDataVector(channelFlag, performingPunch, externalPort, idChannel,
     		nowTime, serverCandidate, channelState,
-			sizePeerListOutInformed, sizePeerListOutInformed_FREE);
+			maxPeerListOutInformed, maxPeerListOutInformed_FREE);
 	
     firstByte = new uint8_t[MESSAGE_CHANNEL_HEADER_SIZE];
     Message::AssembleHeader(OPCODE_CHANNEL, MESSAGE_CHANNEL_HEADER_SIZE, 0, data);
@@ -14,7 +14,7 @@ MessageChannel::MessageChannel(uint8_t channelFlag, bool performingPunch, uint16
 
 vector<int> MessageChannel::GetHeaderValuesDataVector(uint8_t channelFlag, bool performingPunch, uint16_t externalPort,
 		uint32_t idChannel, uint32_t nowTime, bool serverCandidate, uint8_t channelState,
-		uint16_t sizePeerListOutInformed,  uint16_t sizePeerListOutInformed_FREE)
+		uint16_t maxPeerListOutInformed,  uint16_t maxPeerListOutInformed_FREE)
 {
     vector<int> data(10);
     data[0] = channelFlag;
@@ -25,8 +25,8 @@ vector<int> MessageChannel::GetHeaderValuesDataVector(uint8_t channelFlag, bool 
     data[5] = nowTime;
     data[6] = serverCandidate;                //ECM client information about is or not a server candidate t
     data[7] = channelState;                   //ECM
-    data[8] = sizePeerListOutInformed;        //ECM
-    data[9] = sizePeerListOutInformed_FREE;   //ECM
+    data[8] = maxPeerListOutInformed;        //ECM
+    data[9] = maxPeerListOutInformed_FREE;   //ECM
     return data;
 }
 

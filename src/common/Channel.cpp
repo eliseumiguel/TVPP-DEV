@@ -506,7 +506,8 @@ vector<PeerData*> Channel::MakeServerAuxList()
  * garante que as redes (paralelas e principal) serão isoladas.
  * Método chamado pelo Bootstrap. Mutex de peerList já fechado.
  */
-vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, unsigned int peerQuantity, bool virtualPeer, uint8_t minimumBandwidth)
+vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, unsigned int peerQuantity,
+		                                  bool virtualPeer, uint8_t minimumBandwidth, bool separatedFreeOutList)
 {
     vector<PeerData*> allPeers, selectedPeers;
     int srcPeerChannelId_Sub = peerList[srcPeer->GetID()].GetChannelId_Sub();
@@ -557,14 +558,37 @@ vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, uns
     	}
 	}
 
-    vector<PeerData*> selectedPeersAUX;
 
-    /* elimina pares com banda inferior à definida */
-    for (uint16_t i = 0; i < allPeers.size(); i++) {
-    	if (allPeers[i]->GetSizePeerListOutInformed() >= minimumBandwidth) {
-    		selectedPeersAUX.push_back(allPeers[i]);
-    	}
+    //seleciona peer por banda ou por lista OUT e OUT_Free
+    vector<PeerData*> selectedPeersAUX;
+    if (!(separatedFreeOutList))
+    {
+         /* elimina pares com banda inferior à definida */
+         for (uint16_t i = 0; i < allPeers.size(); i++) {
+    	     if (allPeers[i]->GetSizePeerListOutInformed() >= minimumBandwidth) {
+    		    selectedPeersAUX.push_back(allPeers[i]);
+    	     }
+          }
     }
+    else{
+        if ((srcPeer->GetSizePeerListOutInformed() > 0)){
+            for (uint16_t i = 0; i < allPeers.size(); i++) {
+            	if (allPeers[i]->GetSizePeerListOutInformed() > 0) {
+            		selectedPeersAUX.push_back(allPeers[i]);
+            	}
+            }
+
+        }
+        else
+            for (uint16_t i = 0; i < allPeers.size(); i++) {
+            	if (allPeers[i]->GetSizePeerListOutInformed_FREE() > 0) {
+            		selectedPeersAUX.push_back(allPeers[i]);
+            	}
+            }
+
+
+    }
+
     allPeers = selectedPeersAUX;
 
     if (peerQuantity > allPeers.size())

@@ -70,7 +70,7 @@ public:
 	void SetMaxActivePeersOutFREE(unsigned int maxActivePeersFREE);
 	void SetMaxOutFreeToBeSeparated(unsigned int outLimitToSeparateFree);
 
-	bool AddPeer(Peer* newPeer, int sizePeerListOut = -1); //add na lista de vizinhos
+	bool AddPeer(Peer* newPeer, int sizePeerListOut = -1, int sizePeerListOut_FREE = -1); //add na lista de vizinhos
 
     set<string>* GetPeerActiveIn();
     set<string>* GetPeerActiveOut(bool separatedFree = false, uint16_t peerOut = 0);

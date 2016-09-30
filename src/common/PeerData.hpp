@@ -78,8 +78,9 @@ class PeerData
         void SetPeerWaitListServer(bool peerWaitListServer);
 
         int GetSizePeerListOutInformed ();
+        int GetSizePeerListOutInformed_FREE ();
         void SetSizePeerListOutInformed(int sizePeerListOutInformed);
-
+        void SetSizePeerListOutInformed_FREE(int sizePeerListOutInformed_FREE);
 
         ChunkUniqueID GetChunkMapHead();
         void SetChunkMapHead(ChunkUniqueID chunkMapHead);

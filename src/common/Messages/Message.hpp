@@ -1,22 +1,22 @@
 // MESSAGE!
-//| OPCODE | HEADER_SIZE | BODY_SIZE | CHECKSUM | HEADER | BODY |
-//|   1    |      1      |     2     |     2    |   ?    |   ?  |
+//| OPCODE | HEADERSIZE | BODY_SIZE | CHECKSUM | HEADER | BODY |
+//|   1    |      1     |     2     |     2    |   ?    |   ?  | TOTAL: 6 Bytes
 
 // CHANNEL MESSAGE
-//| OPCODE | HEADER_SIZE | BODY_SIZE | CHECKSUM |  CHANNELCODE | PUNCH | VERSION | EXTPORT | CHANNELID | SERVERAUX |CHANNELSTATE |
-//|   1    |      1      |     2     |     2    |       1      |   1   |    2    |    2    |     4     |     1     |     1       |TOTAL: 18 Bytes
+//| OPCODE | HEADERSIZE | BODY_SIZE | CHECKSUM | CHANNELCODE | PUNCH | VERSION | EXTPORT | CHANNELID | NOWTIME | SERVERAUX |CHANNELSTATE | PEEROUT | PEEROUT_FREE|
+//|   1    |      1     |     2     |     2    |      1      |   1   |    2    |    2    |     4     |     4   |     1     |     1       |    2    |      2      |TOTAL: 26 Bytes
 
-// PEERLIST MESSAGE
+// PEERLIST MESSAGE                                         ?     ?
 //| OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM |  EXTPORT | CHUNKGUID | QTDPEERS | PEERLIST |  
 //|   1    |     1      |     2    |     2    |     2    |  4  |  2  |    2     |  6/peer  |  TOTAL: 16 Bytes + 6*QTDPEERS
 
 // PING MESSAGE
-//| OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM |  OUTLIST  | PINGCODE | PEERMODE | CHUNKGUID |
-//|   1    |     1      |     2    |     2    |      2    |    1     |     1    |  4  |  2  | TOTAL: 16
+//| OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM |  MAXOUT  |MAXOUTFREE  |  SIZEIN  |  SIZEOUT  |  SIZEFREE  | PINGCODE | PEERMODE | CHUNKGUID |
+//|   1    |     1      |     2    |     2    |     2    |     2      |    2     |     2     |      2     |     1    |     1    |  4  |  2  | TOTAL: 24
 
 // PING BOOT MESSAGE
-//| OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM |  OUTLIST  | PINGCODE | PEERMODE | CHUNKGUID | STREAMRATE |CHANNELID |
-//|   1    |     1      |     2    |     2    |      2    |     1    |     1    |  4  |  2  |      4     |   0|4    | TOTAL: 24
+//| OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM |  MAXOUT  |MAXOUTFREE  |  SIZEIN  |  SIZEOUT  |  SIZEFREE  | PINGCODE | PEERMODE | CHUNKGUID | STREAMRATE |CHANNELID |
+//|   1    |     1      |     2    |     2    |     2    |     2      |    2     |     2     |      2     |     1    |     1    |  4  |  2  |      4     |   0|4    | TOTAL: 32
 
 // PING CHUNKMAP MESSAGE
 //| OPCODE | HEADERSIZE | BODYSIZE | CHECKSUM |  OUTLIST  |  PINGCODE | PEERMODE | CHUNKGUID |    BITMAP    |

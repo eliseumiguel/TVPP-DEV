@@ -23,13 +23,14 @@ void PeerManager::SetMaxActivePeersOut(unsigned int maxActivePeers){this->maxAct
 void PeerManager::SetMaxActivePeersOutFREE(unsigned int maxActivePeers){this->maxActivePeersOutFREE = maxActivePeers;}
 
 //adiciona peer na lista de vizinhos
-bool PeerManager::AddPeer(Peer* newPeer, int sizePeerListOut)
+bool PeerManager::AddPeer(Peer* newPeer, int sizePeerListOut, int sizePeerListOut_FREE)
 {
 	boost::mutex::scoped_lock peerListLock(peerListMutex);
 	if (peerList.find(newPeer->GetID()) == peerList.end())
 	{
 		peerList[newPeer->GetID()] = PeerData(newPeer);
 		peerList[newPeer->GetID()].SetSizePeerListOutInformed(sizePeerListOut);
+		peerList[newPeer->GetID()].SetSizePeerListOutInformed_FREE(sizePeerListOut_FREE);
 		if (peerManagerState == SERVER_AUX_ACTIVE)
 			peerList[newPeer->GetID()].SetChannelId_Sub(SERVER_AUX_SUB_CHANNEL_ID);
 		peerListLock.unlock();
@@ -39,6 +40,7 @@ bool PeerManager::AddPeer(Peer* newPeer, int sizePeerListOut)
 	//atualiza sizePeerListOut caso peer já esteja na lista
 	if (sizePeerListOut >= 0)
 		peerList[newPeer->GetID()].SetSizePeerListOutInformed(sizePeerListOut);
+	    peerList[newPeer->GetID()].SetSizePeerListOutInformed_FREE(sizePeerListOut_FREE);
 	peerListLock.unlock();
 	return false;
 }
