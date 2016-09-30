@@ -99,8 +99,11 @@ int main (int argc, char* argv[])
             cout <<"                                                                                                                             "<<endl;
 			cout <<"  -connectorStrategy            select a strategy for peer connection (default: "<<connectorStrategy<<")"<<endl;
             cout <<"                                 **(Options: Random, RandomWhitoutPoor)"<<endl;
-            cout <<"  -minimalBandwidthToBeMyIN     minimal partner's peersizeOut to ask for new partner IN (default: "<<minimalBandwidthToBeMyIN<<")"<<endl;
+            cout <<"  -minimalOUTtoBeMyIN           minimal partner's peersizeOut to ask for new partner IN (default: "<<minimalBandwidthToBeMyIN<<")"<<endl;
             cout <<"                                 **(if chosen, it sets automatically connectorStrategy = RandomWhitoutPoor)"<<endl;
+            cout <<"  -minimalOUTFREEtoBeMyIN       minimal partner's peersizeOut_FREE to ask for new partner IN (default: "<<minimalBandwidthToBeMyIN<<")"<<endl;
+            cout <<"                                 **(if chosen, it sets automatically connectorStrategy = RandomWhitoutPoor)"<<endl;
+            cout <<"                                   (find the partner only the maxPartnersOutFREE is setted on it)"<<endl;
             cout <<"  -timeToRemovePeerOutWorseBand time to remove someone and connect a better new peer asking to be partner (default: disabled)"<<endl;
             cout <<"                                 **(for to able, choose a positive number)"<<endl;
             cout <<"                                ---"<<endl;
@@ -119,7 +122,7 @@ int main (int argc, char* argv[])
             cout <<"  -outLimitToSeparateFree       maximum peer out to be insert in peerListOutFree (default: "<<outLimitToSeparateFree<<")"<<endl;
             cout <<"  -mode                         define the type of client. (default: "<<mode<<")"<<endl;
             cout <<"                                 **(Options: client (0); server (1); free-rider-good (2))"<<endl;
-            cout <<"  -peerPort                     port for inter peer comunication (default: "<<peerPort<<")"<<endl;
+            cout <<"  -peerPort                     port for inter-peer communication (default: "<<peerPort<<")"<<endl;
             cout <<"  -maxRequestAttempt            maximum number of attempts to perform a request(default: "<<maxRequestAttempt<<")"<<endl;;
             cout <<"  -tipOffsetTime                amount of seconds from where to start requesting chunks prior to stream tip (default: "<<tipOffsetTime<<" )"<<endl;;
             cout <<"  -requestLimit                 define the amount of chunks that can be simultaneously asked (default: "<<requestLimit<<" )"<<endl;
@@ -277,12 +280,19 @@ int main (int argc, char* argv[])
             timeToRemovePeerOutWorseBand = atoi(argv[optind]);
             XPConfig::Instance()->SetBool("removeWorsePartner", true);
         }
-		else if (swtc=="-minimalBandwidthToBeMyIN")
+		else if (swtc=="-minimalOUTtoBeMyIN")
         {
             optind++;
             minimalBandwidthToBeMyIN = atoi(argv[optind]);
             connectorStrategy = "RandomWhitoutPoor";
         }
+		else if (swtc=="-minimalOUTFREEtoBeMyIN")
+        {
+            optind++;
+            minimalBandwidthToBeMyIN = atoi(argv[optind]);
+            connectorStrategy = "RandomWhitoutPoorFREE";
+        }
+
         else if (swtc=="-chunkSchedulerStrategy")
         {
             optind++;

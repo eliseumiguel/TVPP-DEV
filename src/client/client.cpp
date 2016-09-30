@@ -19,8 +19,8 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
             string peers_udp_port, string streamingPort, PeerModes mode, uint32_t buffer, 
             int maxPeersIn, int maxPeersOut, int janela, int num, int ttlIn, int ttlOut, int maxRequestAttempt, int tipOffsetTime, int limitDownload, int limitUpload,
             string disconnectorStrategyIn, string disconnectorStrategyOut, int quantityDisconnect,
-			string connectorStrategy, unsigned int minimalBandwidthToBeMyIN, int timeToRemovePeerOutWorseBand,
-			string chunkSchedulerStrategy,
+			string connectorStrategy, unsigned int minimalBandwidthToBeMyIN,
+			int timeToRemovePeerOutWorseBand, string chunkSchedulerStrategy,
             string messageSendScheduler, string messageReceiveScheduler,
 			int maxPartnersOutFREE, unsigned int outLimitToSeparateFree)
 {
@@ -113,9 +113,15 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
     else
     {
     	if (connectorStrategy == "RandomWhitoutPoor")
-            this->connectorIn = new Connector(new RandomStrategyWhitoutPoorBand(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveIn(),minimalBandwidthToBeMyIN);
+            this->connectorIn = new Connector(new RandomStrategyWhitoutPoorBand(),
+            		&peerManager, updatePeerListPeriod, peerManager.GetPeerActiveIn(),minimalBandwidthToBeMyIN);
     	else
-    		this->connectorIn = new Connector(new RandomStrategy(), &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveIn(), 0);
+    		if (connectorStrategy == "RandomWhitoutPoorFREE")
+    			this->connectorIn = new Connector(new RandomStrategyWhitoutPoorBand_FREE(),
+    			            		&peerManager, updatePeerListPeriod, peerManager.GetPeerActiveIn(),minimalBandwidthToBeMyIN);
+    		else
+    		          this->connectorIn = new Connector(new RandomStrategy(),
+    				                          &peerManager, updatePeerListPeriod, peerManager.GetPeerActiveIn(), 0);
     }
     //TODO More connector options
     if (connectorIn) temporizableList.push_back(connectorIn);

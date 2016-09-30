@@ -12,7 +12,7 @@ class Connector : public Temporizable
 		PeerManager* peerManager;
 		set<string>* peerActive;
 		unsigned int minimalBandwidthToBeMyIN;
-
+		unsigned int minimalBandwidthToBeMyIN_FREE;
     public:
 		Connector(Strategy *connectorStrategy, PeerManager* peerManager, uint64_t timerPeriod, set<string>* peerActive, unsigned int minimalBandwidthToBeMyIN);
 		void Connect();

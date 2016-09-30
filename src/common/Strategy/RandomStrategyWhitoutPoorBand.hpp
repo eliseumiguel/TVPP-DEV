@@ -19,13 +19,14 @@ class RandomStrategyWhitoutPoorBand: public Strategy
 {
     private:
 
-		void SelectPeers(vector<PeerData*>* peers, Peer* srcPeer, int quantity, unsigned int minimalBandwidthOut){
+		void SelectPeers(vector<PeerData*>* peers, Peer* srcPeer, int quantity,
+				         unsigned int minimalBandwidthOut){
 			vector<PeerData*> peersAUX;
 			for (unsigned int i=0; i < peers->size(); i++)
 			{
-				if (((*peers)[i]->GetSizePeerListOutInformed() >= (int)minimalBandwidthOut) || ((*peers)[i]->GetSizePeerListOutInformed() < 0))
+				if (((*peers)[i]->GetSizePeerListOutInformed() >= (int)minimalBandwidthOut) ||
+				    ((*peers)[i]->GetSizePeerListOutInformed() < 0))
 					peersAUX.push_back((*peers)[i]);
-
 			}
 
 			*peers = peersAUX;
@@ -35,4 +36,27 @@ class RandomStrategyWhitoutPoorBand: public Strategy
 		}
 		void SelectPeers(vector<PeerData*>* peers, Peer* srcPeer, int quantity) {}
 };
+
+class RandomStrategyWhitoutPoorBand_FREE: public Strategy
+{
+    private:
+
+		void SelectPeers(vector<PeerData*>* peers, Peer* srcPeer, int quantity,
+				         unsigned int minimalBandwidthOut){
+			vector<PeerData*> peersAUX;
+			for (unsigned int i=0; i < peers->size(); i++)
+			{
+				if (((*peers)[i]->GetSizePeerListOutInformed_FREE() >= (int)minimalBandwidthOut) ||
+				    ((*peers)[i]->GetSizePeerListOutInformed() < 0))
+					peersAUX.push_back((*peers)[i]);
+			}
+
+			*peers = peersAUX;
+
+			RandomStrategy* randomPeers = new RandomStrategy();
+			randomPeers->Execute(&(*peers), srcPeer, quantity);
+		}
+		void SelectPeers(vector<PeerData*>* peers, Peer* srcPeer, int quantity) {}
+};
+
 #endif

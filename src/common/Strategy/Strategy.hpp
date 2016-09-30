@@ -15,7 +15,8 @@ class Strategy
             if (!peers->empty())
                 SelectPeers(peers, srcPeer, quantity);
         }
-        void Execute(vector<PeerData*>* peers, Peer* srcPeer, int quantity, unsigned int minimalBandwidthOut)
+        void Execute(vector<PeerData*>* peers, Peer* srcPeer, int quantity,
+        		      unsigned int minimalBandwidthOut)
         {
             if (!peers->empty())
                 SelectPeers(peers, srcPeer, quantity, minimalBandwidthOut);

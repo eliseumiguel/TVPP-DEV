@@ -10,7 +10,7 @@ using namespace std;
 Bootstrap::Bootstrap(string udpPort, string peerlistSelectorStrategy, unsigned int peerListSharedSize,
 		unsigned int maxSubChannel, unsigned int maxServerAuxCandidate,
 		unsigned int maxPeerInSubChannel, unsigned int sizeCluster,
-		MesclarModeServer MixType,	uint8_t QT_PeerMixType,	uint8_t TimeDescPeerMix, uint8_t minimumBandwidth){
+		MesclarModeServer MixType,	uint8_t QT_PeerMixType,	uint8_t TimeDescPeerMix, uint8_t minimumBandwidth, uint8_t minimumBandwidth_FREE){
 
 	if (peerlistSelectorStrategy == "TournamentStrategy")
 		this->peerlistSelectorStrategy = new TournamentStrategy();
@@ -28,6 +28,7 @@ Bootstrap::Bootstrap(string udpPort, string peerlistSelectorStrategy, unsigned i
 	cout << "Starting Bootstrap Version[" << VERSION << "]" << endl;
 
 	this->minimumBandwidth = minimumBandwidth;
+	this->minimumBandwidth_FREE = minimumBandwidth_FREE;
 	// para configurar o channel para o flash crowd.
 	this->maxSubChannel = maxSubChannel;
 	this->maxServerAuxCandidate = maxServerAuxCandidate;
@@ -169,7 +170,7 @@ Message *Bootstrap::HandleChannelMessage(MessageChannel* message, string sourceA
 				{
 				     selectedPeers = channelList[channelId].SelectPeerList( peerlistSelectorStrategy, source, peerListSharedSize,
 				                                             XPConfig::Instance()->GetBool("isolaVirtutalPeerSameIP"),
-							                                 minimumBandwidth, XPConfig::Instance()->GetBool("separatedFreeOutList"));
+							                                 minimumBandwidth,minimumBandwidth_FREE, XPConfig::Instance()->GetBool("separatedFreeOutList"));
 
 				      messageReply = new MessagePeerlistShare(selectedPeers.size(),
 					    	source->GetIP(), externalPort,

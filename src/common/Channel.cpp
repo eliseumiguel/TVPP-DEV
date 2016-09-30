@@ -507,7 +507,8 @@ vector<PeerData*> Channel::MakeServerAuxList()
  * Método chamado pelo Bootstrap. Mutex de peerList já fechado.
  */
 vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, unsigned int peerQuantity,
-		                                  bool virtualPeer, uint8_t minimumBandwidth, bool separatedFreeOutList)
+		                                  bool virtualPeer, uint8_t minimumBandwidth, uint8_t minimumBandwidth_FREE,
+										  bool separatedFreeOutList)
 {
     vector<PeerData*> allPeers, selectedPeers;
     int srcPeerChannelId_Sub = peerList[srcPeer->GetID()].GetChannelId_Sub();
@@ -559,11 +560,13 @@ vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, uns
 	}
 
 
-    //seleciona peer por banda ou por lista OUT e OUT_Free
     vector<PeerData*> selectedPeersAUX;
-    if (!(separatedFreeOutList))
+    if (!(separatedFreeOutList) || (srcPeer->GetSizePeerListOutInformed() > 0))
     {
-         /* elimina pares com banda inferior à definida */
+         /* elimina pares com banda inferior à definida
+          * Se as listas não forem separadas, todos recebem parceiros com OUT >= minimumBandwidth
+          * Se as listas forem separadas e o par for contribuidor, ele recebe parceiros com OUT >= minimumBandwidth
+          * */
          for (uint16_t i = 0; i < allPeers.size(); i++) {
     	     if (allPeers[i]->GetSizePeerListOutInformed() >= minimumBandwidth) {
     		    selectedPeersAUX.push_back(allPeers[i]);
@@ -571,20 +574,14 @@ vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, uns
           }
     }
     else{
-        if ((srcPeer->GetSizePeerListOutInformed() > 0)){
-            for (uint16_t i = 0; i < allPeers.size(); i++) {
-            	if (allPeers[i]->GetSizePeerListOutInformed() > 0) {
-            		selectedPeersAUX.push_back(allPeers[i]);
+    	  /* as listas aqui são separaddas e o par não é contribuidor.
+    	   *  Assim recebe quem tem OUT_FREE
+    	   */
+          for (uint16_t i = 0; i < allPeers.size(); i++) {
+             	if (allPeers[i]->GetSizePeerListOutInformed_FREE() >= minimumBandwidth_FREE) {
+           		    selectedPeersAUX.push_back(allPeers[i]);
             	}
-            }
-
-        }
-        else
-            for (uint16_t i = 0; i < allPeers.size(); i++) {
-            	if (allPeers[i]->GetSizePeerListOutInformed_FREE() > 0) {
-            		selectedPeersAUX.push_back(allPeers[i]);
-            	}
-            }
+          }
 
 
     }

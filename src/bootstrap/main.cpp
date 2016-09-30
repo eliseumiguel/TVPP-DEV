@@ -33,6 +33,7 @@ int main(int argc, char* argv[]) {
     unsigned int peerListSharedSize = 20;
 
     uint8_t minimumBandwidth = 0;               //ECM minimum bandwidth to share peer to other to be neighbor
+    uint8_t minimumBandwidth_FREE = 0;          // only if separatedFreeOutList
 
     // config merge mode...
 	MesclarModeServer mergeType          = (MesclarModeServer) 0x02;       //tipo de mesclagem
@@ -53,7 +54,8 @@ int main(int argc, char* argv[]) {
         cout <<"  -udpPort                     define the tcp bootstrap port (default: "<<myUDPPort<<")"<<endl;
         cout <<"  -peerlistSelectorStrategy    define the tcp bootstrap port (default: RandomStrategy)"<<endl;
         cout <<"  -peerListSharedSize          define the peer quantity to be shared each time between bootstrap and peer ()(default: "<<peerListSharedSize<<")"<<endl;
-        cout <<"  -minimumBandwidth            define the minimum bandwidth to share a peer  (defautl: "<<(int)minimumBandwidth<<")"<<endl;
+        cout <<"  -minimalOUTsend              define the minimum OUT to share a peer                     (defautl: "<<(int)minimumBandwidth<<")"<<endl;
+        cout <<"  -minimalOUTFREEsend          define the minimum OUT_FRER to share a peer to Free Rider  (defautl: "<<(int)minimumBandwidth_FREE<<")"<<endl;
         cout <<endl;
         cout <<"      ****  FLASH CROWD ***"<<endl;
 
@@ -132,9 +134,14 @@ int main(int argc, char* argv[]) {
         {
             XPConfig::Instance()->SetBool("subChannelMixed", true);
         }
-        else if (swtc=="-minimumBandwidth") {
+        else if (swtc=="-minimalOUTsend") {
             optind++;
             minimumBandwidth = atoi(argv[optind]);
+         }
+        else if (swtc=="-minimalOUTFREEsend") {
+            optind++;
+            minimumBandwidth_FREE = atoi(argv[optind]);
+            XPConfig::Instance()->SetBool("separatedFreeOutList",true);
          }
         else if (swtc=="-mergeType") {
             optind++;
@@ -175,7 +182,7 @@ int main(int argc, char* argv[]) {
 
 
     Bootstrap bootstrapInstance(myUDPPort, peerlistSelectorStrategy, peerListSharedSize, maxSubChannel, maxServerAuxCandidate,
-    		                    maxPeerInSubChannel, sizeCluster, mergeType , qt_PeerMergeType, timeDescPeerMerge, minimumBandwidth);
+    		                    maxPeerInSubChannel, sizeCluster, mergeType , qt_PeerMergeType, timeDescPeerMerge, minimumBandwidth,minimumBandwidth_FREE);
     
     boost::thread TTCPSERVER(boost::bind(&Bootstrap::TCPStart, &bootstrapInstance, myTCPPort.c_str()));
     boost::thread TUDPSERVER(boost::bind(&Bootstrap::UDPStart, &bootstrapInstance));
