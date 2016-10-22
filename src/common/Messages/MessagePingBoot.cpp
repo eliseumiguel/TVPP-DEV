@@ -29,6 +29,6 @@ vector<uint8_t> MessagePingBoot::GetHeaderValuesSizeVector()
 	int prevSize = sizes.size();
     sizes.resize(prevSize + 2);
     sizes[prevSize + 0] = 32;                                                    //STREAMRATE
-    sizes[prevSize + 0] = 32;                                                    //CHANNEL ID
+    sizes[prevSize + 1] = 32;                                                    //CHANNEL ID
     return sizes;
 }
