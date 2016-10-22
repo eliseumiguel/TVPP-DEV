@@ -922,9 +922,9 @@ void Client::Ping()
         if (pingsSend % step != 0)    //Each 10s
         {
             pingMessage = new MessagePingBoot(peerMode, latestReceivedPosition,
-            		                          peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()),
-											  peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut()),
-											  peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut(true,0)),
+            		                          //peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()),
+											  //peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut()),
+											  //peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut(true,0)),
 
             		                          peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut()),
             		                          peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut(true,0)),
@@ -1061,9 +1061,9 @@ void Client::Ping()
             if(peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()) > 0)
             {
                 pingMessage = new MessagePing(PING_LIVE_OUT, BUFFER_SIZE/8, peerMode, latestReceivedPosition,
-                                              peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()),
-						                      peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut()),
-						                      peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut(true,0)),
+                                              //peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()),
+						                      //peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut()),
+						                      //peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut(true,0)),
                 		                      peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut()),
                 		                      peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut(true,0)));
                 pingMessage->SetIntegrity();
@@ -1099,9 +1099,9 @@ void Client::Ping()
             if (peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut(out,0)) > 0)
             {
                 pingMessage = new MessagePing(PING_PART_CHUNKMAP, BUFFER_SIZE/8, peerMode, latestReceivedPosition,
-                        peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()),
-						  peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut()),
-						  peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut(true,0)),
+                          //peerManager.GetPeerActiveSize(peerManager.GetPeerActiveIn()),
+						  //peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut()),
+						  //peerManager.GetPeerActiveSize(peerManager.GetPeerActiveOut(true,0)),
                 		                      peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut(false,0)),
 											  peerManager.GetMaxActivePeers(peerManager.GetPeerActiveOut(true,0)));
                 pingMessage->SetIntegrity();

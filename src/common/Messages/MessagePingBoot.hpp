@@ -7,9 +7,9 @@ class MessagePingBoot : public MessagePing
 {
 	protected: 
 		vector<int> GetHeaderValuesDataVector(PingTypes pingType, PeerModes mode, ChunkUniqueID chunkuid,
-                uint16_t neighborhoodSizeIn,
-                uint16_t neighborhoodSizeOut,
-                uint16_t neighborhoodSizeOut_FREE,
+                //uint16_t neighborhoodSizeIn,
+                //uint16_t neighborhoodSizeOut,
+                //uint16_t neighborhoodSizeOut_FREE,
 
 				uint16_t maxPeerListOut,
 				uint16_t maxPeerListOut_FREE,
@@ -20,9 +20,9 @@ class MessagePingBoot : public MessagePing
         MessagePingBoot(Message* message) : MessagePing(message) {};
         MessagePingBoot(PeerModes mode, ChunkUniqueID chunkuid,
 
-                uint16_t neighborhoodSizeIn,
-                uint16_t neighborhoodSizeOut,
-                uint16_t neighborhoodSizeOut_FREE,
+                //uint16_t neighborhoodSizeIn,
+                //uint16_t neighborhoodSizeOut,
+                //uint16_t neighborhoodSizeOut_FREE,
 
         		uint16_t maxPeerListOut,
 				uint16_t maxPeerListOut_FREE,
@@ -31,9 +31,9 @@ class MessagePingBoot : public MessagePing
 
         vector<int> GetHeaderValuesDataVector(PeerModes mode, ChunkUniqueID chunkuid,
 
-        		uint16_t neighborhoodSizeIn,
-                uint16_t neighborhoodSizeOut,
-                uint16_t neighborhoodSizeOut_FREE,
+        		//uint16_t neighborhoodSizeIn,
+                //uint16_t neighborhoodSizeOut,
+                //uint16_t neighborhoodSizeOut_FREE,
 
         		uint16_t maxPeerListOut,
 				uint16_t maxPeerListOut_FREE,

@@ -77,14 +77,14 @@ vector<int> MessagePingBootPerf::GetHeaderValuesDataVector(PingTypes pingType, P
 									uint16_t maxPeerListOut_FREE)
 {
     vector<int> data = MessagePingBoot::GetHeaderValuesDataVector(pingType, mode, chunkuid,
-    		                            neighborhoodSizeIn,
-    	                             	neighborhoodSizeOut,
-										neighborhoodSizeOut_FREE,
+    		                            //neighborhoodSizeIn,
+    	                             	//neighborhoodSizeOut,
+										//neighborhoodSizeOut_FREE,
 										maxPeerListOut,
 										maxPeerListOut_FREE,
 										estimatedStreamRate, channelId);
     int prevSize = data.size();
-    data.resize(prevSize + 18);
+    data.resize(prevSize + 21);
     //Performance
     data[prevSize + 0]  = chunksGeneratedPerSecond;
     data[prevSize + 1]  = chunksSentPerSecond;
@@ -115,6 +115,10 @@ vector<int> MessagePingBootPerf::GetHeaderValuesDataVector(PingTypes pingType, P
         data[prevSize + 16] = -1;
     }
     data[prevSize + 17] = nowtime;
+    data[prevSize + 18] = neighborhoodSizeIn;
+    data[prevSize + 19] = neighborhoodSizeOut;
+    data[prevSize + 20] = neighborhoodSizeOut_FREE;
+
     return data;
 }
 
@@ -122,7 +126,7 @@ vector<uint8_t> MessagePingBootPerf::GetHeaderValuesSizeVector()
 {
     vector<uint8_t> sizes = MessagePingBoot::GetHeaderValuesSizeVector();
     int prevSize = sizes.size();
-    sizes.resize(prevSize + 18);
+    sizes.resize(prevSize + 21);
 
     sizes[prevSize + 0] = 32;                                                    //STAT.ChunksGenerated
     sizes[prevSize + 1] = 32;                                                    //STAT.ChunksSent
@@ -142,6 +146,11 @@ vector<uint8_t> MessagePingBootPerf::GetHeaderValuesSizeVector()
     sizes[prevSize + 15] = 32;                                                    //STAT.SampleChunk.TriesCount
     sizes[prevSize + 16] = 32;                                                    //STAT.SampleChunk.Time
     sizes[prevSize + 17] = 32;                                                    //STAT.NowTime
+    sizes[prevSize + 18] = 16;                                                    //neighborhoodSizeIn
+    sizes[prevSize + 19] = 16;                                                    //neighborhoodSizeOut
+    sizes[prevSize + 20] = 16;                                                    //neighborhoodSizeOut_FREE
+
+
 
     return sizes;
 }

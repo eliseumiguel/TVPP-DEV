@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
     unsigned int peerListSharedSize = 20;
 
     uint8_t minimumBandwidth = 0;               //ECM minimum bandwidth to share peer to other to be neighbor
-    uint8_t minimumBandwidth_FREE = 0;          // only if separatedFreeOutList
+    uint8_t minimumBandwidth_FREE = 0;          // only if --separatedFreeOutList
 
     // config merge mode...
 	MesclarModeServer mergeType          = (MesclarModeServer) 0x02;       //tipo de mesclagem

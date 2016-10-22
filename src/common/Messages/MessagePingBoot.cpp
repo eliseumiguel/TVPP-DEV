@@ -2,9 +2,9 @@
 
 MessagePingBoot::MessagePingBoot(PeerModes mode, ChunkUniqueID chunkuid,
 
-		uint16_t neighborhoodSizeIn,
-        uint16_t neighborhoodSizeOut,
-        uint16_t neighborhoodSizeOut_FREE,
+		//uint16_t neighborhoodSizeIn,
+        //uint16_t neighborhoodSizeOut,
+        //uint16_t neighborhoodSizeOut_FREE,
 
 
 		uint16_t maxPeerListOut,
@@ -14,9 +14,9 @@ MessagePingBoot::MessagePingBoot(PeerModes mode, ChunkUniqueID chunkuid,
 {
 	vector<int> data = GetHeaderValuesDataVector(mode, chunkuid,
 
-                      neighborhoodSizeIn,
-                      neighborhoodSizeOut,
-                      neighborhoodSizeOut_FREE,
+                      //neighborhoodSizeIn,
+                      //neighborhoodSizeOut,
+                      //neighborhoodSizeOut_FREE,
 
 			           maxPeerListOut,
 			           maxPeerListOut_FREE,
@@ -27,9 +27,9 @@ MessagePingBoot::MessagePingBoot(PeerModes mode, ChunkUniqueID chunkuid,
 }
 
 vector<int> MessagePingBoot::GetHeaderValuesDataVector(PeerModes mode, ChunkUniqueID chunkuid,
-                uint16_t neighborhoodSizeIn,
-                uint16_t neighborhoodSizeOut,
-                uint16_t neighborhoodSizeOut_FREE,
+                //uint16_t neighborhoodSizeIn,
+                //uint16_t neighborhoodSizeOut,
+                //uint16_t neighborhoodSizeOut_FREE,
 
 		        uint16_t maxPeerListOut,
 		        uint16_t maxPeerListOut_FREE,
@@ -37,9 +37,9 @@ vector<int> MessagePingBoot::GetHeaderValuesDataVector(PeerModes mode, ChunkUniq
 				uint32_t estimatedStreamRate, uint32_t channelId)
 {
 	return GetHeaderValuesDataVector(PING_BOOT, mode, chunkuid,
-            neighborhoodSizeIn,
-            neighborhoodSizeOut,
-            neighborhoodSizeOut_FREE,
+            //neighborhoodSizeIn,
+            //neighborhoodSizeOut,
+            //neighborhoodSizeOut_FREE,
 
 			maxPeerListOut,
 			maxPeerListOut_FREE,
@@ -47,9 +47,9 @@ vector<int> MessagePingBoot::GetHeaderValuesDataVector(PeerModes mode, ChunkUniq
 }
 
 vector<int> MessagePingBoot::GetHeaderValuesDataVector(PingTypes pingType, PeerModes mode, ChunkUniqueID chunkuid,
-        uint16_t neighborhoodSizeIn,
-        uint16_t neighborhoodSizeOut,
-        uint16_t neighborhoodSizeOut_FREE,
+        //uint16_t neighborhoodSizeIn,
+        //uint16_t neighborhoodSizeOut,
+        //uint16_t neighborhoodSizeOut_FREE,
 
 
 		uint16_t maxPeerListOut,
@@ -58,9 +58,9 @@ vector<int> MessagePingBoot::GetHeaderValuesDataVector(PingTypes pingType, PeerM
 		uint32_t estimatedStreamRate, uint32_t channelId)
 {
     vector<int> data = MessagePing::GetHeaderValuesDataVector(pingType, mode, chunkuid,
-            neighborhoodSizeIn,
-            neighborhoodSizeOut,
-            neighborhoodSizeOut_FREE,
+            //neighborhoodSizeIn,
+            //neighborhoodSizeOut,
+            //neighborhoodSizeOut_FREE,
 
     		maxPeerListOut,
 			maxPeerListOut_FREE);

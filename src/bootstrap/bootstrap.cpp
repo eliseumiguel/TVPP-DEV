@@ -311,9 +311,12 @@ void Bootstrap::HandlePingMessage(MessagePingBoot* message,
 	//int sizePeerListIn = pingHeader[6];
 	//int sizePeerListOut = pingHeader[7];
 	//int sizePeerListOut_FREE = pingHeader[8];
+	//int serverStreamRate = pingHeader[9];
+	//uint32_t channelId = pingHeader[10];
 
-	int serverStreamRate = pingHeader[9];
-	uint32_t channelId = pingHeader[10];
+	int serverStreamRate = pingHeader[6];
+	uint32_t channelId = pingHeader[7];
+
 	unsigned short totalPeer = 0;
 
 
@@ -340,7 +343,7 @@ void Bootstrap::HandlePingMessage(MessagePingBoot* message,
 
 			//If it has performance measures
 			if (pingType == PING_BOOT_PERF) {
-				uint8_t indexPerfStart = 11; // original era 6
+				uint8_t indexPerfStart = 8; // original era 6
 
 
 				MessagePingBootPerf* messageWrapper = new MessagePingBootPerf(
@@ -392,13 +395,20 @@ void Bootstrap::HandlePingMessage(MessagePingBoot* message,
 
 				performanceLog += boost::lexical_cast<string>(
 						rawtime) + " ";                         //NowTime
-
+/*
 				performanceLog += boost::lexical_cast<string>(
 						pingHeader[6]) + " ";                   //ECM  NeighborhoodSizeIn
 				performanceLog += boost::lexical_cast<string>(
 						pingHeader[7]) + " ";                   //ECM  NeighborhoodSizeOUT
 				performanceLog += boost::lexical_cast<string>(
 						pingHeader[8]) + " ";                   //ECM  NeighborhoodSizeOUT_FREE
+*/
+				performanceLog += boost::lexical_cast<string>(
+						pingHeader[indexPerfStart + 18]) + " ";                   //ECM  NeighborhoodSizeIn
+				performanceLog += boost::lexical_cast<string>(
+						pingHeader[indexPerfStart + 19]) + " ";                   //ECM  NeighborhoodSizeOUT
+				performanceLog += boost::lexical_cast<string>(
+						pingHeader[indexPerfStart + 20]) + " ";                   //ECM  NeighborhoodSizeOUT_FREE
 
 
 				performanceLog += boost::lexical_cast<string>(

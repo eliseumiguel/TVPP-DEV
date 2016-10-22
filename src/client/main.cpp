@@ -102,7 +102,7 @@ int main (int argc, char* argv[])
             cout <<"  -minimalOUTtoBeMyIN           minimal partner's peersizeOut to ask for new partner IN (default: "<<minimalBandwidthToBeMyIN<<")"<<endl;
             cout <<"                                 **(if chosen, it sets automatically connectorStrategy = RandomWhitoutPoor)"<<endl;
             cout <<"  -minimalOUTFREEtoBeMyIN       minimal partner's peersizeOut_FREE to ask for new partner IN (default: "<<minimalBandwidthToBeMyIN<<")"<<endl;
-            cout <<"                                 **(if chosen, it sets automatically connectorStrategy = RandomWhitoutPoor)"<<endl;
+            cout <<"                                 **(if chosen, it sets automatically connectorStrategy = RandomWhitoutPoorFREE)"<<endl;
             cout <<"                                   (find the partner only the maxPartnersOutFREE is setted on it)"<<endl;
             cout <<"  -timeToRemovePeerOutWorseBand time to remove someone and connect a better new peer asking to be partner (default: disabled)"<<endl;
             cout <<"                                 **(for to able, choose a positive number)"<<endl;
@@ -205,7 +205,7 @@ int main (int argc, char* argv[])
         {
             optind++;
             maxPartnersOutFREE = atoi(argv[optind]);
-            if (maxPartnersOutFREE >= 0)                                          //se igual a zero, o peer não aceita free rider.
+            if (maxPartnersOutFREE >= 0)
                XPConfig::Instance()->SetBool("separatedFreeOutList", true);
 
         }
