@@ -337,7 +337,7 @@ PeerData& Channel::GetPeerData(Peer* peer)
  *
  * Mutex peerList fechado em bootstrap
  */
-void Channel::SetChannelMode(ChannelModes New_channelMode)
+void Channel::SetChannelMode(ChannelModes New_channelMode, bool TIMEMERGE)
 {
 	boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
 	boost::mutex::scoped_lock channelSubCandidatesLock(*channel_Sub_Candidates_Mutex);
@@ -367,14 +367,18 @@ void Channel::SetChannelMode(ChannelModes New_channelMode)
         }
     	case MODE_FLASH_CROWD_MESCLAR: //***********************************************************
     	{
-    		if (this->channelMode == MODE_FLASH_CROWD)
+    		if ((this->channelMode == MODE_FLASH_CROWD) || (this->channelMode == MODE_FLASH_CROWD_MESCLAR))
     		{
     			this->mesclarRedes = true;
     			for (map<string,SubChannelServerAuxData>::iterator i = channel_Sub_List.begin(); i != channel_Sub_List.end(); i++){
-    				server_Sub_Candidates[i->first].SetState(SERVER_AUX_MESCLAR);
-    				server_Sub_Candidates[i->first].SetPeerWaitInform(true);
-    				this->Remove_ChannelSub(&(i->first), this->mesclarRedes);
-   					cout<<"setting "<<i->first<<" server merging networks"<<endl;
+    				if (server_Sub_Candidates[i->first].GetState() != SERVER_AUX_MESCLAR){
+      				    server_Sub_Candidates[i->first].SetState(SERVER_AUX_MESCLAR);
+    				    server_Sub_Candidates[i->first].SetPeerWaitInform(true);
+    				    this->Remove_ChannelSub(&(i->first), this->mesclarRedes);
+   					    cout<<"setting "<<i->first<<" server merging networks"<<endl;
+   					    if (TIMEMERGE) break;
+    				}
+
     			}
     			this->channelMode = New_channelMode;
     		}

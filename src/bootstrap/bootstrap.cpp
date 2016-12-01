@@ -212,7 +212,7 @@ void Bootstrap::setChannelState(uint32_t channelId, uint8_t channelState) {
 	for (map<unsigned int, Channel>::iterator channel = channelList.begin();
 			channel != channelList.end(); channel++)
 		if (channel->first == channelId)
-			channel->second.SetChannelMode((ChannelModes) channelState);
+			channel->second.SetChannelMode((ChannelModes) channelState, XPConfig::Instance()->GetBool("TIMEMERGE"));
 
 	if (channelState == MODE_FLASH_CROWD)
 		cout << " ***** CHANNEL STATE NEW * FLASH CROWD ****" << endl;

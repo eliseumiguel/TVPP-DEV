@@ -87,7 +87,7 @@ class Channel
 		PeerData& GetPeerData(Peer* peer);
         time_t GetCreationTime();
 
-        void SetChannelMode(ChannelModes channelMode);
+        void SetChannelMode(ChannelModes channelMode, bool TIMEMERGE = false);
         ChannelModes GetChannelMode();
 
         bool GetServerSubWaitInform(Peer* peer);
