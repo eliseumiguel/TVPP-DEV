@@ -472,7 +472,8 @@ void Channel::Remove_ChannelSub(const string* source, bool mesclar)
     {
     	for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
     		if (i->second.GetChannelId_Sub() == (int)channel_Sub_List[*source].Get_ServerAuxChannelId_Sub())
-    			i->second.SetChannelId_Sub( i->second.GetChannelId_Sub() * (-1));
+    		//	i->second.SetChannelId_Sub( i->second.GetChannelId_Sub() * (-1));
+    			i->second.SetChannelId_Sub(-1); // isso foi mudado para permitir que haja um único canal mesclando.
     }
     else
     {
@@ -527,19 +528,26 @@ vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, uns
                 		allPeers.push_back(&(i->second));
             }
     }
-    else  //Modo flash crowd com subcanais isolados
+    else  //Modo flash crowd com subcanais isolados ou mesclando
     {
     	/* Garante fazer a vizinhança apenas com os pares que estão no mesmo subcanal
     	 * Atende ao caso de só haver o canal principal
+    	 * Se for flash crowd, preserva na íntegra os subcanais.
+    	 * Se for um subcanal mesclando:
+    	 *          a) ele protege os outros subcanais não mesclando isolados da rede
+    	 *          b) ele não permite mesclar os free rider do canal que está mesclado
     	 */
 
 		boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
     	for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
     	{
-    		if (  (srcPeer->GetID() != i->second.GetPeer()->GetID()) &&      	                                 // (se não é ele mesmo)  e
-    			  ((srcPeerChannelId_Sub == i->second.GetChannelId_Sub()) ||                                     // ((se o subChannel_ID = subChannel_ID) ou
-    		      ((srcPeerChannelId_Sub <0) && (i->second.GetChannelId_Sub()==(int)this->channelId ))) &&       // (se está mesclando e o novo parceiro é da rede principal)) e
-       	          (channel_Sub_List.find(i->first) == channel_Sub_List.end())                                    // (não fornece server aux para par da rede principal)
+    		if (  (srcPeer->GetID() != i->second.GetPeer()->GetID())                                 && (         // (se ele não é o mesmo escolhido)  E
+    			    (srcPeerChannelId_Sub == i->second.GetChannelId_Sub())  ||                                  // (   (se o subChannel_ID = subChannel_ID) ou
+    		        ( (srcPeerChannelId_Sub <0) && (srcPeer->GetSizePeerListOutInformed() > 0) &&                //     ((está mesclando) e (ele não é free) e
+    		    		       (i->second.GetChannelId_Sub()==(int)this->channelId )) ||                         //     (escolhido é da rede principal)) ou
+							   ((srcPeerChannelId_Sub == (int)this->channelId) &&                                //     (ele é da rede principal e escolhido está mesclando) ) e
+									   (i->second.GetChannelId_Sub() < 0)) )                         && (
+       	          channel_Sub_List.find(i->first) == channel_Sub_List.end())                                    // (não fornece server aux para par da rede principal)
 			   )
     			{
     				if (!virtualPeer)                                              // permit relationship between same IP
@@ -619,7 +627,11 @@ vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, uns
        	}
     }
   	cout<<"sending "<<selectedPeers.size()<<" peer to "<<srcPeer->GetID()<<"'s neighbor"<<endl;
-
+  	/*
+  	for (std::vector<PeerData*>::iterator it = selectedPeers.begin() ; it != selectedPeers.end(); ++it)
+  	    std::cout << ' ' << (*it)->GetPeer()->GetID();
+     cout<<endl;
+     */
     return selectedPeers;
 }
 
