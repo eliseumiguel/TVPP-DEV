@@ -517,7 +517,7 @@ vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, uns
     vector<PeerData*> allPeers, selectedPeers;
     int srcPeerChannelId_Sub = peerList[srcPeer->GetID()].GetChannelId_Sub();
 
-    if ((this->GetChannelMode() != MODE_FLASH_CROWD) || (modeFlasCrowdSemSubChannel)){
+    if (((this->GetChannelMode() != MODE_FLASH_CROWD) && (this->GetChannelMode() != MODE_FLASH_CROWD_MESCLAR)) || (modeFlasCrowdSemSubChannel)){
         for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
             if (srcPeer->GetID() != i->second.GetPeer()->GetID()){
             	if (!virtualPeer)
@@ -536,9 +536,10 @@ vector<PeerData*> Channel::SelectPeerList(Strategy* strategy, Peer* srcPeer, uns
 		boost::mutex::scoped_lock channelSubListLock(*channel_Sub_List_Mutex);
     	for (map<string, PeerData>::iterator i = peerList.begin(); i != peerList.end(); i++)
     	{
-    		if (  (srcPeer->GetID() != i->second.GetPeer()->GetID()) &&      	   // (se não é ele mesmo)  e
-    			  (srcPeerChannelId_Sub == i->second.GetChannelId_Sub()) &&        // (se o subChannel_ID = subChannel_ID)
-       	          (channel_Sub_List.find(i->first) == channel_Sub_List.end())      // (não fornece server aux para par da rede principal)
+    		if (  (srcPeer->GetID() != i->second.GetPeer()->GetID()) &&      	                                 // (se não é ele mesmo)  e
+    			  ((srcPeerChannelId_Sub == i->second.GetChannelId_Sub()) ||                                     // ((se o subChannel_ID = subChannel_ID) ou
+    		      ((srcPeerChannelId_Sub <0) && (i->second.GetChannelId_Sub()==(int)this->channelId ))) &&       // (se está mesclando e o novo parceiro é da rede principal)) e
+       	          (channel_Sub_List.find(i->first) == channel_Sub_List.end())                                    // (não fornece server aux para par da rede principal)
 			   )
     			{
     				if (!virtualPeer)                                              // permit relationship between same IP
